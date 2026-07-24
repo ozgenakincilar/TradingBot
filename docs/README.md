@@ -14,6 +14,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [08-operasyon-ve-gozlemlenebilirlik.md](08-operasyon-ve-gozlemlenebilirlik.md) | Deployment, telemetry, alarm ve olay müdahalesi |
 | [09-diyagramlar.md](09-diyagramlar.md) | Sistem, emir, veri ve deployment diyagramları |
 | [10-yol-haritasi.md](10-yol-haritasi.md) | Aşamalar, teslimatlar ve tamamlanma ölçütleri |
+| [11-git-stratejisi.md](11-git-stratejisi.md) | Branch, commit, PR, merge ve release çalışma modeli |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

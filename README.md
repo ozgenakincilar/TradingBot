@@ -32,6 +32,7 @@ docs/
 ## Yerel doğrulama
 
 ```powershell
+$env:ConnectionStrings__TradingBot = '<SQL Server connection string>'
 dotnet restore TradingBot.slnx
 dotnet build TradingBot.slnx --configuration Release
 dotnet run --project src/TradingBot.Host
@@ -42,3 +43,5 @@ Sağlık kontrolü: `GET /health`
 ## Güvenlik
 
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.
+
+SQL Server connection string environment variable veya secret provider üzerinden verilir; repository dosyalarına yazılmaz. EF Core komutlarında `TRADINGBOT_DB_CONNECTION` environment variable kullanılır.

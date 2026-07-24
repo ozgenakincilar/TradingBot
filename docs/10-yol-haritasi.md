@@ -33,10 +33,14 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 
 ## Aşama 2 — Market data ve persistence
 
+- [x] EF Core SQL Server provider, DbContext ve repository-local `dotnet-ef` aracı.
+- [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
+- [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
+- [ ] Domain repository'leri, Unit of Work ve atomik application use case'leri.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
 - Candle aggregation ve warm-up.
-- Veritabanı migration, repository ve audit.
+- Genişletilmiş audit/outbox dispatcher ve retention işleri.
 - Readiness/startup health.
 
 **Çıkış ölçütü:** Uzun süreli paper çalışmada gap onarımı, restart ve veri bütünlüğü doğrulanmış.

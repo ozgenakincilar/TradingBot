@@ -6,6 +6,13 @@ using TradingBot.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var tradingBotConnectionString = builder.Configuration.GetConnectionString("TradingBot");
+if (string.IsNullOrWhiteSpace(tradingBotConnectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:TradingBot must be supplied through environment configuration or a secret provider.");
+}
+
 builder.Services
     .AddOptions<TradingOptions>()
     .Bind(builder.Configuration.GetSection(TradingOptions.SectionName))
@@ -21,6 +28,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IMarketDataClient, PaperMarketDataClient>();
 builder.Services.AddSingleton<MarketSnapshotService>();
 builder.Services.AddHostedService<TradingWorker>();
+builder.Services.AddTradingBotPersistence(tradingBotConnectionString);
 
 var app = builder.Build();
 

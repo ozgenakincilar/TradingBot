@@ -16,6 +16,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [10-yol-haritasi.md](10-yol-haritasi.md) | Aşamalar, teslimatlar ve tamamlanma ölçütleri |
 | [11-git-stratejisi.md](11-git-stratejisi.md) | Branch, commit, PR, merge ve release çalışma modeli |
 | [12-performans-ve-risk-hedefleri.md](12-performans-ve-risk-hedefleri.md) | Getiri hedefleri, drawdown sınırları ve hedef yönetişimi |
+| [13-instructions-uyumluluk-matrisi.md](13-instructions-uyumluluk-matrisi.md) | `instructions.md` içindeki 100 zorunlu kuralın statüsü ve kanıtı |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

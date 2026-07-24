@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TradingBot.Application.Abstractions;
+using TradingBot.Application.Abstractions.Persistence;
 using TradingBot.Infrastructure.Persistence;
+using TradingBot.Infrastructure.Persistence.Repositories;
 
 namespace TradingBot.Infrastructure;
 
@@ -21,6 +24,13 @@ public static class DependencyInjection
                     sqlServer.MigrationsAssembly(typeof(TradingBotDbContext).Assembly.FullName);
                     sqlServer.EnableRetryOnFailure(maxRetryCount: 3);
                 }));
+
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IRiskDecisionRepository, RiskDecisionRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<ITradingUnitOfWork, TradingUnitOfWork>();
+        services.AddSingleton<IIdGenerator, SystemIdGenerator>();
 
         return services;
     }

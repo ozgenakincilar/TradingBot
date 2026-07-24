@@ -37,7 +37,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] EF Core SQL Server provider, DbContext ve repository-local `dotnet-ef` aracı.
 - [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
 - [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
-- [ ] Domain repository'leri, Unit of Work ve atomik application use case'leri.
+- [x] Order/RiskDecision/Audit/Outbox repository'leri, retry-aware Unit of Work ve ilk atomik application use case'i.
+- [ ] Portfolio ve market-data repository'leri ile ek atomik use case'ler.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
 - Candle aggregation ve warm-up.

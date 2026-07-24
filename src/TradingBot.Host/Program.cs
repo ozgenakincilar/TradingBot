@@ -1,5 +1,6 @@
 using TradingBot.Application;
 using TradingBot.Application.Abstractions;
+using TradingBot.Application.Orders;
 using TradingBot.Domain;
 using TradingBot.Host;
 using TradingBot.Infrastructure;
@@ -27,6 +28,7 @@ builder.Services
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IMarketDataClient, PaperMarketDataClient>();
 builder.Services.AddSingleton<MarketSnapshotService>();
+builder.Services.AddScoped<PersistRiskApprovedOrder>();
 builder.Services.AddHostedService<TradingWorker>();
 builder.Services.AddTradingBotPersistence(tradingBotConnectionString);
 

@@ -23,7 +23,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 
 - [x] Instrument filtrelerinin Domain modeli ve temel value object’ler.
 - [x] İlk Order aggregate/state machine uygulaması.
-- RiskProfile ve zorunlu limitler.
+- [x] İlk RiskProfile, position sizing, günlük kayıp, exposure, açık emir ve kill-switch limitleri.
 - Portfolio/PnL hesapları.
 - Deterministik paper execution/fill modeli.
 - [x] Order ve Instrument için ilk unit testler.

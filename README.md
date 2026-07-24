@@ -4,6 +4,8 @@
 
 > Durum: Mimari hazırlık aşaması. Canlı emir gönderimi devre dışıdır.
 
+Ürün kapsamı yalnızca **kaldıraçsız Spot trading**'dir. Futures, margin, short ve borçlanma desteklenmez.
+
 ## Mimari yaklaşım
 
 - Modüler monolit

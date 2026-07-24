@@ -5,6 +5,7 @@
 ## 1. Güvenlik ilkeleri
 
 - Least privilege: API key üzerinde para çekme yetkisi kesinlikle bulunmaz.
+- API key üzerinde futures, margin ve borrowing yetkileri bulunmaz; yalnızca gerekli Spot trade/read izinleri açılır.
 - Default deny: Live trading açıkça etkinleştirilmedikçe kapalıdır.
 - Defense in depth: Kod, borsa-side limit ve operasyon prosedürü birlikte çalışır.
 - Auditability: Her kritik karar değiştirilemez audit izi üretir.
@@ -41,7 +42,7 @@ Her yeni exposure aşağıdaki sıradan geçer:
 2. Exchange/account/trading status.
 3. Market data freshness ve gap kontrolü.
 4. Instrument filtreleri.
-5. Available balance/margin.
+5. Kullanılabilir nakit ve Spot varlık bakiyesi.
 6. Order notional ve position limitleri.
 7. Sembol, sektör ve korelasyon exposure.
 8. Günlük drawdown/loss limiti.
@@ -58,7 +59,7 @@ Karar `Approved`, `Resized` veya gerekçe kodlu `Rejected` olur.
 - Sembol başına maksimum notional.
 - Toplam gross/net exposure.
 - Maksimum açık emir ve pozisyon sayısı.
-- Maksimum kaldıraç ve liquidation distance.
+- Sell işlemlerinde maksimum kullanılabilir varlık miktarı; negatif pozisyon kesinlikle yasak.
 - Maksimum spread/slippage.
 - Maksimum veri yaşı ve clock offset.
 - Maksimum DCA/grid kademe sayısı; varsayılan kapalı.
@@ -66,7 +67,15 @@ Karar `Approved`, `Resized` veya gerekçe kodlu `Rejected` olur.
 
 Değerler ürün kararıdır; güvenli varsayılan live işlemi engellemektir.
 
-## 6. Kill switch seviyeleri
+## 6. Kaldıraçsız Spot sınırı
+
+- Leverage daima `1x` ekonomik exposure ile sınırlıdır; borsa leverage özelliği kullanılmaz.
+- Futures, perpetual, options, margin, borrowing ve short emir yolları uygulanmaz.
+- Bot yalnızca sahip olduğu varlığı satabilir.
+- Spot dışı endpoint veya instrument yanlışlıkla yapılandırılırsa uygulama fail-fast davranır.
+- Aylık getiri hedefi pozisyon boyutunu otomatik büyütemez ve risk profilini değiştiremez.
+
+## 7. Kill switch seviyeleri
 
 - **Pause:** Yeni intent üretme; açık koruyucu emirleri koru.
 - **Cancel:** Yeni intent’i durdur ve açık giriş emirlerini iptal et.
@@ -75,10 +84,11 @@ Değerler ürün kararıdır; güvenli varsayılan live işlemi engellemektir.
 
 “Flatten all” geri dönüşü zor finansal işlem olduğundan kimlik doğrulama, açık onay ve audit gerektirir.
 
-## 7. Live readiness kontrol listesi
+## 8. Live readiness kontrol listesi
 
 - Paper ve testnet kabul testleri tamamlandı.
 - API key withdrawal yetkisiz ve IP allowlist’li.
+- API key futures/margin/borrowing yetkilerinden arındırılmış.
 - Risk limitleri iki kişi/iki aşamalı gözden geçirildi.
 - Server-side stop doğrulandı.
 - Restart/reconciliation ve unknown order senaryoları test edildi.

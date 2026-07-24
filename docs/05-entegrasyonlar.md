@@ -20,6 +20,8 @@ Application katmanında borsadan bağımsız aşağıdaki portlar tanımlanacakt
 
 Her adaptör exchange DTO’sunu kendi assembly/namespace sınırında tutar.
 
+Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uygular. Futures/margin endpoint, credential izni veya instrument türü algılanırsa adaptör trading-ready olamaz.
+
 ## 2. Market data başlangıç akışı
 
 1. REST ile instrument filtreleri ve başlangıç snapshot alınır.
@@ -88,8 +90,7 @@ Her adaptör exchange DTO’sunu kendi assembly/namespace sınırında tutar.
 
 ## 8. Seçim bekleyen entegrasyonlar
 
-- Borsa ve Spot/Futures.
-- Veritabanı.
+- İlk Spot borsası.
 - Secret vault.
 - Birincil ve yedek bildirim kanalı.
 - Metrik/trace backend’i.

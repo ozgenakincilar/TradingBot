@@ -30,6 +30,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Restart sırasında açık order/position reconstruction.
 - Stale data ve clock drift nedeniyle trading halt.
 - Daily loss, exposure ve kill switch kontrolleri.
+- Futures/margin instrument veya endpoint yapılandırmasının fail-fast reddedilmesi.
+- Sell quantity'nin kullanılabilir Spot bakiyeyi aşamaması ve pozisyonun negatif olamaması.
+- Getiri hedefinin risk limitlerini veya emir miktarını değiştirmediğinin doğrulanması.
 - Graceful shutdown sırasında yeni iş kabul edilmemesi.
 - Secret değerinin hiçbir log/exception içinde görünmemesi.
 

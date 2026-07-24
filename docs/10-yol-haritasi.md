@@ -9,7 +9,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] .NET 10 çözüm iskeleti.
 - [x] Clean Architecture + DDD kararı.
 - [x] Başlangıç dokümantasyon paketi.
-- [ ] İlk borsa ve Spot/Futures kararı.
+- [x] Ürün türü kararı: yalnızca kaldıraçsız Spot.
+- [ ] İlk Spot borsası kararı.
 - [ ] İlk strateji, timeframe ve ürün kapsamı.
 - [x] Persistence teknolojisi ADR’si: Microsoft SQL Server.
 - [ ] Telemetry teknoloji ADR’si.

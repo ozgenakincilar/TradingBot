@@ -47,6 +47,7 @@
 
 - `Portfolio` aggregate/projection: balance, position, realized/unrealized PnL ve exposure.
 - Borsa snapshot’ları ile reconcile edilir.
+- Pozisyon yalnızca elde bulunan Spot varlığı temsil eder; negatif quantity ve short exposure geçersizdir.
 
 ## 3. Temel value object’ler
 
@@ -97,7 +98,9 @@ stateDiagram-v2
 - Terminal emir durumu terminal olmayan duruma dönemez.
 - Stale veya gap içeren market data yeni intent üretemez.
 - Stop mesafesi ve position size birlikte maksimum kayıp limitini aşamaz.
-- Live modda account status, position mode ve margin mode doğrulanmadan emir açılamaz.
+- Live modda account status ve Spot trading yetkisi doğrulanmadan emir açılamaz.
+- Sell quantity kullanılabilir Spot varlık bakiyesini aşamaz; borçlanma ve negatif pozisyon yasaktır.
+- Futures, margin, leverage, liquidation ve funding domain kavramları ürün kapsamının dışındadır.
 - Günlük kayıp limiti veya kill switch aktifken yeni exposure yasaktır.
 
 ## 6. Domain event’ler

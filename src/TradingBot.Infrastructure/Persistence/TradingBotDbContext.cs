@@ -14,6 +14,12 @@ public sealed class TradingBotDbContext(DbContextOptions<TradingBotDbContext> op
 
     public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
 
+    public DbSet<AssetBalanceEntity> AssetBalances => Set<AssetBalanceEntity>();
+
+    public DbSet<SpotPositionEntity> SpotPositions => Set<SpotPositionEntity>();
+
+    public DbSet<SpotExecutionEntity> SpotExecutions => Set<SpotExecutionEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

@@ -67,6 +67,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Tick verisi retention, batch/bulk insert ve gerektiğinde SQL Server partitioning politikasına tabidir.
 - Execution transaction'ları ile yüksek hacimli market-data yazımları ayrı şema, repository ve iş yükü sınırlarında tutulur.
 - Backup restore düzenli olarak test edilir.
+- `portfolio.AssetBalances` ve `portfolio.SpotPositions` güncel aggregate snapshot'larını `rowversion` ile saklar.
+- `portfolio.SpotExecutions`, `(Exchange, ExchangeExecutionId)` birleşik anahtarıyla duplicate fill'i veritabanı seviyesinde engeller.
+- Portfolio snapshot, execution ledger, audit ve outbox aynı Serializable transaction'da yazılır.
 
 ### ACID transaction gereksinimleri
 

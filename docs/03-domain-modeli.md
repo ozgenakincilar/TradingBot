@@ -51,6 +51,9 @@
 - `AssetBalance`, total/reserved/available ayrımını korur ve aynı bakiyenin iki emirde kullanılmasını engeller.
 - `SpotPosition`, fee-adjusted ağırlıklı ortalama maliyet ile realized/unrealized PnL üretir.
 - Buy ve sell fill yalnızca önceden rezerve edilmiş bakiyeden settle edilir.
+- Tam gerçekleşen paper fill; rezervasyon ve settlement adımlarını tek uygulama transaction'ında yürütür.
+- Borsa execution ID'si aynı borsa içinde idempotency anahtarıdır; tekrar gelen fill ikinci kez bakiye veya PnL değiştiremez.
+- `AssetBalance` ve `SpotPosition` kalıcı durumdan invariant doğrulamasıyla yeniden oluşturulur.
 
 ## 3. Temel value object’ler
 

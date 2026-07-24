@@ -59,6 +59,41 @@ public sealed class SpotPosition
         return new SpotPosition(instrumentId, baseAsset, quoteAsset, openedAt);
     }
 
+    public static SpotPosition Restore(
+        InstrumentId instrumentId,
+        AssetCode baseAsset,
+        AssetCode quoteAsset,
+        decimal openQuantity,
+        decimal reservedSellQuantity,
+        decimal averageEntryPrice,
+        decimal realizedPnl,
+        DateTimeOffset updatedAt)
+    {
+        if (openQuantity < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(openQuantity));
+        }
+
+        if (reservedSellQuantity < 0m || reservedSellQuantity > openQuantity)
+        {
+            throw new ArgumentOutOfRangeException(nameof(reservedSellQuantity));
+        }
+
+        if ((openQuantity == 0m && averageEntryPrice != 0m) ||
+            (openQuantity > 0m && averageEntryPrice <= 0m))
+        {
+            throw new DomainRuleViolationException(
+                "Average entry price must be zero for a closed position and positive for an open position.");
+        }
+
+        var position = Open(instrumentId, baseAsset, quoteAsset, updatedAt);
+        position.OpenQuantity = openQuantity;
+        position.ReservedSellQuantity = reservedSellQuantity;
+        position.AverageEntryPrice = averageEntryPrice;
+        position.RealizedPnl = realizedPnl;
+        return position;
+    }
+
     public void ApplyBuyFill(
         Quantity quantity,
         Price price,

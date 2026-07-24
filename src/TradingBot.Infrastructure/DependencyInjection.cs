@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IRiskDecisionRepository, RiskDecisionRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IPortfolioRepository, PortfolioRepository>();
         services.AddScoped<ITradingUnitOfWork, TradingUnitOfWork>();
         services.AddSingleton<IIdGenerator, SystemIdGenerator>();
 

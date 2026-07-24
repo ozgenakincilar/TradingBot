@@ -125,7 +125,9 @@ public sealed class AtomicPersistenceIntegrationTests
     private static TradingBotDbContext CreateContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<TradingBotDbContext>()
-            .UseSqlServer(connectionString)
+            .UseSqlServer(
+                connectionString,
+                static sqlServer => sqlServer.EnableRetryOnFailure(maxRetryCount: 3))
             .Options;
 
         return new TradingBotDbContext(options);

@@ -26,7 +26,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk Order aggregate/state machine uygulaması.
 - [x] İlk RiskProfile, position sizing, günlük kayıp, exposure, açık emir ve kill-switch limitleri.
 - [x] İlk Spot AssetBalance/Position modeli, rezervasyon, komisyonlu ortalama maliyet ve PnL hesapları.
-- [ ] Portfolio aggregate persistence, exchange reconciliation ve çoklu varlık projection'ları.
+- [ ] Portfolio persistence'ın ilk tam-fill dilimi tamamlandı; açık/partial fill rezervasyonları, exchange reconciliation ve çoklu varlık projection'ları kaldı.
 - Deterministik paper execution/fill modeli.
 - [x] Order ve Instrument için ilk unit testler.
 - [ ] Property-based testler ve genişletilmiş finansal sınır testleri.
@@ -39,7 +39,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
 - [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
 - [x] Order/RiskDecision/Audit/Outbox repository'leri, retry-aware Unit of Work ve ilk atomik application use case'i.
-- [ ] Portfolio ve market-data repository'leri ile ek atomik use case'ler.
+- [ ] Portfolio repository, idempotent tam Spot fill ve atomik balance/position/execution/audit/outbox persistence tamamlandı; market-data repository ve partial-fill use case'leri kaldı.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
 - Candle aggregation ve warm-up.

@@ -188,3 +188,31 @@ flowchart LR
 ```
 
 Okların hiçbiri dış katmandan içeri doğru ters çevrilemez; Domain bağımsız kalır.
+
+## 9. Tam gerçekleşen Spot fill persistence akışı
+
+```mermaid
+sequenceDiagram
+    participant EX as Paper Execution
+    participant APP as PersistCompletedSpotFill
+    participant PF as Portfolio Domain
+    participant DB as SQL Server
+    participant OB as Outbox Dispatcher
+
+    EX->>APP: Completed fill (ExchangeExecutionId)
+    APP->>DB: BEGIN SERIALIZABLE
+    APP->>DB: Execution ID mevcut mu?
+    alt Duplicate
+        DB-->>APP: Mevcut
+        APP->>DB: COMMIT (değişiklik yok)
+    else Yeni fill
+        DB-->>APP: Balance + Position snapshot
+        APP->>PF: Reserve + settle + fee-adjusted PnL
+        PF-->>APP: Yeni tutarlı durum
+        APP->>DB: Balance + Position + Execution + Audit + Outbox
+        APP->>DB: COMMIT
+        DB-->>OB: Commit sonrası yayınlanabilir mesaj
+    end
+```
+
+Bu akış ilk sürümde tamamen gerçekleşen paper fill içindir. Açık ve parçalı emirlerin uzun ömürlü rezervasyonları execution state machine ile birlikte ayrıca uygulanacaktır.

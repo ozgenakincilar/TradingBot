@@ -52,6 +52,13 @@ public sealed class AssetBalance
         return new AssetBalance(asset, total, reserved, updatedAt);
     }
 
+    public static AssetBalance Restore(
+        AssetCode asset,
+        decimal total,
+        decimal reserved,
+        DateTimeOffset updatedAt) =>
+        Create(asset, total, reserved, updatedAt);
+
     public void Credit(decimal amount, DateTimeOffset occurredAt)
     {
         EnsurePositive(amount, nameof(amount));

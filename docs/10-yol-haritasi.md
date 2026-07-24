@@ -25,7 +25,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Instrument filtrelerinin Domain modeli ve temel value object’ler.
 - [x] İlk Order aggregate/state machine uygulaması.
 - [x] İlk RiskProfile, position sizing, günlük kayıp, exposure, açık emir ve kill-switch limitleri.
-- Portfolio/PnL hesapları.
+- [x] İlk Spot AssetBalance/Position modeli, rezervasyon, komisyonlu ortalama maliyet ve PnL hesapları.
+- [ ] Portfolio aggregate persistence, exchange reconciliation ve çoklu varlık projection'ları.
 - Deterministik paper execution/fill modeli.
 - [x] Order ve Instrument için ilk unit testler.
 - [ ] Property-based testler ve genişletilmiş finansal sınır testleri.

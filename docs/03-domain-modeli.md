@@ -48,6 +48,9 @@
 - `Portfolio` aggregate/projection: balance, position, realized/unrealized PnL ve exposure.
 - Borsa snapshot’ları ile reconcile edilir.
 - Pozisyon yalnızca elde bulunan Spot varlığı temsil eder; negatif quantity ve short exposure geçersizdir.
+- `AssetBalance`, total/reserved/available ayrımını korur ve aynı bakiyenin iki emirde kullanılmasını engeller.
+- `SpotPosition`, fee-adjusted ağırlıklı ortalama maliyet ile realized/unrealized PnL üretir.
+- Buy ve sell fill yalnızca önceden rezerve edilmiş bakiyeden settle edilir.
 
 ## 3. Temel value object’ler
 
@@ -100,6 +103,8 @@ stateDiagram-v2
 - Stop mesafesi ve position size birlikte maksimum kayıp limitini aşamaz.
 - Live modda account status ve Spot trading yetkisi doğrulanmadan emir açılamaz.
 - Sell quantity kullanılabilir Spot varlık bakiyesini aşamaz; borçlanma ve negatif pozisyon yasaktır.
+- Total, reserved, available ve open position quantity hiçbir geçişte negatif olamaz.
+- Komisyon net maliyet/PnL hesabına katılmadan fill settle edilemez.
 - Futures, margin, leverage, liquidation ve funding domain kavramları ürün kapsamının dışındadır.
 - Günlük kayıp limiti veya kill switch aktifken yeni exposure yasaktır.
 

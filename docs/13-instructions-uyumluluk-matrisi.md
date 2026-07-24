@@ -20,8 +20,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | Statü | Adet |
 |---|---:|
 | ✅ Uygulandı | 10 |
-| 🟡 Kısmi | 15 |
-| ⬜ Planlandı | 69 |
+| 🟡 Kısmi | 17 |
+| ⬜ Planlandı | 67 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -72,7 +72,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 31 | Price tick size | ✅ Uygulandı | Fiyat aşağı adım normalizasyonu ve test mevcut. [Instrument](../src/TradingBot.Domain/Instruments/Instrument.cs) |
 | 32 | Lot size | ✅ Uygulandı | Miktar aşağı adım normalizasyonu ve test mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | Min quantity/notional reddi var; çok kademeli order-decay politikası henüz yok. |
-| 34 | Komisyon kaybı | ⬜ Planlandı | Fee modeli, net PnL ve backtest/live parity gerekli. |
+| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, fee-adjusted ortalama maliyet ve net realized/unrealized PnL var; exchange fee-asset çeşitleri ve backtest/live parity henüz yok. [Spot settlement](../src/TradingBot.Domain/Portfolio/SpotTradeSettlementService.cs) |
 | 35 | Mum gap filling | ⬜ Planlandı | REST snapshot + WebSocket sequence recovery gerekli. |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
@@ -93,7 +93,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 47 | Açık emir limiti | ✅ Uygulandı | Risk profili maksimum açık emir sayısını reddediyor. [RiskEngine](../src/TradingBot.Domain/Risk/RiskEngine.cs) |
 | 48 | Cancel ratio | ⬜ Planlandı | Cancel/fill metriği ve throttle gerekli. |
 | 49 | Account freeze | ⬜ Planlandı | Spot `canTrade`/account-status doğrulaması gerekli. |
-| 50 | Yetersiz bakiye | ⬜ Planlandı | Spot available cash/asset reservation ve pre-trade balance kontrolü gerekli. |
+| 50 | Yetersiz bakiye | 🟡 Kısmi | Total/reserved/available Spot bakiye ve fazla alım-satım reddi var; exchange account reconciliation/persistence henüz yok. [Balance testleri](../tests/TradingBot.Domain.Tests/AssetBalanceTests.cs) |
 | 51 | Kaldıraç kısıtlaması | ➖ Kapsam dışı | Kaldıraç yok. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 52 | Asset exposure | 🟡 Kısmi | Sembol ve gross exposure var; sektör/korelasyon limiti henüz yok. [RiskProfile](../src/TradingBot.Domain/Risk/RiskProfile.cs) |
 | 53 | Max position notional | ✅ Uygulandı | Sembol/gross notional capacity position sizing'e uygulanıyor. [Risk testleri](../tests/TradingBot.Domain.Tests/RiskEngineTests.cs) |

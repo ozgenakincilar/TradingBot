@@ -525,3 +525,21 @@ flowchart TD
 ```
 
 `boundary` son tamamen kapanmış candle'ın exclusive bitişidir; devam eden açık candle aralığa dahil edilmez. Instrument ve candle-history kapıları geçtikten sonra stream başlar; ilk doğrulanmış market event gelene kadar genel readiness yine kapalıdır.
+
+## 21. İlk sürümlü strateji zarfı
+
+```mermaid
+flowchart LR
+    S15[15m contiguous closed candles\nminimum 200] --> SYNC{Timeframe ve kapanış\nuyumlu mu?}
+    T1H[1H contiguous closed candles\nminimum 200 + EMA200] --> SYNC
+    DEF[btc-usdt-long-flat-baseline\nv1 / OKX:BTC-USDT] --> SYNC
+    SYNC -- Açık/future/gap/identity mismatch --> HALT[Karar üretme]
+    SYNC -- Geçerli --> EVAL[Deterministik strategy evaluation]
+    EVAL --> HOLD[Hold]
+    EVAL --> LONG[EnterLong]
+    EVAL --> FLAT[ExitToFlat]
+    LONG --> RISK[TradeIntent değil\nönce ayrı dönüşüm + Risk]
+    FLAT --> RISK
+```
+
+Short action sözleşmede bulunmaz. Kesin entry/exit formülü backtest ve out-of-sample kanıtı kabul edilene kadar `EVAL` uygulaması execution'a bağlanmaz.

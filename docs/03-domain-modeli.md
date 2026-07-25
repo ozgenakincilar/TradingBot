@@ -36,8 +36,12 @@
 
 ### Strategy Context
 
-- `StrategyInstance` aggregate: parametre sürümü, çalışma durumu ve son işlenen bar.
-- Çıktı `TradeIntent`; doğrudan `Order` üretemez.
+- `StrategyDefinition`, strategy ID/version, instrument, signal/trend timeframe, EMA periyodu ve iki seri için minimum warm-up sınırını immutable tutar.
+- İlk kabul edilen zarf `btc-usdt-long-flat-baseline/v1`: `OKX:BTC-USDT`, `15m` sinyal, `1H EMA(200)` trend ve her iki seride en az 200 kapalı candle.
+- `StrategyDecision` yalnız `Hold`, `EnterLong` veya `ExitToFlat` olabilir; short kararı tip sisteminde yoktur.
+- Karar yalnız tanımla aynı instrument/timeframe candle'ları kullanabilir. Sinyal candle'ı değerlendirme anında kapanmış, trend candle'ı ise sinyal kapanışından daha yeni olmamalıdır.
+- Gelecekteki `StrategyInstance` aggregate'i parametre sürümü, çalışma durumu ve son işlenen barı taşıyacaktır.
+- Çıktı ileride `TradeIntent`e çevrilir; doğrudan `Order` üretemez.
 - Aynı girdi ve sürüm aynı sonucu üretmelidir.
 
 ### Risk Context

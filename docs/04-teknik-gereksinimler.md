@@ -76,7 +76,16 @@
 - Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
 - OKX host başlangıcında `CandleTimeframeSeconds` explicit allowlist'ten seçilir ve `WarmupCandleCount` 1-300 aralığında doğrulanır. Instrument kapısından sonra warm-up tamamlanmadan candle-history readiness açılmaz; hata host başlangıcını fail-closed durdurur.
-- `appsettings.json` içindeki `15m/200` paper doğrulama baseline'ıdır; onaylanmış alım-satım stratejisi değildir. Canlı candle WebSocket/aggregation ve nihai strategy lookback kararı sonraki dilimdir.
+- `appsettings.json` içindeki mevcut `15m/200`, onaylanan signal-serisi gereksinimiyle uyumludur; ancak tek başına `1H/200` trend warm-up'ını karşılamaz. Canlı multi-timeframe WebSocket/aggregation ve iki ayrı readiness serisi sonraki dilimdir.
+
+### Strateji sözleşmesi
+
+- İlk tanım `btc-usdt-long-flat-baseline/v1`, `OKX:BTC-USDT`, `15m` sinyal ve `1H` trend timeframe'lerini taşır.
+- Trend timeframe, signal timeframe'den büyük ve onun tam katı olmak zorundadır.
+- `EMA(200)` için hem signal hem trend serisinde minimum warm-up 200 kapalı candle'dan kısa olamaz.
+- Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
+- Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
+- Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.
 
 ## 5. Yapılandırma
 

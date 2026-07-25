@@ -22,8 +22,16 @@
 ### Market Data Context
 
 - `Instrument` aggregate: tick size, lot size, min/max notional, status.
+- OKX Spot metadata adaptörü `tickSz`, `lotSz`, `minSz` ve `state` alanlarını dinamik okur; yapılandırılmış instrument yalnız `SPOT` ve `live` ise başlangıç kapısını geçer.
+- `minSz` minimum base-asset miktarıdır; borsa ayrıca minimum notional yayımlamıyorsa bu değer `MinNotional` gibi yorumlanamaz.
 - `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data.
+- `Timeframe` pozitif tam saniyeli sabit UTC periyottur; candle açılışı Unix epoch tabanlı periyot sınırına hizalanır.
+- `Candle.CreateClosed`, kapanış zamanı henüz gelmemiş mumu ve geçersiz OHLCV ilişkilerini reddeder. Strateji hattına açık mum tipi taşınmaz.
+- `ClosedCandleSequenceGuard`, ilk contiguous recovery serisi olmadan ready olmaz; gap veya aynı sınırdaki çelişkili candle sonrası son güvenilir candle'ı ilerletmeden fail-closed kalır.
 - Sequence ve timestamp doğrulama.
+- `MarketDataIntegrityGuard`, REST recovery snapshot uygulanmadan instrument'ı ready kabul etmez.
+- Beklenen sequence atlanırsa, aynı sequence farklı event ID ile gelirse veya event/receive zamanı gerilerse instrument recovery tamamlanana kadar not-ready olur.
+- Duplicate ve geç gelen eski event cursor'u geri saramaz; recovery snapshot da son kabul edilen sequence/zamandan eski olamaz.
 
 ### Strategy Context
 
@@ -42,11 +50,33 @@
 - `Order` aggregate: state machine ve fill toplamı.
 - `Execution` entity/value data.
 - Client order ID idempotency anahtarıdır.
+- `PaperExecutionEngine`, top-of-book snapshot, minimum latency, slippage, komisyon ve likidite katılım sınırıyla deterministik fill üretir.
+- `ProcessPaperOrderSnapshot`, kalıcı order/reservation görünümünü salt okunur yükler, paper sonucunu değerlendirir ve oluşan fill'i atomik settlement use case'ine aktarır.
+- Piyasa olay kimliği deterministik paper execution kimliğine çevrilir; aynı olay yeniden işlendiğinde ikinci ekonomik fill oluşmaz.
+- `ProcessPaperMarketEvent`, tek bir top-of-book olayında aynı instrument'a ait aktif ve rezervasyonu bulunan emirleri sıralı işler; her emir bağımsız, kısa settlement transaction'ına sahiptir.
+- Limit order ancak slippage-adjusted gerçekleşme fiyatı limit sınırını ihlal etmiyorsa fill olabilir.
+- Tek snapshot'taki fill miktarı görünür top-of-book likiditesinin yapılandırılmış katılım oranını aşamaz; kalan miktar partial olarak bekler.
 
 ### Portfolio Context
 
 - `Portfolio` aggregate/projection: balance, position, realized/unrealized PnL ve exposure.
 - Borsa snapshot’ları ile reconcile edilir.
+- Pozisyon yalnızca elde bulunan Spot varlığı temsil eder; negatif quantity ve short exposure geçersizdir.
+- `AssetBalance`, total/reserved/available ayrımını korur ve aynı bakiyenin iki emirde kullanılmasını engeller.
+- `SpotPosition`, fee-adjusted ağırlıklı ortalama maliyet ile realized/unrealized PnL üretir.
+- Buy ve sell fill yalnızca önceden rezerve edilmiş bakiyeden settle edilir.
+- Tam gerçekleşen paper fill; rezervasyon ve settlement adımlarını tek uygulama transaction'ında yürütür.
+- Borsa execution ID'si aynı borsa içinde idempotency anahtarıdır; tekrar gelen fill ikinci kez bakiye veya PnL değiştiremez.
+- `AssetBalance` ve `SpotPosition` kalıcı durumdan invariant doğrulamasıyla yeniden oluşturulur.
+- `SpotOrderReservation`, order başına ayrılan quote/base tutarını fill'ler arasında taşır; duplicate fill ekonomik etki oluşturmaz.
+- Partial fill yalnızca gerçekleşen tutarı tüketir. Final fill fiyat iyileşmesi fazlasını, cancel ise yalnız kalan rezervasyonu serbest bırakır.
+- Reservation, `Order` state machine ile aynı transaction'da `Active` durumundan yalnız `Filled` veya `Cancelled` terminal durumuna geçer.
+- `SpotReconciliationEngine`, borsanın account snapshot'ını yerel balance ve aktif order state'iyle karşılaştırır.
+- `canTrade=false`, balance farkı, kayıp/fazladan order veya fill miktarı farkı kritik discrepancy'dir ve kalıcı trading halt üretir.
+- Temiz bir snapshot mevcut halt'ı otomatik kaldırmaz; güvenli yeniden açma ayrı bir operatör sürecidir.
+- Recovery en az iki ardışık, halt sonrasında oluşmuş, tutarlı ve `canTrade=true` snapshot gerektirir.
+- Recovery ID idempotency anahtarıdır; operatör kimliği, gerekçe ve kanıt snapshot ID'leri append-only saklanır.
+- Son safety transition'dan eski risk onayı recovery sonrasında dahi yeni order oluşturamaz.
 
 ## 3. Temel value object’ler
 
@@ -97,7 +127,11 @@ stateDiagram-v2
 - Terminal emir durumu terminal olmayan duruma dönemez.
 - Stale veya gap içeren market data yeni intent üretemez.
 - Stop mesafesi ve position size birlikte maksimum kayıp limitini aşamaz.
-- Live modda account status, position mode ve margin mode doğrulanmadan emir açılamaz.
+- Live modda account status ve Spot trading yetkisi doğrulanmadan emir açılamaz.
+- Sell quantity kullanılabilir Spot varlık bakiyesini aşamaz; borçlanma ve negatif pozisyon yasaktır.
+- Total, reserved, available ve open position quantity hiçbir geçişte negatif olamaz.
+- Komisyon net maliyet/PnL hesabına katılmadan fill settle edilemez.
+- Futures, margin, leverage, liquidation ve funding domain kavramları ürün kapsamının dışındadır.
 - Günlük kayıp limiti veya kill switch aktifken yeni exposure yasaktır.
 
 ## 6. Domain event’ler

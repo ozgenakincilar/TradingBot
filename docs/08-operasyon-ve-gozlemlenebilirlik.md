@@ -50,9 +50,10 @@ Market input → strategy → risk → order → fill zinciri correlation ile iz
 
 ## 4. Sağlık modeli
 
-- `/health/live`: Process event loop yanıtlıyor.
-- `/health/ready`: Config geçerli, market data fresh, zorunlu dependency erişilebilir.
-- `/health/startup`: İlk snapshot/reconciliation tamamlandı.
+- `/health`: Mevcut liveness endpoint'i; process HTTP event loop'u yanıtlıyor.
+- `/health/ready`: Instrument metadata kapısı geçmiş ve ilk doğrulanmış market event alınmışsa `200`; başlangıçta veya stream kopmasında `503`.
+- SQL Server, reconciliation ve diğer zorunlu dependency kontrolleri henüz readiness sonucuna dahil değildir.
+- Ayrı `/health/startup` endpoint'i ve ilk reconciliation kanıtı planlanmıştır, henüz uygulanmamıştır.
 
 Health endpoint ayrıntıları anonim dış erişime açılmaz.
 

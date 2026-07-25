@@ -9,13 +9,14 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] .NET 10 çözüm iskeleti.
 - [x] Clean Architecture + DDD kararı.
 - [x] Başlangıç dokümantasyon paketi.
-- [ ] İlk borsa ve Spot/Futures kararı.
+- [x] Ürün türü kararı: yalnızca kaldıraçsız Spot.
+- [x] İlk Spot borsası kararı: OKX TR V5 Spot API.
 - [ ] İlk strateji, timeframe ve ürün kapsamı.
 - [x] Persistence teknolojisi ADR’si: Microsoft SQL Server.
 - [ ] Telemetry teknoloji ADR’si.
 - [x] İlk Domain test projesi ve kritik invariant testleri.
 - [ ] Application/architecture/integration test projeleri.
-- [ ] CI kalite kapıları.
+- [x] GitHub Actions CI: format, Release build, ağsız test, EF migration drift/script, NuGet vulnerability ve repository policy kapıları.
 
 **Çıkış ölçütü:** Açık ürün kararları kapanmış, solution sınır testleri ve CI çalışıyor.
 
@@ -23,9 +24,12 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 
 - [x] Instrument filtrelerinin Domain modeli ve temel value object’ler.
 - [x] İlk Order aggregate/state machine uygulaması.
-- RiskProfile ve zorunlu limitler.
-- Portfolio/PnL hesapları.
-- Deterministik paper execution/fill modeli.
+- [x] İlk RiskProfile, position sizing, günlük kayıp, exposure, açık emir ve kill-switch limitleri.
+- [x] İlk Spot AssetBalance/Position modeli, rezervasyon, komisyonlu ortalama maliyet ve PnL hesapları.
+- [ ] Portfolio persistence, balance/order reconciliation, halt ve iki temiz snapshot+operatör onaylı recovery tamamlandı; kontrollü state correction ve çoklu varlık projection'ları kaldı.
+- [x] İlk deterministik paper execution/fill modeli: latency, top-of-book, limit, slippage, komisyon ve partial liquidity.
+- [x] Market snapshot → deterministik paper fill → atomik SQL settlement application pipeline'ı ve olay idempotency'si.
+- [x] Aktif emir keşfi yapan, scoped persistence kullanan ve cancellation-aware hosted paper market-event worker'ı.
 - [x] Order ve Instrument için ilk unit testler.
 - [ ] Property-based testler ve genişletilmiş finansal sınır testleri.
 
@@ -33,11 +37,25 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 
 ## Aşama 2 — Market data ve persistence
 
-- Exchange metadata/REST adaptörü.
+- [x] EF Core SQL Server provider, DbContext ve repository-local `dotnet-ef` aracı.
+- [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
+- [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
+- [x] Order/RiskDecision/Audit/Outbox repository'leri, retry-aware Unit of Work ve ilk atomik application use case'i.
+- [x] Borsa-bağımsız market-data sequence/timestamp integrity state machine ve recovery cursor invariant'ları.
+- [x] Integrity-aware market snapshot application servisi: initial/gap recovery, duplicate suppression ve freshness gate.
+- [x] Bounded market-event buffer ve atomik snapshot/replay hizalama algoritması.
+- [x] İlk OKX TR public REST order-book recovery adapter'ı ve recorded contract testleri.
+- [x] OKX public `books5` TLS WebSocket client, heartbeat, `prevSeqId` continuity ve gerçek connectivity smoke testi.
+- [x] Hosted OKX stream supervisor: bounded snapshot/replay session, execution pump ve reconnect backoff+jitter.
+- [x] OKX public Spot instrument metadata adapter'ı, `live`/filtre startup kapısı ve instrument+market-data readiness endpoint'i.
+- [x] Borsa-bağımsız UTC timeframe/closed-candle modeli, fail-closed sequence guard ve bounded gap-recovery application portu.
+- [x] OKX V5 kapalı candle history adapter'ı, UTC bar allowlist'i ve recorded/gerçek ağ contract testleri.
+- [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
+- [x] Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
-- Candle aggregation ve warm-up.
-- Veritabanı migration, repository ve audit.
-- Readiness/startup health.
+- [ ] Candle aggregation ve warm-up: closed-candle/gap/history tamamlandı; canlı aggregation ve lookback orkestrasyonu kaldı.
+- Genişletilmiş audit/outbox dispatcher ve retention işleri.
+- [ ] Readiness/startup health: instrument+market-data readiness tamamlandı; SQL/reconciliation dependency ve ayrı startup probe kaldı.
 
 **Çıkış ölçütü:** Uzun süreli paper çalışmada gap onarımı, restart ve veri bütünlüğü doğrulanmış.
 

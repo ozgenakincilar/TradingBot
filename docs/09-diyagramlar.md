@@ -14,6 +14,27 @@ flowchart LR
     Monitoring[İzleme Sistemi] -->|Health probe| Bot
 ```
 
+```mermaid
+sequenceDiagram
+    participant WS as WebSocket Producer
+    participant BUF as Bounded Channel (Wait)
+    participant REST as REST Snapshot
+    participant ALIGN as Replay Aligner
+    participant DOWN as Downstream
+
+    WS->>BUF: Buffered events (backpressure)
+    REST-->>ALIGN: Snapshot sequence N
+    BUF-->>ALIGN: Arrival-ordered buffered events
+    ALIGN->>ALIGN: Drop sequence <= N overlap
+    ALIGN->>ALIGN: Validate N+1, N+2, ...
+    alt Tam seri contiguous
+        ALIGN-->>DOWN: Publish validated batch
+    else Gap/conflict/time regression
+        ALIGN-->>DOWN: Publish nothing
+        ALIGN-->>REST: New recovery required
+    end
+```
+
 ## 2. Container/bileşen görünümü
 
 ```mermaid
@@ -78,6 +99,35 @@ sequenceDiagram
         M->>M: Rebuild and validate
         M-->>T: Resume symbol
     end
+```
+
+### Market-data integrity state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> NotReady
+    NotReady --> Ready: Geçerli REST recovery snapshot
+    NotReady --> NotReady: Stream event / eski recovery
+    Ready --> Ready: Beklenen next sequence
+    Ready --> Ready: Exact duplicate / geç eski event yok sayılır
+    Ready --> NotReady: Sequence gap
+    Ready --> NotReady: Aynı sequence + farklı event ID
+    Ready --> NotReady: Event/receive time gerilemesi
+    NotReady --> Ready: Yeni ve doğrulanmış recovery cursor
+```
+
+Guard son güvenilir cursor'u gap sırasında ilerletmez. Bu sayede recovery adapter'ı hangi sequence'den itibaren snapshot/replay gerektiğini kesin olarak bilir.
+
+```mermaid
+flowchart LR
+    STREAM[GetTopOfBookAsync] --> SERVICE[MarketSnapshotService]
+    SERVICE --> GUARD[Instrument Integrity Guard]
+    GUARD -- Accepted + fresh --> EXEC[Paper execution cycle]
+    GUARD -- Duplicate / out-of-order / stale --> DROP[Withhold event]
+    GUARD -- Gap / conflict / time regression --> REST[GetRecoverySnapshotAsync]
+    REST --> GUARD
+    GUARD -- Recovery applied + fresh --> EXEC
+    GUARD -- Recovery rejected --> HALT[Fail closed]
 ```
 
 ## 4. Emir yaşam döngüsü
@@ -188,3 +238,268 @@ flowchart LR
 ```
 
 Okların hiçbiri dış katmandan içeri doğru ters çevrilemez; Domain bağımsız kalır.
+
+## 9. Tam gerçekleşen Spot fill persistence akışı
+
+```mermaid
+sequenceDiagram
+    participant EX as Paper Execution
+    participant APP as PersistCompletedSpotFill
+    participant PF as Portfolio Domain
+    participant DB as SQL Server
+    participant OB as Outbox Dispatcher
+
+    EX->>APP: Completed fill (ExchangeExecutionId)
+    APP->>DB: BEGIN SERIALIZABLE
+    APP->>DB: Execution ID mevcut mu?
+    alt Duplicate
+        DB-->>APP: Mevcut
+        APP->>DB: COMMIT (değişiklik yok)
+    else Yeni fill
+        DB-->>APP: Balance + Position snapshot
+        APP->>PF: Reserve + settle + fee-adjusted PnL
+        PF-->>APP: Yeni tutarlı durum
+        APP->>DB: Balance + Position + Execution + Audit + Outbox
+        APP->>DB: COMMIT
+        DB-->>OB: Commit sonrası yayınlanabilir mesaj
+    end
+```
+
+Bu kısa yol tamamen gerçekleşen paper fill içindir. Açık ve parçalı emirler aşağıdaki kalıcı rezervasyon yaşam döngüsünü kullanır.
+
+## 10. Partial fill ve kalıcı rezervasyon yaşam döngüsü
+
+```mermaid
+sequenceDiagram
+    participant EX as Paper/Exchange Execution
+    participant APP as Reservation Use Cases
+    participant ORD as Order Aggregate
+    participant PF as Portfolio Domain
+    participant DB as SQL Server
+
+    APP->>DB: BEGIN SERIALIZABLE
+    APP->>PF: Reserve buy quote / sell base
+    APP->>DB: OrderReservation + Balance/Position + Audit + Outbox
+    APP->>DB: COMMIT
+    loop Her benzersiz partial fill
+        EX->>APP: Fill(ExecutionId, quantity, price, fee)
+        APP->>DB: BEGIN SERIALIZABLE + duplicate kontrolü
+        APP->>ORD: ApplyFill
+        APP->>PF: Consume only actual fill + fee
+        APP->>DB: Order + Reservation + Portfolio + Execution + Audit + Outbox
+        APP->>DB: COMMIT
+    end
+    alt Fill kalan miktarı tamamlar
+        APP->>PF: Fiyat/fee tahmin fazlasını serbest bırak
+        APP->>ORD: Filled
+    else Cancel onayı önce kesinleşir
+        APP->>PF: Yalnız RemainingReserved değerini serbest bırak
+        APP->>ORD: Cancelled
+    end
+```
+
+Serializable transaction ve `rowversion`, aynı order üzerindeki fill/cancel yarışında lost update'i engeller. Terminal reservation'a gelen geç olay bakiye veya PnL oluşturamaz.
+
+## 11. Spot account reconciliation ve trading halt
+
+```mermaid
+sequenceDiagram
+    participant EX as Exchange Account API
+    participant REC as ReconcileSpotAccount
+    participant DB as SQL Server
+    participant ORD as Order Persistence Gate
+
+    EX-->>REC: SnapshotId + canTrade + balances + open orders
+    REC->>DB: BEGIN SERIALIZABLE
+    REC->>DB: SnapshotId/hash duplicate kontrolü
+    REC->>DB: Yerel balances + active orders
+    REC->>REC: Deterministik karşılaştırma
+    alt Fark veya canTrade=false
+        REC->>DB: ReconciliationRun + TradingSafetyState=Halted
+        REC->>DB: Audit + Outbox + COMMIT
+        ORD->>DB: Yeni order için safety state sorgusu
+        DB-->>ORD: Halted
+        ORD-->>ORD: Yeni exposure reddedilir
+    else Tutarlı snapshot
+        REC->>DB: ReconciliationRun + Audit + Outbox + COMMIT
+        Note over REC,DB: Önceden aktif halt otomatik kaldırılmaz
+    end
+```
+
+## 12. Kontrollü trading safety recovery
+
+```mermaid
+sequenceDiagram
+    participant OP as Yetkili Operatör
+    participant REC as Reconciliation
+    participant SAFE as RecoverTradingSafety
+    participant DB as SQL Server
+    participant ORD as Order Persistence Gate
+
+    REC->>DB: Clean snapshot #1 (halt sonrasında)
+    REC->>DB: Clean snapshot #2 (halt sonrasında)
+    OP->>SAFE: RecoveryId + OperatorId + Reason
+    SAFE->>DB: BEGIN SERIALIZABLE
+    SAFE->>DB: Halt state + son 2 run + duplicate RecoveryId
+    alt Kanıt eksik veya snapshot kirli
+        SAFE-->>OP: Recovery reddedildi
+    else İki snapshot tutarlı ve canTrade=true
+        SAFE->>DB: SafetyState=Ready + Recovery + Audit + Outbox
+        SAFE->>DB: COMMIT
+        ORD->>DB: Yeni risk onayının zamanı safety transition'dan sonra mı?
+        alt Eski risk onayı
+            ORD-->>ORD: Reddet; yeniden risk değerlendirmesi gerekli
+        else Yeni risk onayı
+            ORD->>DB: Atomik order persistence
+        end
+    end
+```
+
+## 13. Deterministik paper execution
+
+```mermaid
+flowchart TD
+    A[Order + Remaining Quantity] --> D{Minimum latency doldu mu?}
+    M[Top-of-book Bid/Ask + Quantity] --> D
+    P[Commission + Slippage + Participation Policy] --> D
+    D -- Hayır --> W1[WaitingForLatency]
+    D -- Evet --> L{Slippage-adjusted fiyat limit koşulunda mı?}
+    L -- Hayır --> W2[WaitingForLimitPrice]
+    L -- Evet --> Q[Fill Qty = min kalan, görünür likidite x katılım]
+    Q --> Z{Fill qty pozitif mi?}
+    Z -- Hayır --> W3[WaitingForLiquidity]
+    Z -- Evet --> F[Deterministik Partial/Full Fill + Quote Fee]
+```
+
+## 14. Uçtan uca paper fill persistence pipeline
+
+```mermaid
+sequenceDiagram
+    participant MD as Market Event
+    participant APP as ProcessPaperOrderSnapshot
+    participant READ as PaperOrderReader
+    participant ENG as PaperExecutionEngine
+    participant FILL as ApplySpotOrderFill
+    participant DB as SQL Server
+
+    MD->>APP: OrderId + MarketEventId + TopOfBook
+    APP->>READ: Order + active reservation (AsNoTracking)
+    READ->>DB: Salt okunur snapshot
+    APP->>ENG: Evaluate(snapshot, policy)
+    alt Waiting
+        ENG-->>APP: Latency / limit / liquidity bekleniyor
+    else Fill
+        ENG-->>APP: Deterministik partial/full fill
+        APP->>FILL: PAPER-{OrderId}-{EventHash}
+        FILL->>DB: BEGIN Serializable
+        FILL->>DB: Aggregate'leri yeniden yükle + idempotency kontrolü
+        alt Execution zaten var
+            FILL->>DB: ROLLBACK/etkisiz sonuç
+            FILL-->>APP: FillAlreadyApplied
+        else Yeni execution
+            FILL->>DB: Order + Reservation + Balance + Position
+            FILL->>DB: Execution + Audit + Outbox
+            FILL->>DB: COMMIT
+            FILL-->>APP: FillApplied
+        end
+    end
+```
+
+## 15. Hosted paper market-event döngüsü
+
+```mermaid
+flowchart TD
+    HOST[Generic Host / TradingWorker] --> MD[IMarketDataClient: Top-of-book event]
+    MD --> SCOPE[Her turda yeni async DI scope]
+    SCOPE --> CYCLE[ProcessPaperMarketEvent]
+    CYCLE --> QUERY[Instrument + active reservation order sorgusu]
+    QUERY --> LOOP{Her aktif order}
+    LOOP --> PIPE[ProcessPaperOrderSnapshot]
+    PIPE --> TX[Bağımsız Serializable settlement]
+    TX --> LOOP
+    LOOP --> DELAY[Bounded polling delay]
+    DELAY --> HOST
+    HOST -. CancellationToken .-> STOP[Graceful cycle stop]
+    CYCLE -. Hata .-> LOG[Structured error log]
+    LOG --> DELAY
+```
+
+Worker singleton olsa da scoped persistence nesnesi taşımaz. Market event fan-out sıralıdır; bu ilk sürümde aynı order üzerinde paralel settlement yarışı üretilmez.
+
+## 16. OKX public books5 WebSocket taşıması
+
+```mermaid
+sequenceDiagram
+    participant C as OkxSpotMarketStreamClient
+    participant WS as OKX WSS / books5
+    participant P as Books5 Parser
+    participant G as Integrity Guard
+
+    C->>WS: TLS connect + subscribe(BASE-QUOTE)
+    WS-->>C: Subscribe acknowledgement
+    C-->>C: Control mesajı; yayınlama
+    WS-->>C: Fragmented books5 snapshot
+    C->>C: ArrayPool buffer + 64 KiB limit
+    C->>P: Complete UTF-8 JSON
+    P->>G: seqId + prevSeqId + event/receive time
+    alt 20 saniye veri yok
+        C->>WS: ping
+        WS-->>C: pong
+    end
+    alt İkinci heartbeat timeout
+        C-->>C: Connection failure; supervisor yeniden bağlar
+    end
+```
+
+## 17. OKX hosted recovery ve reconnect supervisor
+
+```mermaid
+flowchart TD
+    HOST[OkxTradingWorker] --> SESSION[MarketDataStreamSession]
+    SESSION --> WS[books5 WebSocket producer]
+    WS --> BUF[Bounded buffer]
+    SESSION --> REST[REST order-book snapshot]
+    REST --> ALIGN[Cross-source freshness check]
+    BUF --> ALIGN[İlk books5 full snapshot sequence anchor]
+    ALIGN --> GUARD[Full snapshot monotonicity + freshness]
+    GUARD --> SAMPLE[Polling aralığında execution sample]
+    SAMPLE --> SCOPE[Yeni DI scope]
+    SCOPE --> PAPER[ProcessPaperMarketEvent]
+    WS -. disconnect/gap/timeout .-> FAIL[Session fail-closed]
+    FAIL --> BACKOFF[Exponential backoff + jitter]
+    BACKOFF --> SESSION
+```
+
+## 18. OKX Spot başlangıç ve readiness kapısı
+
+```mermaid
+flowchart TD
+    CFG[TradingOptions: OKX/BASE-QUOTE] --> CAT[OKX public instruments REST]
+    CAT --> VALID{SPOT + live + symbol eşleşmesi\npozitif tickSz/lotSz/minSz}
+    VALID -- Hayır --> STOP[Host startup fail-fast\nEndpoint erişilemez]
+    VALID -- Evet --> IR[Instrument ready]
+    IR --> WORKER[OkxTradingWorker başlar]
+    WORKER --> WS[books5 WSS + REST recovery]
+    WS --> EVENT{İlk doğrulanmış event}
+    EVENT -- Hayır --> WAIT[Readiness 503]
+    EVENT -- Evet --> READY[Readiness 200]
+    READY --> PAPER[Paper execution sample]
+    WS -. disconnect/gap/timeout .-> WAIT
+```
+
+Bu readiness yalnız instrument ve market-data kapılarını temsil eder. SQL Server erişimi ve startup reconciliation ayrı kontroller olarak eklenene kadar production-ready iddiası oluşturmaz.
+
+## 19. Kapalı candle gap recovery
+
+```mermaid
+flowchart TD
+    LAST[Son kabul edilen kapalı candle] --> EXPECT[Expected open = last close]
+    STREAM[Yeni kapalı candle] --> CHECK{Open time expected mı?}
+    CHECK -- Evet --> ACCEPT[Sequence accepted]
+    CHECK -- Hayır, ileri --> PAUSE[Series not-ready]
+    PAUSE --> RANGE[OKX history-candles\nbounded expected..observed close]
+    RANGE --> VALID{Tam sayı + UTC boundary +\naynı instrument/timeframe + closed}
+    VALID -- Hayır --> CLOSED[Hiçbir kısmi candle yayınlama]
+    VALID -- Evet --> ATOMIC[Contiguous recovery atomik uygula]
+    ATOMIC --> READY[Series ready]
+```

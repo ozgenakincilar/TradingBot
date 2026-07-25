@@ -64,11 +64,15 @@ Host -------------> Application <------------- Infrastructure
 - Worker/API endpoint’leri.
 - Options validation, health checks ve telemetry wiring.
 - Ortam seçimi; secret değerleri okumadan sadece sağlayıcıları bağlar.
+- `TradingWorker` singleton yaşam döngüsündedir fakat her market-event turunda yeni async DI scope açar; scoped `DbContext`, repository veya application handler saklamaz.
 
 ## 5. İletişim modeli
 
 - Process içi komutlar doğrudan application handler çağrısıdır.
 - Yüksek hacimli market data bounded `Channel<T>` üzerinden akar.
+- Bounded channel `FullMode=Wait` kullanır; kapasite dolduğunda producer'a backpressure uygular ve kritik market event'i sessizce düşürmez.
+- Başlangıç/reconnect sırasında WebSocket event'leri buffer'da tutulur; REST snapshot sequence'inden eski overlap atılır ve kalan seri tamamen doğrulanmadan aşağı akışa yayınlanmaz.
+- `MarketSnapshotService`, instrument başına integrity guard'ı process ömründe tutar; aynı instrument değerlendirmelerini `SemaphoreSlim` ile sıralar ve yalnız fresh/ready event'i execution hattına verir.
 - Domain event aynı transaction içindeki yan etkileri ayırır.
 - Integration event ancak dış servis veya gelecekte ayrılacak modül sınırında kullanılır.
 - Kuyruk dolduğunda veri türüne göre açık backpressure politikası uygulanır; kritik execution olayı sessizce düşürülemez.

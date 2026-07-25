@@ -9,6 +9,9 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0003](0003-paper-first.md) | Paper-first ve live deny-by-default | Kabul edildi |
 | [ADR-0004](0004-microsoft-sql-server.md) | Microsoft SQL Server persistence | Kabul edildi |
 | [ADR-0005](0005-acid-cap-ve-tutarlilik.md) | ACID transaction sınırları ve CAP tutarlılık tercihi | Kabul edildi |
+| [ADR-0006](0006-trunk-based-git-stratejisi.md) | Trunk-based Git ve Pull Request stratejisi | Kabul edildi |
+| [ADR-0007](0007-kaldiracsiz-spot-only.md) | Kaldıraçsız Spot-only ürün sınırı | Kabul edildi |
+| [ADR-0008](0008-okx-tr-spot-ilk-borsa.md) | İlk borsa olarak OKX TR Spot V5 API | Kabul edildi |
 
 Yeni ADR biçimi:
 

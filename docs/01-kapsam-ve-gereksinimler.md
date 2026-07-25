@@ -13,7 +13,7 @@ Kârlılık garanti değildir. Öncelik; sermayenin korunması, tutarlı durum y
 ## 2. İlk sürüm kapsamı
 
 - Tek borsa adaptörü; borsa ayrıca seçilecektir.
-- Önce Spot veya Futures türlerinden yalnızca biri; ayrıca seçilecektir.
+- Yalnızca kaldıraçsız Spot piyasa.
 - Paper trading ve testnet desteği.
 - REST snapshot ve WebSocket piyasa verisi.
 - Mum verisi doğrulama ve gap filling.
@@ -32,6 +32,9 @@ Kârlılık garanti değildir. Öncelik; sermayenin korunması, tutarlı durum y
 - Otomatik strateji üretimi ve kendi kendine model eğitimi.
 - Mikroservis dağıtımı ve çok bölgeli active-active çalışma.
 - Kullanıcıya yatırım tavsiyesi sunma.
+- Futures, perpetual ve options ürünleri.
+- Margin/cross/isolated hesap, borçlanma ve kaldıraç.
+- Açığa satış veya negatif varlık pozisyonu.
 
 ## 4. Aktörler
 
@@ -65,6 +68,9 @@ Kimlikler test ve izlenebilirlik için sabittir.
 - **FR-015:** Sistem kapanırken yeni iş kabulünü durdurmalı, çalışan işleri sınır süre içinde tamamlamalı ve checkpoint yazmalıdır.
 - **FR-016:** Backtest komisyon, slippage, latency ve likidite varsayımlarını içermelidir.
 - **FR-017:** Her karar; correlation ID, strategy version, input snapshot ve risk sonucu ile denetlenebilmelidir.
+- **FR-018:** Sistem yalnızca Spot endpoint ve instrument türlerini kabul etmeli; margin, futures veya leverage yapılandırmasında fail-fast davranmalıdır.
+- **FR-019:** Satış miktarı kullanılabilir varlık bakiyesini aşmamalı ve pozisyon hiçbir zaman negatif olamamalıdır.
+- **FR-020:** Aylık net `%10` stretch hedefi yeni risk oluşturmak için emir üretmemeli veya risk limitlerini dinamik yükseltmemelidir.
 
 ## 6. Kalite gereksinimleri
 
@@ -82,10 +88,9 @@ Kimlikler test ve izlenebilirlik için sabittir.
 ## 7. Açık ürün kararları
 
 - İlk borsa hangisi?
-- Spot mu Futures mı?
 - İlk strateji ve zaman dilimi nedir?
 - Başlangıç sermayesi ve risk limitleri nedir?
 - Kurulu SQL Server instance/sürümü, bağlantı yöntemi ve production lisanslama modeli nedir?
 - Bildirim kanalları hangileridir?
 
-Bu kararlar verilmeden gerçek borsa adaptörü veya live işlem geliştirilmez.
+Spot-only ürün kararı [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) ile kapanmıştır. Kalan kararlar verilmeden gerçek borsa adaptörü veya live işlem geliştirilmez.

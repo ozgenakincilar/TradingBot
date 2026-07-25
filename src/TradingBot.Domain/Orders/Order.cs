@@ -114,6 +114,57 @@ public sealed class Order
             createdAt);
     }
 
+    public static Order Restore(
+        OrderId id,
+        ClientOrderId clientOrderId,
+        InstrumentId instrumentId,
+        OrderSide side,
+        OrderType type,
+        Quantity requestedQuantity,
+        Quantity approvedQuantity,
+        Price? limitPrice,
+        OrderStatus status,
+        decimal filledQuantity,
+        decimal? averageFillPrice,
+        string? exchangeOrderId,
+        string? rejectionReason,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt)
+    {
+        var order = Create(
+            id,
+            clientOrderId,
+            instrumentId,
+            side,
+            type,
+            requestedQuantity,
+            limitPrice,
+            createdAt);
+
+        if (approvedQuantity.Value > requestedQuantity.Value ||
+            filledQuantity < 0m ||
+            filledQuantity > approvedQuantity.Value ||
+            (filledQuantity == 0m && averageFillPrice is not null) ||
+            (filledQuantity > 0m && averageFillPrice is null or <= 0m) ||
+            (status == OrderStatus.Filled && filledQuantity != approvedQuantity.Value) ||
+            (status == OrderStatus.PartiallyFilled &&
+             (filledQuantity == 0m || filledQuantity == approvedQuantity.Value)) ||
+            updatedAt < createdAt ||
+            status is < OrderStatus.Draft or > OrderStatus.Unknown)
+        {
+            throw new DomainRuleViolationException("Persisted order state violates order invariants.");
+        }
+
+        order.ApprovedQuantity = approvedQuantity;
+        order.Status = status;
+        order.FilledQuantity = filledQuantity;
+        order.AverageFillPrice = averageFillPrice;
+        order.ExchangeOrderId = exchangeOrderId;
+        order.RejectionReason = rejectionReason;
+        order.UpdatedAt = updatedAt;
+        return order;
+    }
+
     public void ApproveRisk(Quantity approvedQuantity, DateTimeOffset occurredAt)
     {
         EnsureStatus(OrderStatus.Draft);

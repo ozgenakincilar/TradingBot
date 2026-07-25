@@ -734,3 +734,25 @@ flowchart TD
 ```
 
 Train ve validation geçmişi yalnız indikatörleri ısıtır. OOS state'i `Flat` başlar; buna karşılık raw dosya hash/count/range kanıtı için her dataset tam olarak EOF'ye kadar okunur.
+
+## 30. Atomik tarihsel dataset export
+
+```mermaid
+flowchart TD
+    R[UTC ve timeframe-hizalı export aralığı] --> P[100 candle'lık sayfalar]
+    P --> WAIT[Sayfa başlangıçları arası en az 100 ms]
+    WAIT --> OKX[OKX history-candles]
+    OKX --> VALID{Exact count + identity + contiguous?}
+    VALID -- Hayır --> FAIL[Fail closed]
+    VALID -- Evet --> TMP[64 KiB async partial CSV<br/>UTF-8 no BOM + LF + invariant decimal]
+    TMP --> MORE{Sayfa kaldı mı?}
+    MORE -- Evet --> WAIT
+    MORE -- Hayır --> FLUSH[Flush + streaming SHA-256]
+    FLUSH --> EXISTS{Hedef mevcut mu?}
+    EXISTS -- Evet --> FAIL
+    EXISTS -- Hayır --> MOVE[Overwrite olmadan atomik rename]
+    MOVE --> ART[Descriptor + summary artifact]
+    FAIL --> CLEAN[Yalnız bu run partial dosyası temizlenir]
+```
+
+Hiçbir aşamada tüm dataset RAM'e alınmaz. Final `.csv`, ancak bütün istek aralığı doğrulanıp diske yazıldıktan ve raw SHA-256 hesaplandıktan sonra görünür olur.

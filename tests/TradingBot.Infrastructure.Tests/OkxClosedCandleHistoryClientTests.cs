@@ -92,6 +92,23 @@ public sealed class OkxClosedCandleHistoryClientTests
     }
 
     [Fact]
+    public async Task MoreThanOfficialHistoryPageLimitIsRejectedBeforeNetworkCall()
+    {
+        var handler = new StubHandler(SuccessPayload());
+        var client = CreateClient(handler);
+
+        var action = () => client.GetAsync(
+            Instrument,
+            OneMinute,
+            Start,
+            Start.AddMinutes(101),
+            CancellationToken.None).AsTask();
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+        Assert.Null(handler.RequestUri);
+    }
+
+    [Fact]
     public async Task ApiErrorIsSanitized()
     {
         var client = CreateClient(new StubHandler("""

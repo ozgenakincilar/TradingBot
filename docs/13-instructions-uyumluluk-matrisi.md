@@ -20,8 +20,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | Statü | Adet |
 |---|---:|
 | ✅ Uygulandı | 17 |
-| 🟡 Kısmi | 33 |
-| ⬜ Planlandı | 44 |
+| 🟡 Kısmi | 34 |
+| ⬜ Planlandı | 43 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -62,7 +62,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 26 | Event subscription leak | ⬜ Planlandı | Stream/event abonelikleri eklendiğinde async-disposable yaşam döngüsü gerekli. |
 | 27 | Pinned memory | ⬜ Planlandı | Native/pinned buffer henüz yok; eklenirse profiling ve bounded lifetime zorunlu. |
 | 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; OKX hosted worker her ekonomik event için ayrı async scope açıyor ve scoped state saklamıyor. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
-| 29 | Büyük dosya okuma | ✅ Uygulandı | CSV raw hash ve candle parse 64 KiB buffer ile async streaming; 25.000 candle fixture exact count/range ile testli, `ReadAllLines` yok. [CSV dataset testleri](../tests/TradingBot.Infrastructure.Tests/CsvHistoricalCandleDatasetTests.cs) |
+| 29 | Büyük dosya okuma | ✅ Uygulandı | CSV export/read/hash 64 KiB buffer ile async streaming; export 100-candle API sayfalarıyla bounded, 25.000 candle reader fixture exact count/range ile testli. [Atomik export testleri](../tests/TradingBot.Infrastructure.Tests/AtomicCsvHistoricalCandleDatasetSinkTests.cs) |
 | 30 | AsyncLocal veri kayması | ⬜ Planlandı | Correlation context eklendiğinde immutable scope ve paralellik testi gerekli. |
 
 ## Bölüm 3 — Finansal Matematik ve Veri Doğruluğu
@@ -89,7 +89,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 46 | Rate-limit score | ⬜ Planlandı | Weight header parser ve merkezi limiter gerekli. |
+| 46 | Rate-limit score | 🟡 Kısmi | Tarihsel export resmî 20 istek/2 saniye sınırı için sayfa başlangıçlarını 100 ms pace eder; response-header/weight izleyen global çoklu-client limiter kaldı. [Export testleri](../tests/TradingBot.Application.Tests/HistoricalCandleDatasetExportTests.cs) |
 | 47 | Açık emir limiti | ✅ Uygulandı | Risk profili maksimum açık emir sayısını reddediyor. [RiskEngine](../src/TradingBot.Domain/Risk/RiskEngine.cs) |
 | 48 | Cancel ratio | ⬜ Planlandı | Cancel/fill metriği ve throttle gerekli. |
 | 49 | Account freeze | 🟡 Kısmi | `canTrade=false` kalıcı halt üretiyor; iki temiz snapshot ve operatör kanıtı olmadan açılamıyor. Gerçek exchange account adaptörü henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |

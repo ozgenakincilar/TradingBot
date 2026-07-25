@@ -71,7 +71,7 @@
 - Candle serisi ilk contiguous recovery uygulanmadan ready değildir. Duplicate eski candle'ı ilerletmez; gap veya aynı open time'daki çelişkili içerik seriyi fail-closed yapar.
 - Gap recovery, beklenen ilk candle ile gözlenen kapalı candle arasını `IClosedCandleHistoryClient` üzerinden `[fromInclusive, toExclusive)` aralığında ister.
 - Recovery çağrısı maksimum candle sayısıyla bounded'dır. Eksik, fazla, sırasız, farklı instrument/timeframe veya henüz açık candle içeren yanıtın hiçbir bölümü yayınlanmaz.
-- OKX V5 `GET /api/v5/market/history-candles` adaptörü tek sayfada en fazla 300 kayıt ister; ters kronolojik cevabı sıralar ve yalnız `confirm=1` satırlarını kapalı candle olarak kabul eder.
+- OKX V5 `GET /api/v5/market/history-candles` adaptörü resmî sınıra göre tek sayfada en fazla 100 kayıt ister; ters kronolojik cevabı sıralar ve yalnız `confirm=1` satırlarını kapalı candle olarak kabul eder.
 - OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
 - Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
@@ -104,6 +104,9 @@
 
 - Canonical CSV header `open_time_utc,open,high,low,close,base_volume`; UTF-8, UTC round-trip timestamp ve invariant decimal zorunludur. Quoted/ekstra kolon veya serbest locale formatı kabul edilmez.
 - CSV raw byte SHA-256 hesabı ve candle parse aynı salt-okunur file handle üzerinde iki streaming geçişle yapılır; 64 KiB file buffer kullanılır ve tüm dosya RAM'e alınmaz.
+- Tarihsel export UTC ve timeframe-hizalı aralığı 100 candle'lık exact sayfalara böler; sayfalar sıralı ve en az 100 ms aralıkla istenir. Eksik sayfa, gap veya identity mismatch final dosya üretmez.
+- Canonical writer aynı dizindeki benzersiz partial dosyaya BOM'suz UTF-8/LF ve invariant decimal ile async yazar; flush ve SHA-256 tamamlanınca overwrite olmadan atomik publish eder.
+- Cancellation, ağ/parse veya disk hatası yalnız çalışmaya ait partial dosyayı temizler. Var olan hedef dataset korunur; büyük `data/` çıktıları Git'e alınmaz.
 - Reader tek kullanımlıdır. Yalnız EOF'ye ulaşan contiguous dataset `CompletedSummary` üretir; erken consumer stop, cancellation veya parse hatası manifest kanıtı oluşturamaz.
 - Manifest data/config/manifest SHA-256, dataset count/range, strategy version, execution varsayımları, split, purpose, partition listesi ve random seed taşır.
 - Train/validation/OOS split'leri UTC `[start,end)` aralıklarıdır. Parameter selection OOS candle yield edemez; final evaluation yalnız OOS partition'ıyla çalışır.

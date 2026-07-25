@@ -45,6 +45,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Candle sequence'in recovery öncesi kapalı olması; duplicate/out-of-order davranışı ve gap/çelişkide son güvenilir sınırı ilerletmeden fail-closed kalması.
 - Bounded candle REST recovery aralığının eksik, fazla, sırasız, yanlış instrument/timeframe veya açık candle yanıtının tamamını reddetmesi.
 - OKX history-candles ters sıra mapping'i, `confirm=0` reddi, exact range, UTC bar allowlist'i ve upstream hata mesajı sanitization contract testleri; opt-in gerçek ağda gecikmeli iki tamamlanmış `1m` candle kontrolü.
+- Resmî 100-candle history sayfa sınırının adapter'da ağ çağrısından önce reddi; 205 candle export'un 100/100/5 exact ve contiguous sayfalara ayrılması.
+- Export pacing sırasında cancellation'ın sonraki sayfayı ve artifact completion'ı durdurması; eksik sayfanın final artifact üretmemesi.
+- Atomik CSV writer çıktısının mevcut streaming reader ile raw SHA/count/range doğrulanması; stream hatasında target/partial bırakmaması ve var olan hedefi overwrite etmemesi.
 - Warm-up'ın açık mevcut candle'ı dışlaması, exact boundary davranışı, cancellation aktarımı ve eksik/kaymış/gap içeren lookback'i bütünüyle reddetmesi.
 - OKX startup kapısının aynı `knownAt` ile sıralı `15m/200` signal ve `1H/200` trend aralıklarını istemesi; signal eksikse trend çağrısı yapmaması, trend eksikse birleşik readiness'i kapalı tutması ve Paper readiness'in candle geçmişine bağlı olmaması.
 - Strategy definition'ın sürüm, `15m/1H` tam-kat ilişkisi, EMA200 warm-up alt sınırı ve long/flat action allowlist'i; açık signal veya gelecekteki trend candle ile karar üretilememesi.

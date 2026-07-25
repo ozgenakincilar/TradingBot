@@ -30,6 +30,9 @@
 - Kilit gerekiyorsa async uyumlu primitive ve kısa critical section kullanılır.
 - Her sembol/emir için sıralama garantisi açıkça tanımlanır.
 - Background task’lar host lifecycle tarafından sahiplenilir ve gözlemlenir.
+- Market event buffer bounded `Channel<T>` ve `FullMode=Wait` kullanır; write/read operasyonları cancellation token taşır.
+- Replay hizalaması iki aşamalıdır: önce snapshot ve tüm buffered seri doğrulanır, yalnız tamamen contiguous sonuç downstream'e topluca açılır.
+- Replay ortasında gap, conflicting sequence veya timestamp regression görülürse kısmi event listesi yayınlanmaz ve yeni recovery gerekir.
 
 ## 4. Ağ ve HTTP
 

@@ -14,6 +14,27 @@ flowchart LR
     Monitoring[İzleme Sistemi] -->|Health probe| Bot
 ```
 
+```mermaid
+sequenceDiagram
+    participant WS as WebSocket Producer
+    participant BUF as Bounded Channel (Wait)
+    participant REST as REST Snapshot
+    participant ALIGN as Replay Aligner
+    participant DOWN as Downstream
+
+    WS->>BUF: Buffered events (backpressure)
+    REST-->>ALIGN: Snapshot sequence N
+    BUF-->>ALIGN: Arrival-ordered buffered events
+    ALIGN->>ALIGN: Drop sequence <= N overlap
+    ALIGN->>ALIGN: Validate N+1, N+2, ...
+    alt Tam seri contiguous
+        ALIGN-->>DOWN: Publish validated batch
+    else Gap/conflict/time regression
+        ALIGN-->>DOWN: Publish nothing
+        ALIGN-->>REST: New recovery required
+    end
+```
+
 ## 2. Container/bileşen görünümü
 
 ```mermaid

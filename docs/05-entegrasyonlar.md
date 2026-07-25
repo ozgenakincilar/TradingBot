@@ -35,6 +35,8 @@ Sequence/timestamp invariant'ları borsa DTO'sundan bağımsız `MarketDataInteg
 
 Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı, `GetRecoverySnapshotAsync` ile authoritative snapshot'ı ayırır. `MarketSnapshotService` ilk event'te ve her gap/conflict sonrasında recovery çağırır; duplicate, out-of-order veya stale sonuç `TradingWorker` tarafından execution cycle'a geçirilmez.
 
+`MarketDataEventBuffer` bounded ve wait-backpressure politikalıdır. `MarketDataReplayAligner`, snapshot sequence'ine eşit/eski overlap'i atar, daha yeni event'leri geliş sırasıyla doğrular ve tüm seri contiguous değilse boş sonuç döndürür. Böylece replay'in doğrulanmış ilk kısmı bile yanlışlıkla strategy/execution hattına sızmaz.
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

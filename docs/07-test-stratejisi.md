@@ -39,6 +39,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Duplicate/out-of-order event'in cursor'u geri sarmaması; gap, çelişkili sequence ve timestamp regression'ın instrument'ı durdurması.
 - Eski recovery snapshot'ın reddedilmesi ve freshness sınırının receive time üzerinden uygulanması.
 - Application market snapshot servisinin ilk event'te recovery çağırması, sıralı event'i doğrudan yayınlaması, duplicate'i kesmesi, gap'i snapshot ile onarması ve stale sonucu execution'a vermemesi.
+- Bounded market event buffer dolduğunda producer'ın beklemesi ve bekleyen write'ın cancellation ile sonlanması.
+- Snapshot overlap temizliği ve contiguous replay; gap/conflict/timestamp regression durumunda hiçbir kısmi event'in yayınlanmaması.
 - POST timeout sonrası unknown order reconciliation.
 - Exchange/local balance ve aktif order snapshot farkının kalıcı halt oluşturması.
 - Duplicate reconciliation snapshot'ın idempotent olması ve aynı ID ile çelişen içeriğin reddedilmesi.

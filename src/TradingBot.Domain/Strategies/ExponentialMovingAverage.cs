@@ -12,23 +12,29 @@ public static class ExponentialMovingAverage
 {
     public static ExponentialMovingAverageResult Calculate(
         IReadOnlyList<Candle> candles,
-        int period)
+        int period) =>
+        CalculateAt(candles, period, candles?.Count ?? 0);
+
+    public static ExponentialMovingAverageResult CalculateAt(
+        IReadOnlyList<Candle> candles,
+        int period,
+        int endExclusive)
     {
         ArgumentNullException.ThrowIfNull(candles);
-        if (period <= 1 || candles.Count < period)
+        if (period <= 1 || endExclusive < period || endExclusive > candles.Count)
         {
             throw new DomainRuleViolationException(
                 "EMA requires at least the complete configured period of closed candles.");
         }
 
-        var start = candles.Count - period;
+        var start = endExclusive - period;
         var first = candles[start];
         var value = first.Close;
         var alpha = 2m / (period + 1m);
 
         try
         {
-            for (var index = start + 1; index < candles.Count; index++)
+            for (var index = start + 1; index < endExclusive; index++)
             {
                 var previous = candles[index - 1];
                 var current = candles[index];

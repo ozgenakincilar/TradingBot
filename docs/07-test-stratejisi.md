@@ -52,6 +52,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Canlı candle session'ın REST anchor öncesi bounded buffering, duplicate/out-of-order suppression, exact gap recovery, oversized gap fail-closed ve worker readiness yaşam döngüsü testleri.
 - Bounded seri store'un warm-up seed, kapasite budama, immutable snapshot, duplicate/eski update ve gap/çelişkide fail-closed davranışı.
 - EMA'nın `decimal` alpha/seed sonucu, yalnız son tam pencereyi kullanması, identity/continuity reddi ve `close > EMA` long izin sınırı.
+- EMA20 yukarı/aşağı kesişimi, bullish trend giriş izni, trend kaybı çıkışı ve `%2` FOMO guard sınırı.
+- Streaming replay'in eşit close time'da trend-first davranışı, gelecekteki trend candle'ı dışlaması, aynı girdide aynı karar/state ve historical gap'te fail-closed olması.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.
@@ -82,6 +84,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Parametre optimizasyonu train/validation/out-of-sample ayrımı kullanır.
 - Walk-forward ve farklı market regime testleri uygulanır.
 - Sonuçlar strategy version, data version, seed ve config hash ile tekrar üretilebilir olmalıdır.
+- Mevcut decision replay fill ve PnL modellemez; bu nedenle performans, net getiri veya `%10` hedef başarısı iddiasında kullanılamaz.
 
 ## 5. Determinizm
 

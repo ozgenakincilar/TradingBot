@@ -65,8 +65,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk strateji sözleşmesi ve sürümleme zarfı; exact entry/exit parametreleri backtest kararı bekliyor.
 - [x] Warm-up ve canlı candle'ları birleştiren bounded, fail-closed seri store'u.
 - [x] Deterministik decimal EMA(200) ve `1H close > EMA` long trend filtresi; execution bağlantısı yok.
-- Closed candle sinyal akışı ve strategy decision bağlantısı.
-- Tarihsel streaming reader.
+- [x] EMA20 cross entry/exit, `%2` FOMO guard ve versioned strategy decision motoru.
+- [x] Bounded historical streaming decision replay; future trend isolation ve gap fail-closed.
+- Fill/fee/spread/slippage/latency ve PnL backtest modeli.
 - Komisyon/slippage/latency fill modeli.
 - Walk-forward ve out-of-sample raporu.
 

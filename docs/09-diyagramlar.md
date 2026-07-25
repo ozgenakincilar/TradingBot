@@ -591,3 +591,27 @@ flowchart TD
 ```
 
 Aynı son 200 candle penceresi aynı EMA sonucunu üretir. Aylık getiri hedefi ve risk limitleri bu hesaplamaya parametre olarak girmez.
+
+## 24. Deterministik v1 karar replay'i
+
+```mermaid
+flowchart TD
+    S[Async 15m closed candles] --> MERGE[Kapanış zamanına göre streaming merge]
+    T[Async 1H closed candles] --> MERGE
+    MERGE --> ORDER{Close time eşit mi?}
+    ORDER -- Evet --> TFIRST[1H trend önce]
+    ORDER -- Hayır --> KNOWN[Yalnız o anda bilinen candle]
+    TFIRST --> WINDOWS[Bounded 200-candle windows]
+    KNOWN --> WINDOWS
+    WINDOWS --> VALID{Identity + contiguous + warm-up}
+    VALID -- Hayır --> FAIL[Replay fail-closed]
+    VALID -- Evet --> POS{Sanal state}
+    POS -- Flat --> ENTRY[1H close > EMA200\n15m EMA20 cross-up\nbody <= 2%]
+    POS -- Long --> EXIT[1H trend loss veya\n15m EMA20 cross-down]
+    ENTRY --> DECISION[Versioned StrategyDecision]
+    EXIT --> DECISION
+    DECISION --> STATE[Flat/Long state update]
+    STATE --> NOEXEC[Fill, PnL, intent veya order yok]
+```
+
+Gelecekteki trend candle enumerator tarafından görülse bile sinyal kapanışından önce pencereye alınmaz. Aynı veri sırası ve v1 tanımı aynı karar dizisini üretir.

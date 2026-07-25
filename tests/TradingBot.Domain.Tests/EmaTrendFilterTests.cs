@@ -37,7 +37,9 @@ public sealed class EmaTrendFilterTests
             Instrument,
             Signal,
             Trend,
+            signalEmaPeriod: 2,
             trendEmaPeriod: 3,
+            maximumSignalCandleMovePercent: 2m,
             minimumSignalWarmupCandles: 3,
             minimumTrendWarmupCandles: 3);
 

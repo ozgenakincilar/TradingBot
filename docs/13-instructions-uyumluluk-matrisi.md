@@ -77,7 +77,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
-| 39 | Warm-up period | 🟡 Kısmi | Bounded warm-up use case'i son `N` tamamen kapanmış candle'ı exact UTC aralık ve contiguous recovery ile doğruluyor. Strateji lookback seçimi ve host readiness bağlantısı kaldı. [Warm-up testleri](../tests/TradingBot.Application.Tests/WarmUpClosedCandlesTests.cs) |
+| 39 | Warm-up period | 🟡 Kısmi | Bounded warm-up son `N` tamamen kapanmış candle'ı exact UTC aralık ve contiguous recovery ile doğruluyor; OKX startup/readiness kapısı eksik geçmişte hostu fail-closed durduruyor. Nihai strateji lookback kararı kaldı. [Host warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
 | 40 | Sell slippage/depth | 🟡 Kısmi | Sell bid referansı, aleyhte slippage ve görünür likidite katılım sınırı var; cumulative multi-level depth henüz yok. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |

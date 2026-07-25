@@ -32,6 +32,10 @@ public sealed class TradingOptions
 
     public decimal MaximumLiquidityParticipationPercent { get; init; } = 25m;
 
+    public int CandleTimeframeSeconds { get; init; }
+
+    public int WarmupCandleCount { get; init; }
+
     public string OkxRestBaseAddress { get; init; } = "https://www.okx.com/";
 
     public string OkxWebSocketEndpoint { get; init; } = "wss://ws.okx.com:8443/ws/v5/public";

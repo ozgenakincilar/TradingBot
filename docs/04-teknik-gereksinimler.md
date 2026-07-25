@@ -75,7 +75,8 @@
 - OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
 - Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
-- Canlı candle WebSocket/aggregation, strategy lookback seçimi ve host readiness bağlantısı sonraki dilimdir.
+- OKX host başlangıcında `CandleTimeframeSeconds` explicit allowlist'ten seçilir ve `WarmupCandleCount` 1-300 aralığında doğrulanır. Instrument kapısından sonra warm-up tamamlanmadan candle-history readiness açılmaz; hata host başlangıcını fail-closed durdurur.
+- `appsettings.json` içindeki `15m/200` paper doğrulama baseline'ıdır; onaylanmış alım-satım stratejisi değildir. Canlı candle WebSocket/aggregation ve nihai strategy lookback kararı sonraki dilimdir.
 
 ## 5. Yapılandırma
 

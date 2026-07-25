@@ -54,9 +54,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - [x] Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
-- [ ] Candle aggregation ve warm-up: closed-candle/gap/history ve genel warm-up tamamlandı; canlı aggregation, timeframe/lookback ürün kararı ve host readiness bağlantısı kaldı.
+- [ ] Candle aggregation ve warm-up: closed-candle/gap/history, genel warm-up ve host readiness bağlantısı tamamlandı; canlı aggregation ile nihai timeframe/lookback ürün kararı kaldı.
 - Genişletilmiş audit/outbox dispatcher ve retention işleri.
-- [ ] Readiness/startup health: instrument+market-data readiness tamamlandı; SQL/reconciliation dependency ve ayrı startup probe kaldı.
+- [ ] Readiness/startup health: instrument+candle-history+market-data readiness tamamlandı; SQL/reconciliation dependency ve ayrı startup probe kaldı.
 
 **Çıkış ölçütü:** Uzun süreli paper çalışmada gap onarımı, restart ve veri bütünlüğü doğrulanmış.
 

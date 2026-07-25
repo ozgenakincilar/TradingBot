@@ -55,10 +55,18 @@ builder.Services
         "Paper slippage 0-1000 baz puan arasında olmalıdır.")
     .Validate(static options => options.MaximumLiquidityParticipationPercent is > 0 and <= 100,
         "Paper likidite katılımı yüzde 0-100 arasında olmalıdır.")
+    .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
+                                options.CandleTimeframeSeconds is 1 or 60 or 180 or 300 or 900 or 1800 or
+                                    3600 or 7200 or 14400 or 21600 or 43200 or 86400,
+        "OKX candle timeframe desteklenen sabit UTC aralıklarından biri olmalıdır.")
+    .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
+                                options.WarmupCandleCount is >= 1 and <= 300,
+        "OKX warm-up candle sayısı 1-300 arasında olmalıdır.")
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<TradingReadinessState>();
+builder.Services.AddSingleton(
+    new TradingReadinessState(marketDataSource == MarketDataSource.OkxPublic));
 builder.Services.AddScoped<PersistRiskApprovedOrder>();
 builder.Services.AddScoped<ApplySpotOrderFill>();
 builder.Services.AddScoped<ProcessPaperOrderSnapshot>();
@@ -92,6 +100,9 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     });
     builder.Services.AddTransient<IClosedCandleHistoryClient>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>());
+    builder.Services.AddTransient(serviceProvider => new WarmUpClosedCandles(
+        serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
+        maximumCandlesPerRequest: 300));
     builder.Services.AddTransient<EnsureSpotInstrumentTradable>();
     builder.Services.AddSingleton<IMarketDataStreamClient>(serviceProvider =>
     {

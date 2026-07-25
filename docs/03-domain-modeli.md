@@ -57,6 +57,9 @@
 - `SpotOrderReservation`, order başına ayrılan quote/base tutarını fill'ler arasında taşır; duplicate fill ekonomik etki oluşturmaz.
 - Partial fill yalnızca gerçekleşen tutarı tüketir. Final fill fiyat iyileşmesi fazlasını, cancel ise yalnız kalan rezervasyonu serbest bırakır.
 - Reservation, `Order` state machine ile aynı transaction'da `Active` durumundan yalnız `Filled` veya `Cancelled` terminal durumuna geçer.
+- `SpotReconciliationEngine`, borsanın account snapshot'ını yerel balance ve aktif order state'iyle karşılaştırır.
+- `canTrade=false`, balance farkı, kayıp/fazladan order veya fill miktarı farkı kritik discrepancy'dir ve kalıcı trading halt üretir.
+- Temiz bir snapshot mevcut halt'ı otomatik kaldırmaz; güvenli yeniden açma ayrı bir operatör sürecidir.
 
 ## 3. Temel value object’ler
 

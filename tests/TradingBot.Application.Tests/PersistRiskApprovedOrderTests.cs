@@ -104,8 +104,23 @@ public sealed class PersistRiskApprovedOrderTests
         Assert.Empty(store.OutboxRecords);
     }
 
+    [Fact]
+    public async Task HandleAsync_ReconciliationHaltBlocksNewEconomicOrder()
+    {
+        var store = new RecordingStore { IsHalted = true };
+        var handler = CreateHandler(store, new SequentialIdGenerator());
+        var order = CreateRiskApprovedOrder();
+
+        var action = () => handler.HandleAsync(
+            CreateCommand(order, RiskDecision.Approve(order.ApprovedQuantity)),
+            CancellationToken.None);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+        Assert.Empty(store.Orders);
+    }
+
     private static PersistRiskApprovedOrder CreateHandler(RecordingStore store, IIdGenerator idGenerator) =>
-        new(store, store, store, store, store, idGenerator);
+        new(store, store, store, store, store, store, idGenerator);
 
     private static PersistRiskApprovedOrderCommand CreateCommand(Order order, RiskDecision decision) =>
         new(order, decision, Now.AddSeconds(2), "correlation-001");
@@ -130,6 +145,7 @@ public sealed class PersistRiskApprovedOrderTests
         IRiskDecisionRepository,
         IAuditRepository,
         IOutboxRepository,
+        IReconciliationRepository,
         ITradingUnitOfWork
     {
         public List<Order> Orders { get; } = [];
@@ -141,6 +157,8 @@ public sealed class PersistRiskApprovedOrderTests
         public List<OutboxRecord> OutboxRecords { get; } = [];
 
         public int UnitOfWorkExecutions { get; private set; }
+
+        public bool IsHalted { get; init; }
 
         public Task<bool> ExistsAsync(
             ClientOrderId clientOrderId,
@@ -155,6 +173,11 @@ public sealed class PersistRiskApprovedOrderTests
         public Task<Order?> GetAsync(OrderId orderId, CancellationToken cancellationToken) =>
             Task.FromResult(Orders.SingleOrDefault(order => order.Id == orderId));
 
+        public Task<IReadOnlyCollection<Order>> GetActiveAsync(
+            string exchange,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<Order>>([]);
+
         public void Store(Order order)
         {
         }
@@ -165,6 +188,28 @@ public sealed class PersistRiskApprovedOrderTests
         public void Add(AuditRecord record) => AuditRecords.Add(record);
 
         public void Add(OutboxRecord record) => OutboxRecords.Add(record);
+
+        public Task<ReconciliationRunRecord?> GetRunAsync(
+            string exchange,
+            string snapshotId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<ReconciliationRunRecord?>(null);
+
+        public Task<TradingSafetyStateRecord?> GetSafetyStateAsync(
+            string exchange,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<TradingSafetyStateRecord?>(null);
+
+        public Task<bool> IsTradingHaltedAsync(string exchange, CancellationToken cancellationToken) =>
+            Task.FromResult(IsHalted);
+
+        public void AddRun(ReconciliationRunRecord run)
+        {
+        }
+
+        public void StoreSafetyState(TradingSafetyStateRecord state)
+        {
+        }
 
         public async Task ExecuteAsync(
             Func<CancellationToken, Task> operation,

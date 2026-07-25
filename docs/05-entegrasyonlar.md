@@ -50,6 +50,10 @@ Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uy
 - Emir sonucu belirsizse sembol/hesap için risk artıran komutlar bloke edilir.
 - Bağlantı döndüğünde account, order ve trade history reconcile edilir.
 - Reconciliation başarılı olmadan readiness ve otomatik trading açılmaz.
+- İlk reconciliation dilimi account `canTrade`, Spot balance ve bot-scoped aktif order snapshot'larını karşılaştırır.
+- Farklar otomatik olarak yerel finansal state'in üzerine yazılmaz; run/audit/outbox ile kaydedilip kalıcı trading halt etkinleştirilir.
+- Aynı snapshot ID yalnız aynı canonical SHA-256 içerikle idempotent kabul edilir.
+- Halt kaldırma, ardışık temiz snapshot ve operatör onayı politikası uygulanana kadar otomatik değildir.
 
 ## 4. Dayanıklılık matrisi
 

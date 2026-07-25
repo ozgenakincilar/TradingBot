@@ -139,6 +139,7 @@ public sealed class AtomicPersistenceIntegrationTests
             new RiskDecisionRepository(context),
             new AuditRepository(context),
             new OutboxRepository(context),
+            new ReconciliationRepository(context),
             new TradingUnitOfWork(context),
             new SystemIdGenerator());
 

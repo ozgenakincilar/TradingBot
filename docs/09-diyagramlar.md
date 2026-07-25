@@ -249,3 +249,29 @@ sequenceDiagram
 ```
 
 Serializable transaction ve `rowversion`, aynı order üzerindeki fill/cancel yarışında lost update'i engeller. Terminal reservation'a gelen geç olay bakiye veya PnL oluşturamaz.
+
+## 11. Spot account reconciliation ve trading halt
+
+```mermaid
+sequenceDiagram
+    participant EX as Exchange Account API
+    participant REC as ReconcileSpotAccount
+    participant DB as SQL Server
+    participant ORD as Order Persistence Gate
+
+    EX-->>REC: SnapshotId + canTrade + balances + open orders
+    REC->>DB: BEGIN SERIALIZABLE
+    REC->>DB: SnapshotId/hash duplicate kontrolü
+    REC->>DB: Yerel balances + active orders
+    REC->>REC: Deterministik karşılaştırma
+    alt Fark veya canTrade=false
+        REC->>DB: ReconciliationRun + TradingSafetyState=Halted
+        REC->>DB: Audit + Outbox + COMMIT
+        ORD->>DB: Yeni order için safety state sorgusu
+        DB-->>ORD: Halted
+        ORD-->>ORD: Yeni exposure reddedilir
+    else Tutarlı snapshot
+        REC->>DB: ReconciliationRun + Audit + Outbox + COMMIT
+        Note over REC,DB: Önceden aktif halt otomatik kaldırılmaz
+    end
+```

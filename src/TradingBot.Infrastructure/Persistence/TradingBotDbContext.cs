@@ -22,6 +22,10 @@ public sealed class TradingBotDbContext(DbContextOptions<TradingBotDbContext> op
 
     public DbSet<SpotOrderReservationEntity> SpotOrderReservations => Set<SpotOrderReservationEntity>();
 
+    public DbSet<ReconciliationRunEntity> ReconciliationRuns => Set<ReconciliationRunEntity>();
+
+    public DbSet<TradingSafetyStateEntity> TradingSafetyStates => Set<TradingSafetyStateEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

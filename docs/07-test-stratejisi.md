@@ -31,6 +31,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Duplicate/out-of-order market ve user events.
 - WebSocket gap ve REST onarımı.
 - POST timeout sonrası unknown order reconciliation.
+- Exchange/local balance ve aktif order snapshot farkının kalıcı halt oluşturması.
+- Duplicate reconciliation snapshot'ın idempotent olması ve aynı ID ile çelişen içeriğin reddedilmesi.
+- Reconciliation halt aktifken yeni ekonomik order'ın persistence kapısında reddedilmesi.
 - Restart sırasında açık order/position reconstruction.
 - Stale data ve clock drift nedeniyle trading halt.
 - Daily loss, exposure ve kill switch kontrolleri.

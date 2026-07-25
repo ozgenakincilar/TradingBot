@@ -87,6 +87,21 @@ public sealed class PortfolioRepository(TradingBotDbContext context) : IPortfoli
                 entity.UpdatedAt);
     }
 
+    public async Task<IReadOnlyCollection<AssetBalance>> GetBalancesAsync(
+        string exchange,
+        CancellationToken cancellationToken)
+    {
+        var entities = await context.AssetBalances
+            .AsNoTracking()
+            .Where(balance => balance.Exchange == exchange)
+            .ToArrayAsync(cancellationToken);
+        return entities.Select(static balance => AssetBalance.Restore(
+            AssetCode.Create(balance.Asset),
+            balance.Total,
+            balance.Reserved,
+            balance.UpdatedAt)).ToArray();
+    }
+
     public void StoreBalance(string exchange, AssetBalance balance)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(exchange);

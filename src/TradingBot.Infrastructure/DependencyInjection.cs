@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+        services.AddScoped<IReconciliationRepository, ReconciliationRepository>();
         services.AddScoped<ITradingUnitOfWork, TradingUnitOfWork>();
         services.AddSingleton<IIdGenerator, SystemIdGenerator>();
 

@@ -72,6 +72,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Portfolio snapshot, execution ledger, audit ve outbox aynı Serializable transaction'da yazılır.
 - `portfolio.SpotOrderReservations`, `execution.Orders` ile bire bir bağlıdır ve açık/partial emir fonlarını restart sonrasında yeniden kurmak için saklar.
 - Order state, reservation, balance, position, execution ledger, audit ve outbox aynı fill/cancel kararında atomik güncellenir.
+- Reconciliation run'ları snapshot hash ile idempotent saklanır; aynı snapshot ID farklı içerikle yeniden kullanılamaz.
+- `operations.TradingSafetyStates`, reconciliation farkında `rowversion` korumalı halt durumunu taşır ve execution persistence yeni exposure'ı reddeder.
+- Temiz reconciliation sonucu halt'ı otomatik temizleyemez; recovery için ayrıca yetkili, audit edilen bir operasyon gerekir.
 
 ### ACID transaction gereksinimleri
 

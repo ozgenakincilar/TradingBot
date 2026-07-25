@@ -23,6 +23,21 @@ public sealed class OrderRepository(TradingBotDbContext context) : IOrderReposit
         return entity is null ? null : Map(entity);
     }
 
+    public async Task<IReadOnlyCollection<Order>> GetActiveAsync(
+        string exchange,
+        CancellationToken cancellationToken)
+    {
+        var entities = await context.Orders
+            .AsNoTracking()
+            .Where(order => order.Exchange == exchange &&
+                (order.Status == (byte)OrderStatus.Open ||
+                 order.Status == (byte)OrderStatus.PartiallyFilled ||
+                 order.Status == (byte)OrderStatus.CancelPending ||
+                 order.Status == (byte)OrderStatus.Unknown))
+            .ToArrayAsync(cancellationToken);
+        return entities.Select(Map).ToArray();
+    }
+
     public void Add(Order order)
     {
         ArgumentNullException.ThrowIfNull(order);

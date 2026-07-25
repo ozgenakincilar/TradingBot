@@ -24,6 +24,7 @@ public sealed class PersistRiskApprovedOrder(
     IRiskDecisionRepository riskDecisions,
     IAuditRepository audit,
     IOutboxRepository outbox,
+    IReconciliationRepository reconciliation,
     ITradingUnitOfWork unitOfWork,
     IIdGenerator idGenerator)
 {
@@ -46,6 +47,15 @@ public sealed class PersistRiskApprovedOrder(
                 {
                     result = PersistOrderResult.AlreadyExists;
                     return;
+                }
+
+
+                if (await reconciliation.IsTradingHaltedAsync(
+                        command.Order.InstrumentId.Exchange,
+                        transactionCancellationToken))
+                {
+                    throw new DomainRuleViolationException(
+                        "New exposure is blocked by the exchange trading safety halt.");
                 }
 
                 var payload = SerializeEvent(command);

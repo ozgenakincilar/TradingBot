@@ -19,6 +19,8 @@ public sealed class PersistenceModelTests
     [InlineData(typeof(SpotPositionEntity), "portfolio", "SpotPositions")]
     [InlineData(typeof(SpotExecutionEntity), "portfolio", "SpotExecutions")]
     [InlineData(typeof(SpotOrderReservationEntity), "portfolio", "SpotOrderReservations")]
+    [InlineData(typeof(ReconciliationRunEntity), "operations", "ReconciliationRuns")]
+    [InlineData(typeof(TradingSafetyStateEntity), "operations", "TradingSafetyStates")]
     public void Model_MapsEntitiesToExpectedSchemas(Type entityType, string schema, string table)
     {
         using var context = CreateContext();
@@ -64,6 +66,7 @@ public sealed class PersistenceModelTests
     [InlineData(typeof(AssetBalanceEntity), nameof(AssetBalanceEntity.RowVersion))]
     [InlineData(typeof(SpotPositionEntity), nameof(SpotPositionEntity.RowVersion))]
     [InlineData(typeof(SpotOrderReservationEntity), nameof(SpotOrderReservationEntity.RowVersion))]
+    [InlineData(typeof(TradingSafetyStateEntity), nameof(TradingSafetyStateEntity.RowVersion))]
     public void ConcurrencyColumns_AreConfiguredAsRowVersion(Type entityType, string propertyName)
     {
         using var context = CreateContext();

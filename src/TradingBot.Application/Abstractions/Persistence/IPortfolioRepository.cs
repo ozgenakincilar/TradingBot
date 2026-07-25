@@ -36,6 +36,10 @@ public interface IPortfolioRepository
         OrderId orderId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<AssetBalance>> GetBalancesAsync(
+        string exchange,
+        CancellationToken cancellationToken);
+
     void StoreBalance(string exchange, AssetBalance balance);
 
     void StorePosition(SpotPosition position);

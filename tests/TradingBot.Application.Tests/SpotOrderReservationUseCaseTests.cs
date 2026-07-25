@@ -181,6 +181,12 @@ public sealed class SpotOrderReservationUseCaseTests
         public Task<Order?> GetAsync(OrderId orderId, CancellationToken cancellationToken) =>
             Task.FromResult(_orders.GetValueOrDefault(orderId));
 
+        public Task<IReadOnlyCollection<Order>> GetActiveAsync(
+            string exchange,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<Order>>(
+                _orders.Values.Where(order => order.InstrumentId.Exchange == exchange).ToArray());
+
         public void Add(Order order) => _orders[order.Id] = order;
 
         public void Store(Order order) => _orders[order.Id] = order;
@@ -208,6 +214,12 @@ public sealed class SpotOrderReservationUseCaseTests
             OrderId orderId,
             CancellationToken cancellationToken) =>
             Task.FromResult(_reservations.GetValueOrDefault(orderId));
+
+        public Task<IReadOnlyCollection<AssetBalance>> GetBalancesAsync(
+            string exchange,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<AssetBalance>>(
+                _balances.Where(pair => pair.Key.Exchange == exchange).Select(static pair => pair.Value).ToArray());
 
         public void StoreBalance(string exchange, AssetBalance balance) =>
             _balances[(exchange, balance.Asset.Value)] = balance;

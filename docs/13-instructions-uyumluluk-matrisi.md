@@ -20,8 +20,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | Statü | Adet |
 |---|---:|
 | ✅ Uygulandı | 10 |
-| 🟡 Kısmi | 19 |
-| ⬜ Planlandı | 65 |
+| 🟡 Kısmi | 21 |
+| ⬜ Planlandı | 63 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -72,18 +72,18 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 31 | Price tick size | ✅ Uygulandı | Fiyat aşağı adım normalizasyonu ve test mevcut. [Instrument](../src/TradingBot.Domain/Instruments/Instrument.cs) |
 | 32 | Lot size | ✅ Uygulandı | Miktar aşağı adım normalizasyonu ve test mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | Min quantity/notional reddi var; çok kademeli order-decay politikası henüz yok. |
-| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, fee-adjusted ortalama maliyet, net realized/unrealized PnL ve atomik SQL persistence var; exchange fee-asset çeşitleri ve backtest/live parity henüz yok. [Spot fill use case](../src/TradingBot.Application/Portfolio/PersistCompletedSpotFill.cs) |
+| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu var; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs) |
 | 35 | Mum gap filling | ⬜ Planlandı | REST snapshot + WebSocket sequence recovery gerekli. |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
 | 39 | Warm-up period | ⬜ Planlandı | Strateji indikatör lookback doğrulaması gerekli. |
-| 40 | Sell slippage/depth | ⬜ Planlandı | Spot order-book depth ve cumulative fill modeli gerekli. |
+| 40 | Sell slippage/depth | 🟡 Kısmi | Sell bid referansı, aleyhte slippage ve görünür likidite katılım sınırı var; cumulative multi-level depth henüz yok. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | ⬜ Planlandı | Paper/backtest latency ve queue-position modeli gerekli. |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill var; queue position ve cancel latency henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

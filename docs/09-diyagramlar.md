@@ -304,3 +304,19 @@ sequenceDiagram
         end
     end
 ```
+
+## 13. Deterministik paper execution
+
+```mermaid
+flowchart TD
+    A[Order + Remaining Quantity] --> D{Minimum latency doldu mu?}
+    M[Top-of-book Bid/Ask + Quantity] --> D
+    P[Commission + Slippage + Participation Policy] --> D
+    D -- Hayır --> W1[WaitingForLatency]
+    D -- Evet --> L{Slippage-adjusted fiyat limit koşulunda mı?}
+    L -- Hayır --> W2[WaitingForLimitPrice]
+    L -- Evet --> Q[Fill Qty = min kalan, görünür likidite x katılım]
+    Q --> Z{Fill qty pozitif mi?}
+    Z -- Hayır --> W3[WaitingForLiquidity]
+    Z -- Evet --> F[Deterministik Partial/Full Fill + Quote Fee]
+```

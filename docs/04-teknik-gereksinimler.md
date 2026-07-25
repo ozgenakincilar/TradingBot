@@ -104,6 +104,15 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Bilinmeyen enum ve eksik alan davranışı test edilir.
 - Borsa payload’ları arşivlenecekse secret/header temizliği uygulanır.
 
+### Paper execution gereksinimleri
+
+- Paper fill aynı policy, order ve market snapshot girdilerinde deterministiktir.
+- Minimum latency dolmadan ve limit fiyat koşulu sağlanmadan fill üretilmez.
+- Buy ask, sell bid referansını kullanır; slippage yönü kullanıcı aleyhine uygulanır.
+- Fill miktarı görünür likidite ve maksimum katılım oranıyla sınırlanır; partial fill desteklenir.
+- Quote komisyonu gerçekleşen fiyat ve miktar üzerinden hesaplanır.
+- Bu ilk model top-of-book seviyesindedir; cumulative depth ve queue position sonraki dilimdir.
+
 ## 8. Paket yönetimi
 
 - Harici paket ancak platform özelliği yetersizse eklenir.

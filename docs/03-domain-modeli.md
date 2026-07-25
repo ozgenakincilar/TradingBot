@@ -42,6 +42,9 @@
 - `Order` aggregate: state machine ve fill toplamı.
 - `Execution` entity/value data.
 - Client order ID idempotency anahtarıdır.
+- `PaperExecutionEngine`, top-of-book snapshot, minimum latency, slippage, komisyon ve likidite katılım sınırıyla deterministik fill üretir.
+- Limit order ancak slippage-adjusted gerçekleşme fiyatı limit sınırını ihlal etmiyorsa fill olabilir.
+- Tek snapshot'taki fill miktarı görünür top-of-book likiditesinin yapılandırılmış katılım oranını aşamaz; kalan miktar partial olarak bekler.
 
 ### Portfolio Context
 

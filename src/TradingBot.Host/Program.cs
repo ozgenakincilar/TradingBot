@@ -58,6 +58,7 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TradingReadinessState>();
 builder.Services.AddScoped<PersistRiskApprovedOrder>();
 builder.Services.AddScoped<ApplySpotOrderFill>();
 builder.Services.AddScoped<ProcessPaperOrderSnapshot>();
@@ -75,6 +76,15 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     });
     builder.Services.AddTransient<IMarketDataSnapshotClient>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotMarketSnapshotClient>());
+    builder.Services.AddHttpClient<OkxSpotInstrumentCatalog>((serviceProvider, client) =>
+    {
+        var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
+        client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
+    builder.Services.AddTransient<ISpotInstrumentCatalog>(serviceProvider =>
+        serviceProvider.GetRequiredService<OkxSpotInstrumentCatalog>());
+    builder.Services.AddTransient<EnsureSpotInstrumentTradable>();
     builder.Services.AddSingleton<IMarketDataStreamClient>(serviceProvider =>
     {
         var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
@@ -88,6 +98,7 @@ if (marketDataSource == MarketDataSource.OkxPublic)
         serviceProvider.GetRequiredService<IMarketDataSnapshotClient>(),
         serviceProvider.GetRequiredService<TimeProvider>(),
         MarketDataRecoveryMode.EveryStreamEventIsSnapshot));
+    builder.Services.AddHostedService<OkxInstrumentStartupGate>();
     builder.Services.AddHostedService<OkxTradingWorker>();
 }
 else
@@ -104,5 +115,13 @@ app.MapGet("/health", () => Results.Ok(new
     status = "healthy",
     mode = TradingMode.Paper.ToString()
 }));
+
+app.MapGet("/health/ready", (TradingReadinessState readiness) =>
+{
+    var snapshot = readiness.Snapshot;
+    return snapshot.IsReady
+        ? Results.Ok(snapshot)
+        : Results.Json(snapshot, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 
 app.Run();

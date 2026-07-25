@@ -69,9 +69,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 31 | Price tick size | ✅ Uygulandı | Fiyat aşağı adım normalizasyonu ve test mevcut. [Instrument](../src/TradingBot.Domain/Instruments/Instrument.cs) |
-| 32 | Lot size | ✅ Uygulandı | Miktar aşağı adım normalizasyonu ve test mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
-| 33 | MinNotional/order decay | 🟡 Kısmi | Min quantity/notional reddi var; çok kademeli order-decay politikası henüz yok. |
+| 31 | Price tick size | ✅ Uygulandı | OKX `tickSz` dinamik okunuyor; fiyat aşağı adım normalizasyonu ve contract/domain testleri mevcut. [Instrument catalog](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotInstrumentCatalog.cs) |
+| 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
+| 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor ve Domain min quantity/notional reddi var. Public instrument yanıtı minimum notional sağlamadığından bu değer uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli order-decay politikası kaldı. |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
 | 35 | Mum gap filling | 🟡 Kısmi | Recovery portu, bounded buffer ve atomik snapshot/replay alignment testli; candle REST/WebSocket adapter'ı kaldı. [Replay testleri](../tests/TradingBot.Application.Tests/MarketDataReplayAlignerTests.cs) |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
@@ -121,7 +121,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 70 | Log rotasyonu | ⬜ Planlandı | Retention/rotation ve disk alarmı gerekli. |
 | 71 | Alert fatigue | ⬜ Planlandı | Dedup/throttle/batch notification pipeline gerekli. |
 | 72 | NuGet vulnerability | 🟡 Kısmi | Manuel transitif tarama temiz; CI zorunlu kapısı henüz yok. [Test stratejisi](07-test-stratejisi.md) |
-| 73 | Runtime watchdog | 🟡 Kısmi | Basit `/health` var; bağımsız watchdog ve liveness/readiness/startup ayrımı yok. [Program](../src/TradingBot.Host/Program.cs) |
+| 73 | Runtime watchdog | 🟡 Kısmi | `/health/ready`, Spot metadata kapısı ve ilk geçerli market event tamamlanana kadar veya stream kopunca 503 döndürüyor. SQL/reconciliation dependency, ayrı startup probe ve bağımsız watchdog kaldı. [Program](../src/TradingBot.Host/Program.cs) |
 | 74 | Yedek bildirim kanalı | ⬜ Planlandı | Birincil/yedek kanal seçimi ve failover testi gerekli. |
 | 75 | Güvenlik güncellemeleri | ⬜ Planlandı | OS/runtime patch runbook ve image scanning gerekli. |
 
@@ -156,7 +156,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
-| 98 | Environment mix-up | 🟡 Kısmi | Trading hâlâ yalnız Paper; OKX public source, HTTPS/WSS endpoint ve symbol startup'ta fail-fast doğrulanıyor. Ayrık CI credential/pipeline henüz yok. [Program](../src/TradingBot.Host/Program.cs) |
+| 98 | Environment mix-up | 🟡 Kısmi | Trading hâlâ yalnız Paper; OKX public source, HTTPS/WSS endpoint, Spot instrument türü, `live` state ve filtreler startup'ta fail-fast doğrulanıyor. Ayrık CI credential/pipeline henüz yok. [Startup gate](../src/TradingBot.Host/OkxInstrumentStartupGate.cs) |
 | 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; recovery kanıtlı ve audit'li. Global flatten mekanizması yok. [Recovery use case](../src/TradingBot.Application/Reconciliation/RecoverTradingSafety.cs) |
 | 100 | Manuel müdahale | 🟡 Kısmi | Harici fark halt ediliyor; iki temiz snapshot+operatör onaylı recovery ve eski risk kararı reddi var. User stream ve kontrollü state correction henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
 

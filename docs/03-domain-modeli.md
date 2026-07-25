@@ -22,6 +22,8 @@
 ### Market Data Context
 
 - `Instrument` aggregate: tick size, lot size, min/max notional, status.
+- OKX Spot metadata adaptörü `tickSz`, `lotSz`, `minSz` ve `state` alanlarını dinamik okur; yapılandırılmış instrument yalnız `SPOT` ve `live` ise başlangıç kapısını geçer.
+- `minSz` minimum base-asset miktarıdır; borsa ayrıca minimum notional yayımlamıyorsa bu değer `MinNotional` gibi yorumlanamaz.
 - `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data.
 - Sequence ve timestamp doğrulama.
 - `MarketDataIntegrityGuard`, REST recovery snapshot uygulanmadan instrument'ı ready kabul etmez.

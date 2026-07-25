@@ -76,4 +76,29 @@ public sealed class OkxPublicWebSocketConnectivityTests
 
         Assert.Equal(2, sequences.Count);
     }
+
+    [Fact]
+    public async Task PublicInstrumentCatalogReturnsLiveSpotTradingFilters()
+    {
+        if (!string.Equals(
+                Environment.GetEnvironmentVariable(ConnectivityVariable),
+                "1",
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        using var httpClient = new HttpClient { BaseAddress = new Uri("https://www.okx.com/") };
+        var catalog = new OkxSpotInstrumentCatalog(httpClient);
+
+        var metadata = await catalog.GetAsync(
+            InstrumentId.Create("OKX", "BTC-USDT"),
+            CancellationToken.None);
+
+        Assert.True(metadata.IsTradingEnabled);
+        Assert.Equal("live", metadata.State);
+        Assert.True(metadata.PriceTickSize > 0m);
+        Assert.True(metadata.QuantityStepSize > 0m);
+        Assert.True(metadata.MinimumQuantity > 0m);
+    }
 }

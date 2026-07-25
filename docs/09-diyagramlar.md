@@ -469,3 +469,22 @@ flowchart TD
     FAIL --> BACKOFF[Exponential backoff + jitter]
     BACKOFF --> SESSION
 ```
+
+## 18. OKX Spot başlangıç ve readiness kapısı
+
+```mermaid
+flowchart TD
+    CFG[TradingOptions: OKX/BASE-QUOTE] --> CAT[OKX public instruments REST]
+    CAT --> VALID{SPOT + live + symbol eşleşmesi\npozitif tickSz/lotSz/minSz}
+    VALID -- Hayır --> STOP[Host startup fail-fast\nEndpoint erişilemez]
+    VALID -- Evet --> IR[Instrument ready]
+    IR --> WORKER[OkxTradingWorker başlar]
+    WORKER --> WS[books5 WSS + REST recovery]
+    WS --> EVENT{İlk doğrulanmış event}
+    EVENT -- Hayır --> WAIT[Readiness 503]
+    EVENT -- Evet --> READY[Readiness 200]
+    READY --> PAPER[Paper execution sample]
+    WS -. disconnect/gap/timeout .-> WAIT
+```
+
+Bu readiness yalnız instrument ve market-data kapılarını temsil eder. SQL Server erişimi ve startup reconciliation ayrı kontroller olarak eklenene kadar production-ready iddiası oluşturmaz.

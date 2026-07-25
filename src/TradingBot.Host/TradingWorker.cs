@@ -11,6 +11,7 @@ public sealed class TradingWorker(
     MarketSnapshotService snapshots,
     IServiceScopeFactory scopeFactory,
     IOptions<TradingOptions> options,
+    TradingReadinessState readiness,
     ILogger<TradingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -23,6 +24,7 @@ public sealed class TradingWorker(
             settings.SlippageBasisPoints,
             Percentage.FromPercent(settings.MaximumLiquidityParticipationPercent));
         policy.Validate();
+        readiness.MarkInstrumentReady(instrumentId.ToString());
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -42,6 +44,7 @@ public sealed class TradingWorker(
                 }
                 else
                 {
+                    readiness.MarkMarketDataReady();
                     await using var scope = scopeFactory.CreateAsyncScope();
                     var processor = scope.ServiceProvider.GetRequiredService<ProcessPaperMarketEvent>();
                     var outcome = await processor.HandleAsync(
@@ -63,6 +66,7 @@ public sealed class TradingWorker(
             }
             catch (Exception exception)
             {
+                readiness.MarkMarketDataNotReady(exception.GetType().Name);
                 logger.LogError(
                     "Paper trading cycle failed for {Instrument} with {ErrorType}; next bounded cycle will retry",
                     instrumentId,

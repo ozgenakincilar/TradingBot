@@ -48,6 +48,9 @@
 - Freshness yalnız integrity state ready ise ve son receive time yapılandırılmış maksimum yaşı aşmıyorsa doğrudur.
 - `IMarketDataClient`, normal top-of-book event'i ile authoritative recovery snapshot çağrısını ayrı port metotları olarak sunar; her ikisi sequence, event time ve receive time taşır.
 - İlk gerçek REST recovery adapter'ı OKX TR V5 `GET /api/v5/market/books?sz=1` yanıtındaki `seqId`, `ts`, best bid/ask ve miktarları normalize eder.
+- OKX Spot instrument catalog `GET /api/v5/public/instruments?instType=SPOT&instId={BASE-QUOTE}` çağrısından `instType`, `instId`, `baseCcy`, `quoteCcy`, `tickSz`, `lotSz`, `minSz` ve `state` alanlarını normalize eder.
+- Host, OKX worker başlamadan önce instrument metadata'sını fail-fast doğrular. Instrument `SPOT/live` değilse veya tick/lot/minimum quantity pozitif değilse process trading-ready olmadan durur.
+- OKX `minSz` minimum base-asset miktarıdır; minimum notional değildir. Ayrı bir borsa/account kuralı veya açık risk politikası olmadan minimum notional uydurulmaz.
 - OKX adapter'ı yalnız HTTPS base address ve `OKX/BASE-QUOTE` instrument kabul eder; API serbest metin hata mesajını exception/log sınırına taşımaz.
 - OKX order-book continuity için `seqId/prevSeqId` kullanılır; deprecated checksum doğrulama kaynağı değildir.
 - OKX public market stream `wss://` üzerinden `books5` kanalına subscribe olur; fragmented text frame'leri 64 KiB bounded mesaj sınırı ve pooled receive buffer ile birleştirir.
@@ -56,6 +59,7 @@
 - Hosted OKX supervisor stream producer'ını bounded buffer üzerinden başlatır; REST snapshot cross-source freshness kontrolü, ilk `books5` mesajı sequence anchor'ı olur. Session producer task'ı cancellation ve exception dahil her terminal durumda await edilir.
 - Stream kopması exponential backoff ve jitter ile yeniden bağlanır; her reconnect yeni REST snapshot/replay session'ı açar.
 - Tüm WebSocket event'leri integrity guard'dan geçer, ancak SQL paper execution sorgusu yapılandırılmış polling aralığında örneklenir.
+- `/health/ready` yalnız instrument başlangıç kapısı geçtikten ve ilk doğrulanmış market event alındıktan sonra başarılı olur; stream kopmasında yeniden başarısız duruma döner.
 - `MarketSnapshotService`, duplicate/out-of-order event'i aşağı akışa vermez; gap/conflict/timestamp regression durumunda recovery snapshot ister ve recovery reddedilirse fail-closed davranır.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.

@@ -8,7 +8,7 @@ Application katmanında borsadan bağımsız aşağıdaki portlar tanımlanacakt
 
 - `IMarketDataStream`
 - `IMarketSnapshotClient`
-- `IInstrumentCatalog`
+- `ISpotInstrumentCatalog`
 - `IOrderGateway`
 - `IAccountGateway`
 - `IExchangeClock`
@@ -24,12 +24,13 @@ Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uy
 
 ## 2. Market data başlangıç akışı
 
-1. REST ile instrument filtreleri ve başlangıç snapshot alınır.
-2. WebSocket stream başlatılır ve buffer edilir.
-3. Snapshot sequence ile buffer hizalanır.
-4. Sıralı event’ler normalize edilerek yayınlanır.
-5. Gap/stale durumunda ilgili sembol “not ready” yapılır.
-6. REST snapshot ile onarım tamamlanınca yayın yeniden açılır.
+1. REST instrument catalog ile sembol, Spot türü, `live` durumu ve tick/lot/minimum quantity filtreleri doğrulanır.
+2. Enstrüman kapısı geçerse WebSocket stream başlatılır ve buffer edilir.
+3. REST başlangıç snapshot'ı alınır.
+4. Snapshot sequence ile buffer hizalanır.
+5. İlk doğrulanmış event sonrası market-data readiness açılır.
+6. Gap/stale/kopma durumunda ilgili sembol “not ready” yapılır.
+7. REST snapshot ile onarım tamamlanınca yayın yeniden açılır.
 
 Sequence/timestamp invariant'ları borsa DTO'sundan bağımsız `MarketDataIntegrityGuard` içinde uygulanır. Adaptör, borsanın update ID/sequence değerini ve kararlı event ID'yi `MarketDataCursor` sözleşmesine dönüştürür; çelişki veya gap sonrası doğrudan ready açamaz.
 
@@ -40,6 +41,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 `OkxSpotMarketStreamClient`, OKX public `books5` WebSocket snapshot kanalını `IMarketDataStreamClient` portuna dönüştürür. Subscribe acknowledgement market event sayılmaz; API error serbest metni sanitize edilir. Gerçek endpoint connectivity testi opt-in environment flag ile çalışır.
 
 `MarketDataStreamSession` WebSocket producer'ını önce başlatır ve event'leri bounded buffer'a alırken REST snapshot ister. OKX `books5` tam-snapshot modunda REST sonucu freshness/cross-source kontrolüdür; ilk WebSocket snapshot'ı sequence anchor'ı olur ve sonraki tam snapshot'lar timestamp/sequence geriye sarma korumasıyla uygulanır. `OkxTradingWorker` validated stream'i paper execution cycle'a taşır; kopmada 1–16 saniye üstel backoff üzerine 100–1000 ms jitter uygular. Worker singleton state içinde `DbContext` tutmaz; her ekonomik event için ayrı async scope açar.
+
+`OkxSpotInstrumentCatalog`, public instruments endpoint'ini `ISpotInstrumentCatalog` portuna dönüştürür. `OkxInstrumentStartupGate` hosted worker sıralamasında stream supervisor'dan önce çalışır; sembol/tür/filtre/state uyumsuzluğunda host başlangıcını durdurur. Ortak `TradingReadinessState`, instrument kapısı ile ilk geçerli market event'i ayrı izler ve stream kesilince market-data readiness'i kapatır.
 
 ## 3. Emir gönderimi
 

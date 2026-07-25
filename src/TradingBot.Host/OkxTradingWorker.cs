@@ -10,6 +10,7 @@ namespace TradingBot.Host;
 public sealed class OkxTradingWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<TradingOptions> options,
+    TradingReadinessState readiness,
     ILogger<OkxTradingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,6 +38,7 @@ public sealed class OkxTradingWorker(
                                    stoppingToken))
                 {
                     failures = 0;
+                    readiness.MarkMarketDataReady();
                     if (marketEvent.ReceivedAt < nextProcessingAt)
                     {
                         continue;
@@ -67,6 +69,7 @@ public sealed class OkxTradingWorker(
             }
             catch (Exception exception)
             {
+                readiness.MarkMarketDataNotReady(exception.GetType().Name);
                 failures = Math.Min(failures + 1, 5);
                 var backoff = TimeSpan.FromSeconds(Math.Pow(2, failures - 1)) +
                               TimeSpan.FromMilliseconds(Random.Shared.Next(100, 1_001));

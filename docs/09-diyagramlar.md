@@ -80,6 +80,23 @@ sequenceDiagram
     end
 ```
 
+### Market-data integrity state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> NotReady
+    NotReady --> Ready: Geçerli REST recovery snapshot
+    NotReady --> NotReady: Stream event / eski recovery
+    Ready --> Ready: Beklenen next sequence
+    Ready --> Ready: Exact duplicate / geç eski event yok sayılır
+    Ready --> NotReady: Sequence gap
+    Ready --> NotReady: Aynı sequence + farklı event ID
+    Ready --> NotReady: Event/receive time gerilemesi
+    NotReady --> Ready: Yeni ve doğrulanmış recovery cursor
+```
+
+Guard son güvenilir cursor'u gap sırasında ilerletmez. Bu sayede recovery adapter'ı hangi sequence'den itibaren snapshot/replay gerektiğini kesin olarak bilir.
+
 ## 4. Emir yaşam döngüsü
 
 ```mermaid

@@ -39,6 +39,10 @@
 - Exponential backoff + full jitter zorunludur.
 - Rate-limit weight ve response header’ları izlenir.
 - WebSocket heartbeat, stale stream, sequence gap ve reconnect yönetilir.
+- Her instrument bağımsız sequence cursor'u taşır; ilk yayın öncesi REST recovery snapshot ile hizalanır.
+- Gap veya çelişkili sequence algılandığında son güvenilir cursor korunur ve yeni market event trading hattına yayınlanmaz.
+- Recovery snapshot son kabul edilen sequence, event time veya receive time değerini geriye saramaz.
+- Freshness yalnız integrity state ready ise ve son receive time yapılandırılmış maksimum yaşı aşmıyorsa doğrudur.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.
 

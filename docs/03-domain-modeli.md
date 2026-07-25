@@ -24,6 +24,9 @@
 - `Instrument` aggregate: tick size, lot size, min/max notional, status.
 - `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data.
 - Sequence ve timestamp doğrulama.
+- `MarketDataIntegrityGuard`, REST recovery snapshot uygulanmadan instrument'ı ready kabul etmez.
+- Beklenen sequence atlanırsa, aynı sequence farklı event ID ile gelirse veya event/receive zamanı gerilerse instrument recovery tamamlanana kadar not-ready olur.
+- Duplicate ve geç gelen eski event cursor'u geri saramaz; recovery snapshot da son kabul edilen sequence/zamandan eski olamaz.
 
 ### Strategy Context
 

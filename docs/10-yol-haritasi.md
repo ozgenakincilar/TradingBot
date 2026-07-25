@@ -41,6 +41,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
 - [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
 - [x] Order/RiskDecision/Audit/Outbox repository'leri, retry-aware Unit of Work ve ilk atomik application use case'i.
+- [x] Borsa-bağımsız market-data sequence/timestamp integrity state machine ve recovery cursor invariant'ları.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek market-data adapter/repository, sequence-gap recovery, user-stream/trade-history reconciliation ve state correction kaldı.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.

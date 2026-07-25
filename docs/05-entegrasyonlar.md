@@ -31,6 +31,8 @@ Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uy
 5. Gap/stale durumunda ilgili sembol “not ready” yapılır.
 6. REST snapshot ile onarım tamamlanınca yayın yeniden açılır.
 
+Sequence/timestamp invariant'ları borsa DTO'sundan bağımsız `MarketDataIntegrityGuard` içinde uygulanır. Adaptör, borsanın update ID/sequence değerini ve kararlı event ID'yi `MarketDataCursor` sözleşmesine dönüştürür; çelişki veya gap sonrası doğrudan ready açamaz.
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

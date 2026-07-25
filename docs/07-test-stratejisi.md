@@ -61,6 +61,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - 25.000 candle fixture'ın tüm dosyayı koleksiyona almadan single-pass async tüketimi ve exact count/range kanıtı.
 - Train/validation/OOS boundary sınıflandırması; parameter-selection stream'inin OOS yield etmemesi ve final planın yalnız OOS kabul etmesi.
 - Aynı dataset/config/split/seed için aynı manifest; seed değişince yalnız manifest kimliğinin değişmesi ve eksik dataset summary ile manifest üretilememesi.
+- Rolling walk-forward'da sabit training uzunluğu, expanding modda sabit başlangıç ve büyüyen gözlenmiş geçmiş; ardışık OOS aralıklarının bitişik/çakışmasız olması.
+- Aynı schedule girdilerinin aynı indeksli pencere dizisini üretmesi; timeframe'e hizalanmayan süre ve tek tam pencereye yetmeyen dataset'in reddedilmesi.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.

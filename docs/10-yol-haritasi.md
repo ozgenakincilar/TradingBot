@@ -69,8 +69,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Bounded historical streaming decision replay; future trend isolation ve gap fail-closed.
 - [x] Next-open fill, fee/spread/slippage/latency, önceki-candle likidite proxy'si ve PnL/performance raporu.
 - [x] Canonical streaming CSV reader, dataset SHA-256, chronological train/validation/OOS kilidi ve reproducible run manifest.
+- [x] Deterministik rolling/expanding walk-forward pencere üreticisi ve çakışmasız OOS zaman politikası.
 - Tick/lot rounding, order-book queue replay ve benchmark raporu.
-- Walk-forward pencere üreticisi, result persistence ve çoklu OOS raporu.
+- Walk-forward schedule/run kimliği, result persistence ve çoklu OOS birleşik raporu.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

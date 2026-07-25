@@ -16,6 +16,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0010](0010-deterministik-v1-sinyal-ve-replay.md) | EMA20 kesişimi, EMA200 trend, FOMO guard ve streaming decision replay | Kabul edildi |
 | [ADR-0011](0011-backtest-execution-ve-maliyet-modeli.md) | Next-bar fill, spread/slippage/fee/latency ve PnL raporu | Kabul edildi |
 | [ADR-0012](0012-reproducible-dataset-ve-oos-kilidi.md) | Streaming CSV, SHA-256 run manifest ve out-of-sample kilidi | Kabul edildi |
+| [ADR-0013](0013-walk-forward-pencere-politikasi.md) | Rolling/expanding ve çakışmasız OOS walk-forward pencereleri | Kabul edildi |
 
 Yeni ADR biçimi:
 

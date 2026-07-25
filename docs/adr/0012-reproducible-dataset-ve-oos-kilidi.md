@@ -1,6 +1,6 @@
 # ADR-0012: Reproducible dataset ve out-of-sample kilidi
 
-**Durum:** Kabul edildi  
+**Durum:** Kabul edildi
 **Tarih:** 2026-07-25
 
 ## Bağlam

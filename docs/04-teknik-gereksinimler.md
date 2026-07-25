@@ -77,7 +77,11 @@
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
 - OKX host başlangıcında ilk strateji sürümü için signal timeframe tam `15m`, trend timeframe tam `1H`; iki warm-up sayısı da 200-300 aralığında doğrulanır.
 - Instrument kapısından sonra aynı UTC `knownAt` ile önce `15m` signal, sonra `1H` trend warm-up çalışır. İki seri de exact/contiguous 200 kapalı candle sağlamadan candle-history readiness açılmaz; herhangi bir hata host başlangıcını fail-closed durdurur.
-- Readiness snapshot signal ve trend serilerinin durum, timeframe ve doğrulanmış candle sayılarını ayrı taşır. Canlı multi-timeframe WebSocket/aggregation ve reconnect gap recovery sonraki dilimdir.
+- Readiness snapshot signal ve trend serilerinin durum, timeframe ve doğrulanmış candle sayılarını ayrı taşır.
+- OKX exchange-aggregated candle akışı order-book public socket'inden ayrıdır ve yalnız `wss://.../ws/v5/business` endpoint'ine bağlanır. İlk strateji sürümü yalnız `candle15m` ve `candle1H` kanallarına subscribe olur.
+- Candle parser `confirm=0` açık güncellemeyi yayınlamaz; yalnız `confirm=1` satırını UTC boundary/OHLCV invariant'larıyla `Candle`a dönüştürür. Bilinmeyen kanal, instrument, timeframe veya serbest upstream hata detayı fail-closed/sanitize edilir.
+- Canlı stream REST anchor kurulurken 64 kapasiteli bounded channel'da bekletilir. Her timeframe bağımsız `ClosedCandleSequenceGuard` taşır; duplicate/out-of-order kesilir, gap en fazla 300 candle ile REST'ten atomik tamamlanır.
+- Candle worker bağlantı kurulana veya reconnect anchor'ı tamamlanana kadar signal/trend readiness'i kapatır; heartbeat, stream sonu veya integrity hatasında 1-16 saniye exponential backoff ve jitter ile yeniden bağlanır.
 
 ### Strateji sözleşmesi
 

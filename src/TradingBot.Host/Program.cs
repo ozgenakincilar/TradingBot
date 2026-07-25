@@ -37,8 +37,11 @@ builder.Services
                                 (Uri.TryCreate(options.OkxRestBaseAddress, UriKind.Absolute, out var rest) &&
                                  rest.Scheme == Uri.UriSchemeHttps &&
                                  Uri.TryCreate(options.OkxWebSocketEndpoint, UriKind.Absolute, out var webSocket) &&
-                                 webSocket.Scheme == "wss"),
-        "OKX REST HTTPS ve WebSocket WSS endpoint'leri zorunludur.")
+                                 webSocket.Scheme == "wss" &&
+                                 Uri.TryCreate(options.OkxBusinessWebSocketEndpoint, UriKind.Absolute, out var business) &&
+                                 business.Scheme == "wss" &&
+                                 business.AbsolutePath == "/ws/v5/business"),
+        "OKX REST HTTPS, public WSS ve business WSS endpoint'leri zorunludur.")
     .Validate(static options => !string.IsNullOrWhiteSpace(options.Symbol),
         "Trading sembolü zorunludur.")
     .Validate(static options => !string.IsNullOrWhiteSpace(options.Exchange),
@@ -81,6 +84,7 @@ builder.Services.AddTradingBotPersistence(tradingBotConnectionString);
 if (marketDataSource == MarketDataSource.OkxPublic)
 {
     builder.Services.AddSingleton<OkxBooks5MessageParser>();
+    builder.Services.AddSingleton<OkxCandleMessageParser>();
     builder.Services.AddHttpClient<OkxSpotMarketSnapshotClient>((serviceProvider, client) =>
     {
         var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
@@ -122,7 +126,21 @@ if (marketDataSource == MarketDataSource.OkxPublic)
         serviceProvider.GetRequiredService<IMarketDataSnapshotClient>(),
         serviceProvider.GetRequiredService<TimeProvider>(),
         MarketDataRecoveryMode.EveryStreamEventIsSnapshot));
+    builder.Services.AddSingleton<IClosedCandleStreamClient>(serviceProvider =>
+    {
+        var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
+        return new OkxClosedCandleStreamClient(
+            new Uri(settings.OkxBusinessWebSocketEndpoint),
+            serviceProvider.GetRequiredService<TimeProvider>(),
+            serviceProvider.GetRequiredService<OkxCandleMessageParser>());
+    });
+    builder.Services.AddTransient(serviceProvider => new ClosedCandleStreamSession(
+        serviceProvider.GetRequiredService<IClosedCandleStreamClient>(),
+        serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
+        serviceProvider.GetRequiredService<TimeProvider>(),
+        maximumCandlesPerRecovery: 300));
     builder.Services.AddHostedService<OkxInstrumentStartupGate>();
+    builder.Services.AddHostedService<OkxCandleWorker>();
     builder.Services.AddHostedService<OkxTradingWorker>();
 }
 else

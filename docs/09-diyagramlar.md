@@ -541,3 +541,28 @@ flowchart LR
 ```
 
 Short action sözleşmede bulunmaz. Kesin entry/exit formülü backtest ve out-of-sample kanıtı kabul edilene kadar `EVAL` uygulaması execution'a bağlanmaz.
+
+## 22. Canlı multi-timeframe candle ve gap recovery
+
+```mermaid
+flowchart TD
+    WORKER[OkxCandleWorker] --> CLOSED[Signal + Trend readiness kapalı]
+    CLOSED --> WS[OKX business WSS\ncandle15m + candle1H]
+    WS --> BUFFER[Bounded candle buffer\ncapacity 64 / wait]
+    CLOSED --> REST[Her timeframe için son kapalı REST anchor]
+    REST --> GUARDS[15m ve 1H sequence guard]
+    GUARDS --> READY[SessionReady\niki readiness açık]
+    BUFFER --> PARSE{confirm=1 ve contract geçerli mi?}
+    PARSE -- confirm=0 --> IGNORE[Açık candle'ı yayınlama]
+    PARSE -- invalid --> RECONNECT[Readiness kapat + backoff/jitter]
+    PARSE -- closed --> OBSERVE{Contiguous mi?}
+    OBSERVE -- duplicate/old --> IGNORE
+    OBSERVE -- next --> PIPE[Validated closed-candle pipeline]
+    OBSERVE -- gap --> FILL[Bounded REST gap recovery]
+    FILL -- complete --> PIPE
+    FILL -- invalid/oversized --> RECONNECT
+    WS -. close/heartbeat timeout .-> RECONNECT
+    RECONNECT --> WS
+```
+
+Bu akış trade tick'lerinden yerel OHLCV üretmez; ilk sürümde borsanın aggregate candle kanalı anti-corruption adapter'ında normalize edilir. Strateji/economic intent bağlantısı ayrı bir sonraki dilimdir.

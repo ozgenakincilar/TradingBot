@@ -51,6 +51,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 `WarmUpClosedCandles`, stratejiden bağımsız gerekli lookback sayısını alır. Borsa portundan yalnız tamamlanmış aralığı ister ve `ClosedCandleSequenceGuard` recovery kapısı geçmeden sonucu aşağı akışa açmaz. Signal başarısızsa trend isteği yapılmaz; trend başarısızsa doğrulanmış signal kanıtı görünür kalır fakat birleşik candle-history readiness kapalıdır.
 
+`OkxClosedCandleStreamClient`, OKX'in exchange-aggregated `candle15m` ve `candle1H` kanallarını ayrı business WebSocket endpoint'inden `IClosedCandleStreamClient` portuna taşır. `OkxCandleMessageParser` yalnız `confirm=1` kapanışlarını kabul eder. `ClosedCandleStreamSession` socket'i REST anchor çağrısından önce pump eder, event'leri bounded buffer'da tutar ve timeframe başına sequence guard uygular. Gap durumunda `RecoverClosedCandleGap` observed candle dahil eksik kapalı aralığı REST'ten alır; kısmi recovery yayınlanmaz. `OkxCandleWorker` reconnect sırasında iki candle readiness kapısını kapatır ve anchor'lar kurulunca birlikte açar. [Resmi OKX candlestick WebSocket sözleşmesi](https://tr.okx.com/docs-v5/en/#websocket-api-public-channel-candlesticks-channel)
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

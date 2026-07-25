@@ -43,4 +43,7 @@ public sealed class TradingOptions
     public string OkxRestBaseAddress { get; init; } = "https://www.okx.com/";
 
     public string OkxWebSocketEndpoint { get; init; } = "wss://ws.okx.com:8443/ws/v5/public";
+
+    public string OkxBusinessWebSocketEndpoint { get; init; } =
+        "wss://ws.okx.com:8443/ws/v5/business";
 }

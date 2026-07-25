@@ -19,8 +19,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 12 |
-| 🟡 Kısmi | 32 |
+| ✅ Uygulandı | 14 |
+| 🟡 Kısmi | 30 |
 | ⬜ Planlandı | 50 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
@@ -73,7 +73,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor ve Domain min quantity/notional reddi var. Public instrument yanıtı minimum notional sağlamadığından bu değer uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli order-decay politikası kaldı. |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
-| 35 | Mum gap filling | 🟡 Kısmi | Closed-candle sequence gap'i fail-closed durduruyor; bounded history portu ve OKX REST adapter'ı yalnız eksiksiz contiguous kapalı aralığı atomik döndürüyor. Candle WebSocket/aggregation kaldı. [OKX candle testleri](../tests/TradingBot.Infrastructure.Tests/OkxClosedCandleHistoryClientTests.cs) |
+| 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
@@ -137,7 +137,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 81 | News/event blackout | ⬜ Planlandı | Güvenilir ekonomik takvim adapter'i ve safe mode gerekli. |
 | 82 | Risk/reward dengesizliği | ⬜ Planlandı | Minimum reward/risk ve exit-policy testleri gerekli. |
 | 83 | Grid trap | ⬜ Planlandı | Grid ilk sürümde yok; eklenirse sermaye tüketimi ve maksimum kademe koruması zorunlu. |
-| 84 | Timeframe senkronu | 🟡 Kısmi | `15m` signal ve `1H` trend exact-multiple invariant'ı ile future trend verisi reddi testli; canlı multi-timeframe stream hizalama kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
+| 84 | Timeframe senkronu | ✅ Uygulandı | `15m/1H` exact-multiple strategy invariant'ı, UTC boundary, future-data reddi ve canlı channel-to-timeframe allowlist'i testli; iki stream bağımsız guard ve ortak reconnect anchor bilgisi taşır. [OKX candle parser testleri](../tests/TradingBot.Infrastructure.Tests/OkxCandleMessageParserTests.cs) |
 | 85 | Black-swan stop | ⬜ Planlandı | Spot server-side hard stop ve emergency policy gerekli. |
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ⬜ Planlandı | İndikatör katmanı geldiğinde finite-output guard testleri gerekli. |

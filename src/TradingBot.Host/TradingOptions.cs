@@ -2,11 +2,19 @@ using TradingBot.Domain;
 
 namespace TradingBot.Host;
 
+public enum MarketDataSource
+{
+    Paper = 1,
+    OkxPublic = 2
+}
+
 public sealed class TradingOptions
 {
     public const string SectionName = "Trading";
 
     public TradingMode Mode { get; init; } = TradingMode.Paper;
+
+    public MarketDataSource MarketDataSource { get; init; } = MarketDataSource.Paper;
 
     public string Exchange { get; init; } = "PAPER";
 
@@ -23,4 +31,8 @@ public sealed class TradingOptions
     public decimal SlippageBasisPoints { get; init; } = 10m;
 
     public decimal MaximumLiquidityParticipationPercent { get; init; } = 25m;
+
+    public string OkxRestBaseAddress { get; init; } = "https://www.okx.com/";
+
+    public string OkxWebSocketEndpoint { get; init; } = "wss://ws.okx.com:8443/ws/v5/public";
 }

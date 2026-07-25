@@ -37,8 +37,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 6 | Borsa bakım modu | ⬜ Planlandı | Exchange system-status poll ve trading-ready kapısı gerekli. |
 | 7 | Proxy/CDN bayat yanıt | ⬜ Planlandı | Signed timestamp/nonce ve cache-control politikası gerekli. |
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
-| 9 | Reconnection storm | ⬜ Planlandı | Exponential backoff + full jitter uygulanacak. |
-| 10 | Paket kaybı/sequence | 🟡 Kısmi | Gerçek OKX stream `prevSeqId/seqId` taşıyor ve guard/replay fail-closed; reconnect sonrası hosted replay pump kaldı. [OKX parser testleri](../tests/TradingBot.Infrastructure.Tests/OkxBooks5MessageParserTests.cs) |
+| 9 | Reconnection storm | 🟡 Kısmi | Hosted OKX supervisor bounded exponential backoff + jitter uyguluyor; retry/reconnect metriği ve uzun süreli chaos testi kaldı. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
+| 10 | Paket kaybı/sequence | 🟡 Kısmi | Genel incremental session gap'te fail-closed; OKX books5 her mesajı full snapshot olarak uygular. Incremental OKX `books` ve uzun chaos testi kaldı. [Session testleri](../tests/TradingBot.Application.Tests/MarketDataStreamSessionTests.cs) |
 | 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | OKX REST snapshot `seqId` authority'si recovery portuna bağlandı; WebSocket `prevSeqId/seqId` adapter'ı kaldı. [OKX contract testleri](../tests/TradingBot.Infrastructure.Tests/OkxSpotMarketSnapshotClientTests.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
 | 13 | Partial network writes | 🟡 Kısmi | Fragmented WebSocket text frame'leri pooled buffer ve bounded 64 KiB limit ile birleştiriliyor; sentetik fragmentation transport testi/Pipelines değerlendirmesi kaldı. [OKX stream client](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketStreamClient.cs) |
@@ -49,7 +49,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 16 | İzlenmeyen background task | 🟡 Kısmi | Paper worker host tarafından sahipleniliyor, tur hatalarını gözlemleyip logluyor; ilerideki dispatcher/stream task'ları için supervisor gerekli. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
+| 16 | İzlenmeyen background task | 🟡 Kısmi | OKX producer task'ı session tarafından await ediliyor ve supervisor Generic Host tarafından sahipleniliyor; outbox dispatcher supervisor'ı kaldı. [Stream session](../src/TradingBot.Application/MarketData/MarketDataStreamSession.cs) |
 | 17 | Thread-pool starvation | ✅ Uygulandı | Üretim kodunda `.Result`/`.Wait()` yok; async akış testlerle derleniyor. |
 | 18 | LOH parçalanması | ⬜ Planlandı | Büyük WebSocket/tarihsel veri buffer'ları oluştuğunda `ArrayPool<T>` ve allocation benchmark gerekli. |
 | 19 | Closure referans sızıntısı | 🟡 Kısmi | Kritik EF configuration callback'leri static; tüm hot-path closure'ları için analyzer/benchmark gerekli. |
@@ -61,7 +61,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 25 | ValueTask kuralları | ✅ Uygulandı | Mevcut `ValueTask` tek await/return sözleşmesiyle kullanılıyor. [Market data portu](../src/TradingBot.Application/Abstractions/IMarketDataClient.cs) |
 | 26 | Event subscription leak | ⬜ Planlandı | Stream/event abonelikleri eklendiğinde async-disposable yaşam döngüsü gerekli. |
 | 27 | Pinned memory | ⬜ Planlandı | Native/pinned buffer henüz yok; eklenirse profiling ve bounded lifetime zorunlu. |
-| 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; singleton hosted worker her turda yeni async scope açıyor ve scoped state saklamıyor. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
+| 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; OKX hosted worker her ekonomik event için ayrı async scope açıyor ve scoped state saklamıyor. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
 | 29 | Büyük dosya okuma | ⬜ Planlandı | Backtest reader streaming olacak; büyük CSV fixture testi gerekli. |
 | 30 | AsyncLocal veri kayması | ⬜ Planlandı | Correlation context eklendiğinde immutable scope ve paralellik testi gerekli. |
 
@@ -152,11 +152,11 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 91 | Açık pozisyonda deploy | ⬜ Planlandı | Deployment precondition ve zero-position guard gerekli. |
 | 92 | Kontrolsüz OS restart | ⬜ Planlandı | Maintenance window ve service auto-recovery runbook'u gerekli. |
 | 93 | Altyapı failover | ⬜ Planlandı | Single-active ownership/reconciliation çözülmeden failover açılmayacak. |
-| 94 | DB/tick I/O şişmesi | ⬜ Planlandı | Batch insert, partition/retention ve disk metriği gerekli. |
+| 94 | DB/tick I/O şişmesi | 🟡 Kısmi | 100 ms stream bütünüyle integrity'den geçerken SQL execution yapılandırılmış aralıkta örnekleniyor; market-data persistence batch/retention kaldı. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
 | 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
-| 98 | Environment mix-up | 🟡 Kısmi | Paper varsayılan ve config fail-fast var; ayrık CI credential/pipeline henüz yok. [TradingOptions](../src/TradingBot.Host/TradingOptions.cs) |
+| 98 | Environment mix-up | 🟡 Kısmi | Trading hâlâ yalnız Paper; OKX public source, HTTPS/WSS endpoint ve symbol startup'ta fail-fast doğrulanıyor. Ayrık CI credential/pipeline henüz yok. [Program](../src/TradingBot.Host/Program.cs) |
 | 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; recovery kanıtlı ve audit'li. Global flatten mekanizması yok. [Recovery use case](../src/TradingBot.Application/Reconciliation/RecoverTradingSafety.cs) |
 | 100 | Manuel müdahale | 🟡 Kısmi | Harici fark halt ediliyor; iki temiz snapshot+operatör onaylı recovery ve eski risk kararı reddi var. User stream ve kontrollü state correction henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
 

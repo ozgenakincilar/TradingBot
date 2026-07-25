@@ -41,6 +41,12 @@ public sealed class MarketDataEventBuffer
         }
     }
 
+    public bool TryRead(out PaperMarketEvent? marketEvent) =>
+        _channel.Reader.TryRead(out marketEvent);
+
+    public ValueTask<PaperMarketEvent> ReadAsync(CancellationToken cancellationToken) =>
+        _channel.Reader.ReadAsync(cancellationToken);
+
     public void Complete(Exception? error = null) =>
         _channel.Writer.TryComplete(error);
 }

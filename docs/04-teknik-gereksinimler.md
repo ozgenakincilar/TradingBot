@@ -52,7 +52,10 @@
 - OKX order-book continuity için `seqId/prevSeqId` kullanılır; deprecated checksum doğrulama kaynağı değildir.
 - OKX public market stream `wss://` üzerinden `books5` kanalına subscribe olur; fragmented text frame'leri 64 KiB bounded mesaj sınırı ve pooled receive buffer ile birleştirir.
 - Stream 20 saniye sessizlikte `ping` gönderir; takip eden heartbeat penceresinde `pong` veya veri gelmezse bağlantıyı hatalı kabul eder.
-- OKX `seqId` değerlerinin ardışık sayı olması beklenmez; continuity yalnız mesajdaki `prevSeqId` ile son kabul edilen `seqId` eşleşmesine göre doğrulanır.
+- OKX `seqId` değerlerinin ardışık sayı olması beklenmez. Incremental `books` kullanılırsa continuity `prevSeqId == son seqId` ile doğrulanır; mevcut `books5` kanalında her mesaj bağımsız tam snapshot'tır ve delta zinciri gibi yorumlanmaz.
+- Hosted OKX supervisor stream producer'ını bounded buffer üzerinden başlatır; REST snapshot cross-source freshness kontrolü, ilk `books5` mesajı sequence anchor'ı olur. Session producer task'ı cancellation ve exception dahil her terminal durumda await edilir.
+- Stream kopması exponential backoff ve jitter ile yeniden bağlanır; her reconnect yeni REST snapshot/replay session'ı açar.
+- Tüm WebSocket event'leri integrity guard'dan geçer, ancak SQL paper execution sorgusu yapılandırılmış polling aralığında örneklenir.
 - `MarketSnapshotService`, duplicate/out-of-order event'i aşağı akışa vermez; gap/conflict/timestamp regression durumunda recovery snapshot ister ve recovery reddedilirse fail-closed davranır.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.

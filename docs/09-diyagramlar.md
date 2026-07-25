@@ -450,3 +450,22 @@ sequenceDiagram
         C-->>C: Connection failure; supervisor yeniden bağlar
     end
 ```
+
+## 17. OKX hosted recovery ve reconnect supervisor
+
+```mermaid
+flowchart TD
+    HOST[OkxTradingWorker] --> SESSION[MarketDataStreamSession]
+    SESSION --> WS[books5 WebSocket producer]
+    WS --> BUF[Bounded buffer]
+    SESSION --> REST[REST order-book snapshot]
+    REST --> ALIGN[Cross-source freshness check]
+    BUF --> ALIGN[İlk books5 full snapshot sequence anchor]
+    ALIGN --> GUARD[Full snapshot monotonicity + freshness]
+    GUARD --> SAMPLE[Polling aralığında execution sample]
+    SAMPLE --> SCOPE[Yeni DI scope]
+    SCOPE --> PAPER[ProcessPaperMarketEvent]
+    WS -. disconnect/gap/timeout .-> FAIL[Session fail-closed]
+    FAIL --> BACKOFF[Exponential backoff + jitter]
+    BACKOFF --> SESSION
+```

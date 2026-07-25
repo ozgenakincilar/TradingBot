@@ -44,6 +44,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX `books5` payload parsing, `prevSeqId` continuity, subscribe acknowledgement, hata sanitization ve crossed-book reddi.
 - Opt-in gerçek ağ smoke testiyle WSS subscribe sonrası BTC-USDT public snapshot alınması; normal test suite ağsız kalır.
+- Genel incremental stream session'ın REST snapshot + sequence event'lerini sırayla yayınlaması ve gap'te fail-closed sonlanması; OKX `books5` modunun REST freshness + full WebSocket snapshot anchor ile gerçek ağda iki event üretmesi.
 - POST timeout sonrası unknown order reconciliation.
 - Exchange/local balance ve aktif order snapshot farkının kalıcı halt oluşturması.
 - Duplicate reconciliation snapshot'ın idempotent olması ve aynı ID ile çelişen içeriğin reddedilmesi.

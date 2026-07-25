@@ -37,7 +37,9 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 `MarketDataEventBuffer` bounded ve wait-backpressure politikalıdır. `MarketDataReplayAligner`, snapshot sequence'ine eşit/eski overlap'i atar, daha yeni event'leri geliş sırasıyla doğrular ve tüm seri contiguous değilse boş sonuç döndürür. Böylece replay'in doğrulanmış ilk kısmı bile yanlışlıkla strategy/execution hattına sızmaz.
 
-`OkxSpotMarketStreamClient`, OKX public `books5` WebSocket snapshot kanalını `IMarketDataStreamClient` portuna dönüştürür. Subscribe acknowledgement market event sayılmaz; API error serbest metni sanitize edilir. Gerçek endpoint connectivity testi opt-in environment flag ile çalışır. Reconnect/backoff supervisor ve stream-to-host pump sonraki dilimdir.
+`OkxSpotMarketStreamClient`, OKX public `books5` WebSocket snapshot kanalını `IMarketDataStreamClient` portuna dönüştürür. Subscribe acknowledgement market event sayılmaz; API error serbest metni sanitize edilir. Gerçek endpoint connectivity testi opt-in environment flag ile çalışır.
+
+`MarketDataStreamSession` WebSocket producer'ını önce başlatır ve event'leri bounded buffer'a alırken REST snapshot ister. OKX `books5` tam-snapshot modunda REST sonucu freshness/cross-source kontrolüdür; ilk WebSocket snapshot'ı sequence anchor'ı olur ve sonraki tam snapshot'lar timestamp/sequence geriye sarma korumasıyla uygulanır. `OkxTradingWorker` validated stream'i paper execution cycle'a taşır; kopmada 1–16 saniye üstel backoff üzerine 100–1000 ms jitter uygular. Worker singleton state içinde `DbContext` tutmaz; her ekonomik event için ayrı async scope açar.
 
 ## 3. Emir gönderimi
 

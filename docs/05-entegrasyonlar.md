@@ -47,6 +47,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 `IClosedCandleHistoryClient`, kapalı candle geçmişini borsa DTO'sundan ayırır. `RecoverClosedCandleGap` beklenen ilk sınırdan gözlenen son kapalı sınıra kadar bounded REST aralığı ister; yanıt eksiksiz ve contiguous değilse kısmi seri döndürmez. `OkxClosedCandleHistoryClient`, V5 history-candles yanıtını ters kronolojik sıradan normalize eder, `confirm=1` zorunluluğunu ve UTC timeframe allowlist'ini uygular. [Resmi OKX V5 API](https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-candlesticks-history)
 
+`WarmUpClosedCandles`, stratejiden bağımsız gerekli lookback sayısını alır. Borsa portundan yalnız tamamlanmış aralığı ister ve `ClosedCandleSequenceGuard` recovery kapısı geçmeden sonucu aşağı akışa açmaz. Gerçek timeframe/lookback ürün kararı config'e bağlanmadan application katmanı varsayılan strateji seçmez.
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

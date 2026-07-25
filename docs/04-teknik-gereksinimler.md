@@ -73,7 +73,9 @@
 - Recovery çağrısı maksimum candle sayısıyla bounded'dır. Eksik, fazla, sırasız, farklı instrument/timeframe veya henüz açık candle içeren yanıtın hiçbir bölümü yayınlanmaz.
 - OKX V5 `GET /api/v5/market/history-candles` adaptörü tek sayfada en fazla 300 kayıt ister; ters kronolojik cevabı sıralar ve yalnız `confirm=1` satırlarını kapalı candle olarak kabul eder.
 - OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
-- Canlı candle WebSocket/aggregation ve warm-up orkestrasyonu sonraki dilimdir.
+- Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
+- Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
+- Canlı candle WebSocket/aggregation, strategy lookback seçimi ve host readiness bağlantısı sonraki dilimdir.
 
 ## 5. Yapılandırma
 

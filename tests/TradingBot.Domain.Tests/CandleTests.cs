@@ -87,6 +87,36 @@ public sealed class CandleTests
         Assert.Throws<DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public void TimestampInsideCandleFloorsToUtcBoundary()
+    {
+        var timestamp = OpenTime.AddSeconds(42);
+
+        var boundary = OneMinute.GetBoundaryAtOrBefore(timestamp);
+
+        Assert.Equal(OpenTime, boundary);
+    }
+
+    [Fact]
+    public void ExactBoundaryIsPreserved()
+    {
+        var boundary = OneMinute.GetBoundaryAtOrBefore(OpenTime);
+
+        Assert.Equal(OpenTime, boundary);
+    }
+
+    [Fact]
+    public void NonUtcTimestampCannotBeFloored()
+    {
+        var localOffset = new DateTimeOffset(2026, 7, 25, 13, 0, 0, TimeSpan.FromHours(3));
+        var action = () =>
+        {
+            _ = OneMinute.GetBoundaryAtOrBefore(localOffset);
+        };
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
     private static Candle Create(DateTimeOffset openTime, DateTimeOffset knownAt) =>
         Candle.CreateClosed(
             Instrument,

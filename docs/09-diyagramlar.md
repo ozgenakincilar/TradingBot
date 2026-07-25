@@ -503,3 +503,20 @@ flowchart TD
     VALID -- Evet --> ATOMIC[Contiguous recovery atomik uygula]
     ATOMIC --> READY[Series ready]
 ```
+
+## 20. Kapalı candle warm-up kapısı
+
+```mermaid
+flowchart TD
+    NOW[KnownAt UTC] --> FLOOR[Timeframe boundary at-or-before]
+    FLOOR --> RANGE[Range = boundary - N x timeframe .. boundary]
+    RANGE --> LIMIT{N bounded policy içinde mi?}
+    LIMIT -- Hayır --> REJECT[Warm-up not-ready]
+    LIMIT -- Evet --> HISTORY[IClosedCandleHistoryClient]
+    HISTORY --> COPY[Immutable local copy]
+    COPY --> GUARD{Exact bounds + contiguous recovery}
+    GUARD -- Hayır --> REJECT
+    GUARD -- Evet --> READY[ClosedCandleWarmupResult]
+```
+
+`boundary` son tamamen kapanmış candle'ın exclusive bitişidir; devam eden açık candle aralığa dahil edilmez.

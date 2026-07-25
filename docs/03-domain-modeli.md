@@ -40,6 +40,8 @@
 - İlk kabul edilen zarf `btc-usdt-long-flat-baseline/v1`: `OKX:BTC-USDT`, `15m` sinyal, `1H EMA(200)` trend ve her iki seride en az 200 kapalı candle.
 - `ExponentialMovingAverage`, yalnız aynı instrument/timeframe'e ait ardışık kapalı candle'lardan `decimal` ile hesaplanır. Son tam periyot penceresinin ilk kapanışı seed, `2 / (period + 1)` ise alpha'dır; böylece aynı son 200 candle restart sonrasında aynı sonucu üretir.
 - `EmaTrendFilter`, son `1H` kapanışı EMA(200)'ün kesin olarak üzerindeyse long yönüne izin verir; eşitlik veya altı fail-closed biçimde izin vermez. Bu filtre henüz ekonomik intent ya da emre bağlı değildir.
+- `LongFlatStrategyEvaluator`, flat durumda `15m` EMA20 yukarı kesişimi + bullish `1H` EMA200 filtresiyle `EnterLong`; long durumda trend kaybı veya EMA20 aşağı kesişimiyle `ExitToFlat` üretir. Pozitif candle gövdesi `%2`yi aşan giriş FOMO guard ile `Hold` olur.
+- `DeterministicStrategyBacktest`, iki timeframe'i async/streaming işler, eşit kapanışta trendi önce alır ve yalnız karar + sanal position state replay eder; fill/PnL veya ekonomik intent üretmez.
 - `StrategyDecision` yalnız `Hold`, `EnterLong` veya `ExitToFlat` olabilir; short kararı tip sisteminde yoktur.
 - Karar yalnız tanımla aynı instrument/timeframe candle'ları kullanabilir. Sinyal candle'ı değerlendirme anında kapanmış, trend candle'ı ise sinyal kapanışından daha yeni olmamalıdır.
 - Gelecekteki `StrategyInstance` aggregate'i parametre sürümü, çalışma durumu ve son işlenen barı taşıyacaktır.

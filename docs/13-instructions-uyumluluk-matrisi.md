@@ -19,9 +19,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 15 |
-| 🟡 Kısmi | 31 |
-| ⬜ Planlandı | 48 |
+| ✅ Uygulandı | 16 |
+| 🟡 Kısmi | 32 |
+| ⬜ Planlandı | 46 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -74,7 +74,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor ve Domain min quantity/notional reddi var. Public instrument yanıtı minimum notional sağlamadığından bu değer uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli order-decay politikası kaldı. |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
 | 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
-| 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
+| 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız `trend.CloseTime <= signal.CloseTime` verisini pencereye alır, eşit zamanda trend-first işler ve future trend candle'ın mevcut kararı değiştirmediği testlidir. [Replay testleri](../tests/TradingBot.Application.Tests/DeterministicStrategyBacktestTests.cs) |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
 | 39 | Warm-up period | ✅ Uygulandı | OKX startup kapısı aynı UTC bilgi anında sıralı `15m/200` signal ve `1H/200` trend geçmişi ister; iki seri exact, kapalı ve contiguous olmadan readiness açılmaz. [Dual warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
@@ -129,8 +129,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 76 | Closed-candle sinyali | 🟡 Kısmi | Sürümlü strategy decision yalnız tanımla eşleşen, değerlendirme anında kapanmış signal candle ve signal kapanışından yeni olmayan trend candle kabul ediyor; strategy engine bağlantısı kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
-| 77 | FOMO koruması | ⬜ Planlandı | Strateji momentum/spike giriş filtresi gerekli. |
+| 76 | Closed-candle sinyali | 🟡 Kısmi | EMA20/EMA200 v1 decision engine ve streaming replay yalnız kapanmış candle kullanıyor; canlı series-store tetiklemesi ve execution bağlantısı kaldı. [Strategy evaluator testleri](../tests/TradingBot.Domain.Tests/LongFlatStrategyEvaluatorTests.cs) |
+| 77 | FOMO koruması | 🟡 Kısmi | Pozitif `15m` candle gövdesi `%2`yi aşınca cross-up girişi bloklanıyor; eşik için out-of-sample/volatilite kanıtı kaldı. [Strategy evaluator testleri](../tests/TradingBot.Domain.Tests/LongFlatStrategyEvaluatorTests.cs) |
 | 78 | Trailing-stop flaw | ⬜ Planlandı | Volatilite tabanlı mesafe ve monotonic stop testleri gerekli. |
 | 79 | İndikatör çelişkisi | ⬜ Planlandı | Ağırlıklı scoring sözleşmesi gerekli. |
 | 80 | Regime switching | 🟡 Kısmi | Deterministik `1H close > EMA200` makro trend filtresi mevcut; range/ADX benzeri rejim ayrımı ve out-of-sample kanıtı kaldı. [EMA trend testleri](../tests/TradingBot.Domain.Tests/EmaTrendFilterTests.cs) |

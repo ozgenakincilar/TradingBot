@@ -92,6 +92,9 @@
 - `EMA(200)` için hem signal hem trend serisinde minimum warm-up 200 kapalı candle'dan kısa olamaz.
 - EMA hesabı `decimal` kullanır, son tam 200 candle penceresinin ilk kapanışından seed edilir ve checked arithmetic taşmasında karar üretmeden hata verir.
 - Long trend izni yalnız son kapalı `1H` candle kapanışı EMA(200)'ün kesin olarak üzerindeyken verilir; bu çıktı strategy engine/backtest kabulünden önce execution'a bağlanmaz.
+- v1 signal EMA periyodu 20, maksimum pozitif signal candle gövdesi `%2`dir. Flat girişte EMA20 yukarı kesişimi; long çıkışta EMA20 aşağı kesişimi veya trend filtresi kaybı kullanılır.
+- Historical replay input'u belleğe topluca yüklemez; iki `IAsyncEnumerable<Candle>` akışını bounded 200-candle pencerelerde işler. Gap, sırasız veri ve identity mismatch fail-closed hatadır.
+- Replay sonucu kârlılık raporu değildir: fill/fee/spread/slippage/latency/PnL eklenmeden execution veya aylık hedef değerlendirmesinde kullanılamaz.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

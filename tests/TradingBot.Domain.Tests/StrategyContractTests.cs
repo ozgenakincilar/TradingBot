@@ -21,7 +21,9 @@ public sealed class StrategyContractTests
         Assert.Equal("btc-usdt-long-flat-baseline", definition.StrategyId);
         Assert.Equal(1, definition.Version);
         Assert.Equal(StrategyExposurePolicy.LongFlat, definition.ExposurePolicy);
+        Assert.Equal(20, definition.SignalEmaPeriod);
         Assert.Equal(200, definition.TrendEmaPeriod);
+        Assert.Equal(2m, definition.MaximumSignalCandleMovePercent);
         Assert.Equal(200, definition.MinimumSignalWarmupCandles);
         Assert.Equal(200, definition.MinimumTrendWarmupCandles);
     }
@@ -35,7 +37,9 @@ public sealed class StrategyContractTests
             Instrument,
             Timeframe.Create(TimeSpan.FromMinutes(45)),
             TrendTimeframe,
+            20,
             200,
+            2m,
             200,
             200);
 
@@ -51,8 +55,30 @@ public sealed class StrategyContractTests
             Instrument,
             SignalTimeframe,
             TrendTimeframe,
+            20,
             200,
-            199,
+            2m,
+            20,
+            200);
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(11)]
+    public void FomoGuardMustUseBoundedPositivePercent(decimal maximumMovePercent)
+    {
+        var action = () => StrategyDefinition.Create(
+            "invalid-fomo-guard",
+            1,
+            Instrument,
+            SignalTimeframe,
+            TrendTimeframe,
+            20,
+            200,
+            maximumMovePercent,
+            200,
             200);
 
         Assert.Throws<DomainRuleViolationException>(action);
@@ -138,7 +164,9 @@ public sealed class StrategyContractTests
             Instrument,
             SignalTimeframe,
             TrendTimeframe,
+            20,
             200,
+            2m,
             200,
             200);
 

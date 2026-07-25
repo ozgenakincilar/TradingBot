@@ -17,7 +17,9 @@ public sealed record StrategyDefinition
         InstrumentId instrumentId,
         Timeframe signalTimeframe,
         Timeframe trendTimeframe,
+        int signalEmaPeriod,
         int trendEmaPeriod,
+        decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
         int minimumTrendWarmupCandles)
     {
@@ -26,7 +28,9 @@ public sealed record StrategyDefinition
         InstrumentId = instrumentId;
         SignalTimeframe = signalTimeframe;
         TrendTimeframe = trendTimeframe;
+        SignalEmaPeriod = signalEmaPeriod;
         TrendEmaPeriod = trendEmaPeriod;
+        MaximumSignalCandleMovePercent = maximumSignalCandleMovePercent;
         MinimumSignalWarmupCandles = minimumSignalWarmupCandles;
         MinimumTrendWarmupCandles = minimumTrendWarmupCandles;
     }
@@ -43,7 +47,11 @@ public sealed record StrategyDefinition
 
     public Timeframe TrendTimeframe { get; }
 
+    public int SignalEmaPeriod { get; }
+
     public int TrendEmaPeriod { get; }
+
+    public decimal MaximumSignalCandleMovePercent { get; }
 
     public int MinimumSignalWarmupCandles { get; }
 
@@ -55,7 +63,9 @@ public sealed record StrategyDefinition
         InstrumentId instrumentId,
         Timeframe signalTimeframe,
         Timeframe trendTimeframe,
+        int signalEmaPeriod,
         int trendEmaPeriod,
+        decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
         int minimumTrendWarmupCandles)
     {
@@ -79,12 +89,18 @@ public sealed record StrategyDefinition
                 "Trend timeframe must be a larger exact multiple of the signal timeframe.");
         }
 
-        if (trendEmaPeriod <= 1 ||
-            minimumSignalWarmupCandles < trendEmaPeriod ||
+        if (signalEmaPeriod <= 1 || trendEmaPeriod <= 1 ||
+            minimumSignalWarmupCandles <= signalEmaPeriod ||
             minimumTrendWarmupCandles < trendEmaPeriod)
         {
             throw new DomainRuleViolationException(
-                "Strategy warm-up must cover the complete trend EMA period on both timeframes.");
+                "Strategy warm-up must cover the signal crossover and complete trend EMA period.");
+        }
+
+        if (maximumSignalCandleMovePercent <= 0m || maximumSignalCandleMovePercent > 10m)
+        {
+            throw new DomainRuleViolationException(
+                "Maximum signal candle move must be greater than zero and at most ten percent.");
         }
 
         return new StrategyDefinition(
@@ -93,7 +109,9 @@ public sealed record StrategyDefinition
             instrumentId,
             signalTimeframe,
             trendTimeframe,
+            signalEmaPeriod,
             trendEmaPeriod,
+            maximumSignalCandleMovePercent,
             minimumSignalWarmupCandles,
             minimumTrendWarmupCandles);
     }

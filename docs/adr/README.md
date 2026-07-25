@@ -14,6 +14,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0008](0008-okx-tr-spot-ilk-borsa.md) | İlk borsa olarak OKX TR Spot V5 API | Kabul edildi |
 | [ADR-0009](0009-ilk-strateji-zarfi.md) | BTC-USDT long/flat, 15m sinyal ve 1H EMA200 strateji zarfı | Kabul edildi |
 | [ADR-0010](0010-deterministik-v1-sinyal-ve-replay.md) | EMA20 kesişimi, EMA200 trend, FOMO guard ve streaming decision replay | Kabul edildi |
+| [ADR-0011](0011-backtest-execution-ve-maliyet-modeli.md) | Next-bar fill, spread/slippage/fee/latency ve PnL raporu | Kabul edildi |
 
 Yeni ADR biçimi:
 

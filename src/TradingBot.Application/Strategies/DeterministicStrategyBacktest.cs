@@ -7,7 +7,8 @@ namespace TradingBot.Application.Strategies;
 
 public sealed record StrategyBacktestDecision(
     StrategyDecision Decision,
-    StrategyPositionState PositionAfterDecision);
+    StrategyPositionState PositionAfterDecision,
+    Candle SignalCandle);
 
 public sealed class DeterministicStrategyBacktest
 {
@@ -59,7 +60,7 @@ public sealed class DeterministicStrategyBacktest
                 StrategyAction.ExitToFlat => StrategyPositionState.Flat,
                 _ => position
             };
-            yield return new StrategyBacktestDecision(decision, position);
+            yield return new StrategyBacktestDecision(decision, position, signal);
         }
     }
 

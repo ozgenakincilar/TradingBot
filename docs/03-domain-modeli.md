@@ -42,6 +42,8 @@
 - `EmaTrendFilter`, son `1H` kapanışı EMA(200)'ün kesin olarak üzerindeyse long yönüne izin verir; eşitlik veya altı fail-closed biçimde izin vermez. Bu filtre henüz ekonomik intent ya da emre bağlı değildir.
 - `LongFlatStrategyEvaluator`, flat durumda `15m` EMA20 yukarı kesişimi + bullish `1H` EMA200 filtresiyle `EnterLong`; long durumda trend kaybı veya EMA20 aşağı kesişimiyle `ExitToFlat` üretir. Pozitif candle gövdesi `%2`yi aşan giriş FOMO guard ile `Hold` olur.
 - `DeterministicStrategyBacktest`, iki timeframe'i async/streaming işler, eşit kapanışta trendi önce alır ve yalnız karar + sanal position state replay eder; fill/PnL veya ekonomik intent üretmez.
+- `BacktestExecutionSimulator`, decision replay'i bir sonraki signal candle açılışında sentetik spread, yönsel slippage, minimum latency, iki taraflı quote fee ve önceki kapalı candle hacmine dayalı katılım sınırıyla yürütür.
+- Backtest nakdi başlangıç bakiyesini aşamaz; `SpotPosition` fee-adjusted cost/PnL üretir. Rapor gross/net return, maliyetler, net liquidation, drawdown, win rate, profit factor, expectancy, holding time, açık pozisyon ve pending target taşır.
 - `StrategyDecision` yalnız `Hold`, `EnterLong` veya `ExitToFlat` olabilir; short kararı tip sisteminde yoktur.
 - Karar yalnız tanımla aynı instrument/timeframe candle'ları kullanabilir. Sinyal candle'ı değerlendirme anında kapanmış, trend candle'ı ise sinyal kapanışından daha yeni olmamalıdır.
 - Gelecekteki `StrategyInstance` aggregate'i parametre sürümü, çalışma durumu ve son işlenen barı taşıyacaktır.

@@ -72,9 +72,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 31 | Price tick size | ✅ Uygulandı | OKX `tickSz` dinamik okunuyor; fiyat aşağı adım normalizasyonu ve contract/domain testleri mevcut. [Instrument catalog](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotInstrumentCatalog.cs) |
 | 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor ve Domain min quantity/notional reddi var. Public instrument yanıtı minimum notional sağlamadığından bu değer uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli order-decay politikası kaldı. |
-| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
+| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu SQL settlement'ta; backtest alış/satış maliyetleri de net return'de testli. Exchange fee-asset çeşitleri ve live parity henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 | 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
-| 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız `trend.CloseTime <= signal.CloseTime` verisini pencereye alır, eşit zamanda trend-first işler ve future trend candle'ın mevcut kararı değiştirmediği testlidir. [Replay testleri](../tests/TradingBot.Application.Tests/DeterministicStrategyBacktestTests.cs) |
+| 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız bilinen trend verisini alır; execution aynı candle'da fill etmez ve next-open likiditesi için mevcut candle toplam hacmi yerine önceki kapalı candle hacmini kullanır. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
 | 39 | Warm-up period | ✅ Uygulandı | OKX startup kapısı aynı UTC bilgi anında sıralı `15m/200` signal ve `1H/200` trend geçmişi ister; iki seri exact, kapalı ve contiguous olmadan readiness açılmaz. [Dual warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
@@ -83,7 +83,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Hosted market-event cycle minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill'i SQL pipeline'ına taşıyor; queue position ve cancel latency henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper ve backtest aynı minimum latency/slippage/participation motorunu kullanıyor; backtest next-open proxy ve pending target taşır. Order-book queue ve cancel latency henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

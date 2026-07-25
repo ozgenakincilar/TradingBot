@@ -71,3 +71,5 @@ Aylık rapor en az şu metrikleri içerir:
 - İşlem sayısı ve ortalama pozisyonda kalma süresi.
 - Risk rejection ve trading-halt olayları.
 - Benchmark karşılaştırması (örneğin buy-and-hold; bilgi amaçlı).
+
+İlk backtest execution raporu gross/net return, realized PnL, fee/spread/slippage, net-liquidation value, drawdown, win rate, profit factor, expectancy ve ortalama holding time üretir. Aylık segmentasyon, benchmark, out-of-sample ve walk-forward raporları tamamlanana kadar `%10` stretch hedefi açısından başarı kanıtı sayılmaz.

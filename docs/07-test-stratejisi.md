@@ -54,6 +54,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - EMA'nın `decimal` alpha/seed sonucu, yalnız son tam pencereyi kullanması, identity/continuity reddi ve `close > EMA` long izin sınırı.
 - EMA20 yukarı/aşağı kesişimi, bullish trend giriş izni, trend kaybı çıkışı ve `%2` FOMO guard sınırı.
 - Streaming replay'in eşit close time'da trend-first davranışı, gelecekteki trend candle'ı dışlaması, aynı girdide aynı karar/state ve historical gap'te fail-closed olması.
+- Backtest kararının aynı candle'da değil sonraki candle open+latency anında fill edilmesi; spread, slippage ve iki taraflı fee'nin net getiriyi düşürmesi.
+- Flat market round trip'in maliyet sonrası zarar yazması, düşük geçmiş hacimde phantom fill oluşmaması ve mevcut candle toplam hacminin open fill'e sızmaması.
+- Aynı input/policy'nin aynı execution raporunu üretmesi; açık pozisyon/pending target'ın zorla kapatılmadan raporlanması.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.
@@ -84,7 +87,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Parametre optimizasyonu train/validation/out-of-sample ayrımı kullanır.
 - Walk-forward ve farklı market regime testleri uygulanır.
 - Sonuçlar strategy version, data version, seed ve config hash ile tekrar üretilebilir olmalıdır.
-- Mevcut decision replay fill ve PnL modellemez; bu nedenle performans, net getiri veya `%10` hedef başarısı iddiasında kullanılamaz.
+- Mevcut next-open execution proxy fee/spread/slippage/latency/PnL modellemektedir; order-book queue, tick/lot rounding ve out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.
 
 ## 5. Determinizm
 

@@ -615,3 +615,26 @@ flowchart TD
 ```
 
 Gelecekteki trend candle enumerator tarafından görülse bile sinyal kapanışından önce pencereye alınmaz. Aynı veri sırası ve v1 tanımı aynı karar dizisini üretir.
+
+## 25. Backtest execution ve performans raporu
+
+```mermaid
+flowchart TD
+    D[StrategyDecision at closed 15m] --> TARGET[Long/Flat execution target]
+    TARGET --> NEXT[Sonraki 15m candle open]
+    PREV[Karar anında bilinen önceki candle volume] --> BOOK[Synthetic bid/ask\nmid ± half spread]
+    NEXT --> BOOK
+    BOOK --> LATENCY[Open + minimum latency]
+    LATENCY --> PAPER[PaperExecutionEngine\nslippage + participation]
+    PAPER -- Likidite yok/kısmi --> CARRY[Target sonraki candle'a taşınır]
+    PAPER -- Fill --> FEE[İki taraflı quote fee]
+    FEE --> CASH[Cash + SpotPosition\nno leverage / no short]
+    CASH --> METRICS[Gross/net return, PnL, costs\ndrawdown, win rate, PF, expectancy]
+    CARRY --> NEXT
+    METRICS --> OPEN{Veri sonunda açık mı?}
+    OPEN -- Evet --> MARK[Net-liquidation estimate\nopen qty + pending açık]
+    OPEN -- Hayır --> REPORT[Final report]
+    MARK --> REPORT
+```
+
+Mevcut candle'ın kapanışta bilinen hacmi kendi açılış fill'inde kullanılmaz. Model gerçek order-book queue replay'i değildir ve veri sonunda yapay kapanış üretmez.

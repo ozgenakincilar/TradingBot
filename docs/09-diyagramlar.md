@@ -666,3 +666,22 @@ flowchart TD
 ```
 
 OOS verisi parameter-selection stream'ine hiç verilmez. Aynı raw dosyalar, strategy/execution config, split ve seed aynı manifest kimliğini üretir.
+
+## 27. Walk-forward pencere üretimi
+
+```mermaid
+flowchart LR
+    CFG[UTC dataset + train/validation/OOS süreleri] --> MODE{Training modu}
+    MODE -- Rolling --> R[Training başlangıcı ve bitişi<br/>OOS süresi kadar ilerler]
+    MODE -- Expanding --> E[Training başlangıcı sabit<br/>bitişi OOS süresi kadar ilerler]
+    R --> W1[Window 0<br/>Train → Validation → OOS 0]
+    E --> W1
+    W1 --> W2[Window 1<br/>Train → Validation → OOS 1]
+    W2 --> W3[Window N<br/>Train → Validation → OOS N]
+    W1 -. OOS 0 end .-> W2
+    W2 -. OOS 1 end .-> W3
+    ALIGN[15m ve 1H hizalama] --> W1
+    LIMIT[En fazla 10.000 pencere] --> W1
+```
+
+Her pencerenin parameter-selection çalışması yalnız train/validation görür. O pencerenin OOS aralığı ayrı final evaluation'da açılır; ardışık OOS aralıkları birbirine bitişik ve çakışmasızdır.

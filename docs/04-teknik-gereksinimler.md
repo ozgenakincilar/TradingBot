@@ -108,6 +108,8 @@
 - Manifest data/config/manifest SHA-256, dataset count/range, strategy version, execution varsayımları, split, purpose, partition listesi ve random seed taşır.
 - Train/validation/OOS split'leri UTC `[start,end)` aralıklarıdır. Parameter selection OOS candle yield edemez; final evaluation yalnız OOS partition'ıyla çalışır.
 - Split sınırları `15m/1H` boundary'lerine hizalı ve her iki dataset tarafından tamamen kapsanmış olmak zorundadır.
+- Walk-forward schedule sabit train/validation/OOS süreleriyle rolling veya expanding üretilir. İlerleme OOS süresidir; böylece OOS pencereleri çakışmaz veya boşluk bırakmaz.
+- Süreler iki timeframe'in tam katı, dataset başlangıç/bitişi iki timeframe'e hizalı olmalıdır. Tam pencere üretilememesi ve 10.000 pencere sınırının aşılması fail-closed hatadır.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | 🟡 Kısmi | Chronological train/validation/OOS split, parameter-selection OOS yield yasağı ve dataset/config/seed manifest hash'i testli; walk-forward ve çoklu OOS kanıtı kaldı. [Dataset governance testleri](../tests/TradingBot.Application.Tests/BacktestDatasetGovernanceTests.cs) |
+| 89 | Overfitting | 🟡 Kısmi | Chronological split, OOS yield yasağı, manifest hash ve deterministik rolling/expanding walk-forward pencereleri testli; schedule/run kimliği ile çoklu OOS birleşik kanıtı kaldı. [Walk-forward testleri](../tests/TradingBot.Application.Tests/WalkForwardScheduleTests.cs) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç

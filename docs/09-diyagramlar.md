@@ -566,3 +566,28 @@ flowchart TD
 ```
 
 Bu akış trade tick'lerinden yerel OHLCV üretmez; ilk sürümde borsanın aggregate candle kanalı anti-corruption adapter'ında normalize edilir. Strateji/economic intent bağlantısı ayrı bir sonraki dilimdir.
+
+## 23. Bounded candle serisi ve deterministik EMA trend filtresi
+
+```mermaid
+flowchart TD
+    START[Startup veya reconnect] --> WARM[15m + 1H tam warm-up\naynı UTC knownAt]
+    WARM --> VALID{Exact, closed ve contiguous mı?}
+    VALID -- Hayır --> CLOSED[Readiness kapalı\nkarar üretme]
+    VALID -- Evet --> SEED[Timeframe başına bounded store\ncapacity 300]
+    LIVE[Validated closed live candle] --> APPEND{Store append}
+    SEED --> APPEND
+    APPEND -- Duplicate / eski --> IGNORE[Seriyi ilerletme]
+    APPEND -- Gap / conflict --> CLOSED
+    APPEND -- Contiguous --> TRIM[Append + en eskiyi buda]
+    TRIM --> SNAP[Immutable ready snapshot]
+    SNAP --> LAST200[Son tam 200 adet 1H candle]
+    LAST200 --> EMA[Decimal EMA200\nfirst close seed]
+    EMA --> FILTER{Son close EMA üstünde mi?}
+    FILTER -- Evet --> ALLOW[Long yönüne izin]
+    FILTER -- Hayır --> HOLD[Long izni yok]
+    ALLOW --> NOEXEC[Henüz execution'a bağlı değil]
+    HOLD --> NOEXEC
+```
+
+Aynı son 200 candle penceresi aynı EMA sonucunu üretir. Aylık getiri hedefi ve risk limitleri bu hesaplamaya parametre olarak girmez.

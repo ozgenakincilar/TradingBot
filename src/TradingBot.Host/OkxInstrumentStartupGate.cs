@@ -9,6 +9,7 @@ public sealed class OkxInstrumentStartupGate(
     IServiceScopeFactory scopeFactory,
     IOptions<TradingOptions> options,
     TimeProvider timeProvider,
+    ClosedCandleSeriesStore candleSeries,
     TradingReadinessState readiness,
     ILogger<OkxInstrumentStartupGate> logger) : IHostedService
 {
@@ -46,6 +47,7 @@ public sealed class OkxInstrumentStartupGate(
                 settings.SignalWarmupCandleCount,
                 knownAt,
                 cancellationToken);
+            await candleSeries.SeedAsync(result, cancellationToken);
             readiness.MarkSignalCandleHistoryReady(
                 settings.SignalCandleTimeframeSeconds,
                 result.Candles.Count);
@@ -71,6 +73,7 @@ public sealed class OkxInstrumentStartupGate(
                 settings.TrendWarmupCandleCount,
                 knownAt,
                 cancellationToken);
+            await candleSeries.SeedAsync(result, cancellationToken);
             readiness.MarkTrendCandleHistoryReady(
                 settings.TrendCandleTimeframeSeconds,
                 result.Candles.Count);

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using TradingBot.Application.MarketData;
+using TradingBot.Domain.Common;
 using TradingBot.Domain.Instruments;
 using TradingBot.Domain.MarketData;
 
@@ -8,6 +9,8 @@ namespace TradingBot.Host;
 public sealed class OkxCandleWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<TradingOptions> options,
+    TimeProvider timeProvider,
+    ClosedCandleSeriesStore candleSeries,
     TradingReadinessState readiness,
     ILogger<OkxCandleWorker> logger) : BackgroundService
 {
@@ -22,6 +25,12 @@ public sealed class OkxCandleWorker(
         Timeframe[] timeframes = [signalTimeframe, trendTimeframe];
         var failures = 0;
 
+        await CloseCandleSeriesAsync(
+            candleSeries,
+            instrumentId,
+            signalTimeframe,
+            trendTimeframe,
+            stoppingToken);
         readiness.MarkSignalCandleHistoryNotReady("candle-stream-connecting");
         readiness.MarkTrendCandleHistoryNotReady("candle-stream-connecting");
 
@@ -31,6 +40,7 @@ public sealed class OkxCandleWorker(
             {
                 await using var scope = scopeFactory.CreateAsyncScope();
                 var session = scope.ServiceProvider.GetRequiredService<ClosedCandleStreamSession>();
+                var warmup = scope.ServiceProvider.GetRequiredService<WarmUpClosedCandles>();
                 await foreach (var update in session.ReadValidatedAsync(
                                    instrumentId,
                                    timeframes,
@@ -38,6 +48,21 @@ public sealed class OkxCandleWorker(
                 {
                     if (update.Kind == ClosedCandleStreamUpdateKind.SessionReady)
                     {
+                        var knownAt = timeProvider.GetUtcNow();
+                        var signalSeed = await warmup.HandleAsync(
+                            instrumentId,
+                            signalTimeframe,
+                            settings.SignalWarmupCandleCount,
+                            knownAt,
+                            stoppingToken);
+                        var trendSeed = await warmup.HandleAsync(
+                            instrumentId,
+                            trendTimeframe,
+                            settings.TrendWarmupCandleCount,
+                            knownAt,
+                            stoppingToken);
+                        await candleSeries.SeedAsync(signalSeed, stoppingToken);
+                        await candleSeries.SeedAsync(trendSeed, stoppingToken);
                         failures = 0;
                         readiness.MarkSignalCandleHistoryReady(
                             settings.SignalCandleTimeframeSeconds,
@@ -54,12 +79,21 @@ public sealed class OkxCandleWorker(
                     }
 
                     var candle = update.Candle!;
+                    var status = await candleSeries.AppendAsync(candle, stoppingToken);
+                    if (status is ClosedCandleSeriesUpdateStatus.GapDetected or
+                        ClosedCandleSeriesUpdateStatus.Conflicting)
+                    {
+                        throw new DomainRuleViolationException(
+                            "Live closed-candle series lost continuity and requires reseeding.");
+                    }
+
                     logger.LogInformation(
-                        "Validated closed candle received for {Instrument}: timeframe={TimeframeSeconds}s, open={OpenTime}, close={CloseTime}",
+                        "Validated closed candle received for {Instrument}: timeframe={TimeframeSeconds}s, open={OpenTime}, close={CloseTime}, seriesStatus={SeriesStatus}",
                         instrumentId,
                         candle.Timeframe.Duration.TotalSeconds,
                         candle.OpenTime,
-                        candle.CloseTime);
+                        candle.CloseTime,
+                        status);
                 }
 
                 throw new IOException("OKX closed-candle stream ended unexpectedly.");
@@ -70,6 +104,12 @@ public sealed class OkxCandleWorker(
             }
             catch (Exception exception)
             {
+                await CloseCandleSeriesAsync(
+                    candleSeries,
+                    instrumentId,
+                    signalTimeframe,
+                    trendTimeframe,
+                    stoppingToken);
                 readiness.MarkSignalCandleHistoryNotReady(exception.GetType().Name);
                 readiness.MarkTrendCandleHistoryNotReady(exception.GetType().Name);
                 failures = Math.Min(failures + 1, 5);
@@ -83,5 +123,16 @@ public sealed class OkxCandleWorker(
                 await Task.Delay(backoff, stoppingToken);
             }
         }
+    }
+
+    private static async ValueTask CloseCandleSeriesAsync(
+        ClosedCandleSeriesStore candleSeries,
+        InstrumentId instrumentId,
+        Timeframe signalTimeframe,
+        Timeframe trendTimeframe,
+        CancellationToken cancellationToken)
+    {
+        await candleSeries.MarkNotReadyAsync(instrumentId, signalTimeframe, cancellationToken);
+        await candleSeries.MarkNotReadyAsync(instrumentId, trendTimeframe, cancellationToken);
     }
 }

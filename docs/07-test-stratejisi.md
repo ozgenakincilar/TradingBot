@@ -50,6 +50,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Strategy definition'ın sürüm, `15m/1H` tam-kat ilişkisi, EMA200 warm-up alt sınırı ve long/flat action allowlist'i; açık signal veya gelecekteki trend candle ile karar üretilememesi.
 - OKX candle parser'ın `candle15m/candle1H`, `confirm=0/1`, subscription ack, future candle, bilinmeyen kanal ve sanitize error contract testleri.
 - Canlı candle session'ın REST anchor öncesi bounded buffering, duplicate/out-of-order suppression, exact gap recovery, oversized gap fail-closed ve worker readiness yaşam döngüsü testleri.
+- Bounded seri store'un warm-up seed, kapasite budama, immutable snapshot, duplicate/eski update ve gap/çelişkide fail-closed davranışı.
+- EMA'nın `decimal` alpha/seed sonucu, yalnız son tam pencereyi kullanması, identity/continuity reddi ve `close > EMA` long izin sınırı.
+- Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.
 - OKX `books5` payload parsing, `prevSeqId` continuity, subscribe acknowledgement, hata sanitization ve crossed-book reddi.

@@ -92,6 +92,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 | Authentication failure | Hayır | Kritik alarm ve trading halt |
 | Validation rejection | Hayır | Domain/config hatası |
 
+Canlı candle reconnect'i başarılı socket bağlantısıyla tamamlanmış sayılmaz. Session anchor doğrulamasından sonra `15m` ve `1H` için tam bounded warm-up yeniden alınır, ortak seri store'una atomik seed edilir ve ancak bundan sonra candle-history readiness açılır. Store gap veya aynı open time için farklı içerik görürse readiness kapatılıp yeni session/reseed başlatılır.
+
 ## 5. Rate limit
 
 - Endpoint weight merkezi limiter tarafından takip edilir.

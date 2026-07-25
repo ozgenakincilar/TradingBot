@@ -39,10 +39,10 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
 | 9 | Reconnection storm | ⬜ Planlandı | Exponential backoff + full jitter uygulanacak. |
 | 10 | Paket kaybı/sequence | 🟡 Kısmi | Snapshot overlap ve buffered replay gap/conflict halinde hiçbir kısmi event yayınlamıyor; gerçek WebSocket adapter bağlantısı kaldı. [Replay testleri](../tests/TradingBot.Application.Tests/MarketDataReplayAlignerTests.cs) |
-| 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | Normal event ve authoritative recovery portları ayrıldı; eski cursor reddi ve freshness gate testli, exchange-specific authority kaldı. [Snapshot service](../src/TradingBot.Application/MarketSnapshotService.cs) |
+| 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | OKX REST snapshot `seqId` authority'si recovery portuna bağlandı; WebSocket `prevSeqId/seqId` adapter'ı kaldı. [OKX contract testleri](../tests/TradingBot.Infrastructure.Tests/OkxSpotMarketSnapshotClientTests.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
 | 13 | Partial network writes | ⬜ Planlandı | Stream framing ve parçalı payload testleri gerekli. |
-| 14 | API versiyon değişimi | 🟡 Kısmi | Ports & Adapters kararı var; gerçek versioned exchange adapter henüz yok. [Mimari](02-mimari.md) |
+| 14 | API versiyon değişimi | 🟡 Kısmi | İlk gerçek adapter OKX V5 namespace ve application portu arkasında izole; changelog/contract CI izlemesi kaldı. [OKX adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketSnapshotClient.cs) |
 | 15 | Socket exhaustion | ⬜ Planlandı | Gerçek HTTP adaptöründe factory/uzun ömürlü handler uygulanacak. |
 
 ## Bölüm 2 — .NET Eşzamanlılık ve Bellek
@@ -116,7 +116,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 65 | Veritabanı şifreleme | ⬜ Planlandı | Production TDE/volume encryption ve backup encryption kararı gerekli. |
 | 66 | Dangling API key | 🟡 Kısmi | `.env` ve production config ignore; secret scanner/CI henüz yok. [.gitignore](../.gitignore) |
 | 67 | Senkron/aşırı log I/O | ⬜ Planlandı | Async structured rolling sink gerekli. |
-| 68 | MITM | 🟡 Kısmi | TLS doğrulamasını kapatan üretim kodu yok; production certificate policy/pinning kararı gerekli. |
+| 68 | MITM | 🟡 Kısmi | OKX adapter HTTPS dışı base address'i fail-fast reddediyor ve TLS doğrulaması kapatılmıyor; certificate policy/pinning kararı kaldı. [OKX adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketSnapshotClient.cs) |
 | 69 | SSH güvenliği | ⬜ Planlandı | Deployment hardening runbook'u gerekli. |
 | 70 | Log rotasyonu | ⬜ Planlandı | Retention/rotation ve disk alarmı gerekli. |
 | 71 | Alert fatigue | ⬜ Planlandı | Dedup/throttle/batch notification pipeline gerekli. |

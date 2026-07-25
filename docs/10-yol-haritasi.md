@@ -10,7 +10,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Clean Architecture + DDD kararı.
 - [x] Başlangıç dokümantasyon paketi.
 - [x] Ürün türü kararı: yalnızca kaldıraçsız Spot.
-- [ ] İlk Spot borsası kararı.
+- [x] İlk Spot borsası kararı: OKX TR V5 Spot API.
 - [ ] İlk strateji, timeframe ve ürün kapsamı.
 - [x] Persistence teknolojisi ADR’si: Microsoft SQL Server.
 - [ ] Telemetry teknoloji ADR’si.
@@ -44,6 +44,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Borsa-bağımsız market-data sequence/timestamp integrity state machine ve recovery cursor invariant'ları.
 - [x] Integrity-aware market snapshot application servisi: initial/gap recovery, duplicate suppression ve freshness gate.
 - [x] Bounded market-event buffer ve atomik snapshot/replay hizalama algoritması.
+- [x] İlk OKX TR public REST order-book recovery adapter'ı ve recorded contract testleri.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.

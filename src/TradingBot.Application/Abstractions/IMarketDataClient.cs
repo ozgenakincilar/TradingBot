@@ -9,13 +9,17 @@ public sealed record PaperMarketEvent(
     DateTimeOffset ReceivedAt,
     PaperTopOfBookSnapshot Snapshot);
 
-public interface IMarketDataClient
+public interface IMarketDataSnapshotClient
+{
+    ValueTask<PaperMarketEvent> GetRecoverySnapshotAsync(
+        InstrumentId instrumentId,
+        CancellationToken cancellationToken);
+}
+
+public interface IMarketDataClient : IMarketDataSnapshotClient
 {
     ValueTask<PaperMarketEvent> GetTopOfBookAsync(
         InstrumentId instrumentId,
         CancellationToken cancellationToken);
 
-    ValueTask<PaperMarketEvent> GetRecoverySnapshotAsync(
-        InstrumentId instrumentId,
-        CancellationToken cancellationToken);
 }

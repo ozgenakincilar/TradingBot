@@ -47,6 +47,9 @@
 - Recovery snapshot son kabul edilen sequence, event time veya receive time değerini geriye saramaz.
 - Freshness yalnız integrity state ready ise ve son receive time yapılandırılmış maksimum yaşı aşmıyorsa doğrudur.
 - `IMarketDataClient`, normal top-of-book event'i ile authoritative recovery snapshot çağrısını ayrı port metotları olarak sunar; her ikisi sequence, event time ve receive time taşır.
+- İlk gerçek REST recovery adapter'ı OKX TR V5 `GET /api/v5/market/books?sz=1` yanıtındaki `seqId`, `ts`, best bid/ask ve miktarları normalize eder.
+- OKX adapter'ı yalnız HTTPS base address ve `OKX/BASE-QUOTE` instrument kabul eder; API serbest metin hata mesajını exception/log sınırına taşımaz.
+- OKX order-book continuity için `seqId/prevSeqId` kullanılır; deprecated checksum doğrulama kaynağı değildir.
 - `MarketSnapshotService`, duplicate/out-of-order event'i aşağı akışa vermez; gap/conflict/timestamp regression durumunda recovery snapshot ister ve recovery reddedilirse fail-closed davranır.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.

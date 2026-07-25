@@ -102,7 +102,7 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 ## 8. Seçim bekleyen entegrasyonlar
 
-- İlk Spot borsası.
+- İlk Spot borsası: OKX TR olarak seçildi; [ADR-0008](adr/0008-okx-tr-spot-ilk-borsa.md).
 - Secret vault.
 - Birincil ve yedek bildirim kanalı.
 - Metrik/trace backend’i.

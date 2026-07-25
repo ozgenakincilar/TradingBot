@@ -41,6 +41,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Application market snapshot servisinin ilk event'te recovery çağırması, sıralı event'i doğrudan yayınlaması, duplicate'i kesmesi, gap'i snapshot ile onarması ve stale sonucu execution'a vermemesi.
 - Bounded market event buffer dolduğunda producer'ın beklemesi ve bekleyen write'ın cancellation ile sonlanması.
 - Snapshot overlap temizliği ve contiguous replay; gap/conflict/timestamp regression durumunda hiçbir kısmi event'in yayınlanmaması.
+- Closed candle'ın UTC timeframe sınırı, kapanış zamanı ve OHLCV invariant'ları; açık candle'ın strategy sözleşmesine girememesi.
+- Candle sequence'in recovery öncesi kapalı olması; duplicate/out-of-order davranışı ve gap/çelişkide son güvenilir sınırı ilerletmeden fail-closed kalması.
+- Bounded candle REST recovery aralığının eksik, fazla, sırasız, yanlış instrument/timeframe veya açık candle yanıtının tamamını reddetmesi.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.
 - OKX `books5` payload parsing, `prevSeqId` continuity, subscribe acknowledgement, hata sanitization ve crossed-book reddi.

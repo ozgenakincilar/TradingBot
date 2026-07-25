@@ -64,6 +64,15 @@
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.
 
+### Candle bütünlüğü
+
+- Candle zaman aralıkları UTC ve Unix epoch tabanlı sabit `Timeframe` sınırlarına hizalanır; sunucu local saati sınır hesabında kullanılmaz.
+- Yalnız kapanış zamanı gelmiş immutable OHLCV candle nesnesi oluşturulabilir; open candle strategy/backtest sözleşmesine giremez.
+- Candle serisi ilk contiguous recovery uygulanmadan ready değildir. Duplicate eski candle'ı ilerletmez; gap veya aynı open time'daki çelişkili içerik seriyi fail-closed yapar.
+- Gap recovery, beklenen ilk candle ile gözlenen kapalı candle arasını `IClosedCandleHistoryClient` üzerinden `[fromInclusive, toExclusive)` aralığında ister.
+- Recovery çağrısı maksimum candle sayısıyla bounded'dır. Eksik, fazla, sırasız, farklı instrument/timeframe veya henüz açık candle içeren yanıtın hiçbir bölümü yayınlanmaz.
+- Gerçek OKX candle history adaptörü, exchange timeframe mapping'i ve warm-up orkestrasyonu sonraki dilimdir.
+
 ## 5. Yapılandırma
 
 Öncelik sırası:

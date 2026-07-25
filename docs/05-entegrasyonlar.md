@@ -9,6 +9,7 @@ Application katmanında borsadan bağımsız aşağıdaki portlar tanımlanacakt
 - `IMarketDataStream`
 - `IMarketSnapshotClient`
 - `ISpotInstrumentCatalog`
+- `IClosedCandleHistoryClient`
 - `IOrderGateway`
 - `IAccountGateway`
 - `IExchangeClock`
@@ -43,6 +44,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 `MarketDataStreamSession` WebSocket producer'ını önce başlatır ve event'leri bounded buffer'a alırken REST snapshot ister. OKX `books5` tam-snapshot modunda REST sonucu freshness/cross-source kontrolüdür; ilk WebSocket snapshot'ı sequence anchor'ı olur ve sonraki tam snapshot'lar timestamp/sequence geriye sarma korumasıyla uygulanır. `OkxTradingWorker` validated stream'i paper execution cycle'a taşır; kopmada 1–16 saniye üstel backoff üzerine 100–1000 ms jitter uygular. Worker singleton state içinde `DbContext` tutmaz; her ekonomik event için ayrı async scope açar.
 
 `OkxSpotInstrumentCatalog`, public instruments endpoint'ini `ISpotInstrumentCatalog` portuna dönüştürür. `OkxInstrumentStartupGate` hosted worker sıralamasında stream supervisor'dan önce çalışır; sembol/tür/filtre/state uyumsuzluğunda host başlangıcını durdurur. Ortak `TradingReadinessState`, instrument kapısı ile ilk geçerli market event'i ayrı izler ve stream kesilince market-data readiness'i kapatır.
+
+`IClosedCandleHistoryClient`, kapalı candle geçmişini borsa DTO'sundan ayırır. `RecoverClosedCandleGap` beklenen ilk sınırdan gözlenen son kapalı sınıra kadar bounded REST aralığı ister; yanıt eksiksiz ve contiguous değilse kısmi seri döndürmez. OKX endpoint adaptörü henüz eklenmemiştir.
 
 ## 3. Emir gönderimi
 

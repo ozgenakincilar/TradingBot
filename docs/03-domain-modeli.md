@@ -25,6 +25,9 @@
 - OKX Spot metadata adaptörü `tickSz`, `lotSz`, `minSz` ve `state` alanlarını dinamik okur; yapılandırılmış instrument yalnız `SPOT` ve `live` ise başlangıç kapısını geçer.
 - `minSz` minimum base-asset miktarıdır; borsa ayrıca minimum notional yayımlamıyorsa bu değer `MinNotional` gibi yorumlanamaz.
 - `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data.
+- `Timeframe` pozitif tam saniyeli sabit UTC periyottur; candle açılışı Unix epoch tabanlı periyot sınırına hizalanır.
+- `Candle.CreateClosed`, kapanış zamanı henüz gelmemiş mumu ve geçersiz OHLCV ilişkilerini reddeder. Strateji hattına açık mum tipi taşınmaz.
+- `ClosedCandleSequenceGuard`, ilk contiguous recovery serisi olmadan ready olmaz; gap veya aynı sınırdaki çelişkili candle sonrası son güvenilir candle'ı ilerletmeden fail-closed kalır.
 - Sequence ve timestamp doğrulama.
 - `MarketDataIntegrityGuard`, REST recovery snapshot uygulanmadan instrument'ı ready kabul etmez.
 - Beklenen sequence atlanırsa, aynı sequence farklı event ID ile gelirse veya event/receive zamanı gerilerse instrument recovery tamamlanana kadar not-ready olur.

@@ -488,3 +488,18 @@ flowchart TD
 ```
 
 Bu readiness yalnız instrument ve market-data kapılarını temsil eder. SQL Server erişimi ve startup reconciliation ayrı kontroller olarak eklenene kadar production-ready iddiası oluşturmaz.
+
+## 19. Kapalı candle gap recovery
+
+```mermaid
+flowchart TD
+    LAST[Son kabul edilen kapalı candle] --> EXPECT[Expected open = last close]
+    STREAM[Yeni kapalı candle] --> CHECK{Open time expected mı?}
+    CHECK -- Evet --> ACCEPT[Sequence accepted]
+    CHECK -- Hayır, ileri --> PAUSE[Series not-ready]
+    PAUSE --> RANGE[Bounded REST range\nexpected..observed close]
+    RANGE --> VALID{Tam sayı + UTC boundary +\naynı instrument/timeframe + closed}
+    VALID -- Hayır --> CLOSED[Hiçbir kısmi candle yayınlama]
+    VALID -- Evet --> ATOMIC[Contiguous recovery atomik uygula]
+    ATOMIC --> READY[Series ready]
+```

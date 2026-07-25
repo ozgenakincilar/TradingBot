@@ -63,6 +63,10 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Aynı dataset/config/split/seed için aynı manifest; seed değişince yalnız manifest kimliğinin değişmesi ve eksik dataset summary ile manifest üretilememesi.
 - Rolling walk-forward'da sabit training uzunluğu, expanding modda sabit başlangıç ve büyüyen gözlenmiş geçmiş; ardışık OOS aralıklarının bitişik/çakışmasız olması.
 - Aynı schedule girdilerinin aynı indeksli pencere dizisini üretmesi; timeframe'e hizalanmayan süre ve tek tam pencereye yetmeyen dataset'in reddedilmesi.
+- Aynı schedule/manifest/sonuçların aynı schedule/run/report hash üretmesi; yalnız sonuç değişince report hash'in değişmesi.
+- Eksik, ters sıralı, yanlış split'li veya parameter-selection manifestli pencerenin birleşik OOS raporuna alınmaması.
+- Çoklu OOS mean/median/worst/best/compound return, mean drawdown ve maliyet agregasyonlarının exact decimal sonucu.
+- Gerçek SQL Server'da walk-forward run+window satırlarının atomik yazılması ve aynı rapor tekrarının ikinci kayıt oluşturmaması.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.

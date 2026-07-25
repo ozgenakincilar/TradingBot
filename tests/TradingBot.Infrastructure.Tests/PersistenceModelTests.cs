@@ -22,6 +22,8 @@ public sealed class PersistenceModelTests
     [InlineData(typeof(ReconciliationRunEntity), "operations", "ReconciliationRuns")]
     [InlineData(typeof(TradingSafetyStateEntity), "operations", "TradingSafetyStates")]
     [InlineData(typeof(TradingSafetyRecoveryEntity), "operations", "TradingSafetyRecoveries")]
+    [InlineData(typeof(WalkForwardRunEntity), "research", "WalkForwardRuns")]
+    [InlineData(typeof(WalkForwardWindowResultEntity), "research", "WalkForwardWindowResults")]
     public void Model_MapsEntitiesToExpectedSchemas(Type entityType, string schema, string table)
     {
         using var context = CreateContext();

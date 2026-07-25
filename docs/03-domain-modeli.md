@@ -48,6 +48,8 @@
 - `ChronologicalDatasetSplit` train/validation/OOS aralıklarını kesişmeyen zaman sınırlarıyla sınıflandırır. `BacktestExperimentPlan`, parameter selection'dan OOS'u dışlar ve final evaluation'ı yalnız OOS'a kilitler.
 - `BacktestRunManifest`, dataset, strategy, execution config, split, purpose, partition ve seed'in canonical data/config/manifest SHA-256 kimliklerini üretir.
 - `WalkForwardSchedule`, rolling veya expanding training politikasıyla timeframe-hizalı split'ler üretir; ardışık OOS aralıkları bitişiktir ve hiçbir zaman çakışmaz.
+- `WalkForwardReport`, sıralı final-OOS manifest ve execution sonuçlarını schedule/run/report SHA-256 kimlikleriyle bağlar; mean/median/worst/best/compound return, mean drawdown, trade ve fee toplamlarını üretir.
+- Aynı walk-forward run kimliği farklı report hash üretirse persistence determinism ihlali olarak fail-closed olur; aynı rapor tekrarı idempotenttir.
 - `StrategyDecision` yalnız `Hold`, `EnterLong` veya `ExitToFlat` olabilir; short kararı tip sisteminde yoktur.
 - Karar yalnız tanımla aynı instrument/timeframe candle'ları kullanabilir. Sinyal candle'ı değerlendirme anında kapanmış, trend candle'ı ise sinyal kapanışından daha yeni olmamalıdır.
 - Gelecekteki `StrategyInstance` aggregate'i parametre sürümü, çalışma durumu ve son işlenen barı taşıyacaktır.

@@ -1,6 +1,6 @@
 # ADR-0008: İlk Borsa Olarak OKX TR Spot
 
-**Durum:** Kabul edildi  
+**Durum:** Kabul edildi
 **Tarih:** 2026-07-26
 
 ## Bağlam

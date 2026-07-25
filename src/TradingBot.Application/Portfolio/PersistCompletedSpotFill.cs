@@ -47,11 +47,23 @@ public sealed class PersistCompletedSpotFill(
         await unitOfWork.ExecuteAsync(
             async transactionCancellationToken =>
             {
-                if (await portfolio.ExecutionExistsAsync(
+                var existingExecution = await portfolio.GetExecutionAsync(
                         command.InstrumentId.Exchange,
                         command.ExchangeExecutionId,
-                        transactionCancellationToken))
+                        transactionCancellationToken);
+                if (existingExecution is not null)
                 {
+                    if (existingExecution.OrderId is not null ||
+                        existingExecution.InstrumentId != command.InstrumentId ||
+                        existingExecution.Side != command.Side ||
+                        existingExecution.Quantity != command.Quantity.Value ||
+                        existingExecution.Price != command.Price.Value ||
+                        existingExecution.QuoteFee != command.QuoteFee.Amount)
+                    {
+                        throw new DomainRuleViolationException(
+                            "Exchange execution id conflicts with a different economic fill.");
+                    }
+
                     result = PersistSpotFillResult.AlreadyApplied;
                     return;
                 }
@@ -75,6 +87,7 @@ public sealed class PersistCompletedSpotFill(
                 portfolio.StorePosition(applied.Position);
 
                 var execution = new SpotExecutionRecord(
+                    null,
                     command.ExchangeExecutionId,
                     command.InstrumentId,
                     command.Side,

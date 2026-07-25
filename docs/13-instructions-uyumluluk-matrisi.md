@@ -93,7 +93,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 47 | Açık emir limiti | ✅ Uygulandı | Risk profili maksimum açık emir sayısını reddediyor. [RiskEngine](../src/TradingBot.Domain/Risk/RiskEngine.cs) |
 | 48 | Cancel ratio | ⬜ Planlandı | Cancel/fill metriği ve throttle gerekli. |
 | 49 | Account freeze | ⬜ Planlandı | Spot `canTrade`/account-status doğrulaması gerekli. |
-| 50 | Yetersiz bakiye | 🟡 Kısmi | Total/reserved/available Spot bakiye, fazla alım-satım reddi, SQL snapshot ve DB constraint'leri var; exchange account reconciliation henüz yok. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/PortfolioPersistenceIntegrationTests.cs) |
+| 50 | Yetersiz bakiye | 🟡 Kısmi | Total/reserved/available bakiye, kalıcı açık/partial order rezervasyonu, fazla alım-satım reddi ve DB constraint'leri var; exchange account reconciliation henüz yok. [Reservation entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 | 51 | Kaldıraç kısıtlaması | ➖ Kapsam dışı | Kaldıraç yok. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 52 | Asset exposure | 🟡 Kısmi | Sembol ve gross exposure var; sektör/korelasyon limiti henüz yok. [RiskProfile](../src/TradingBot.Domain/Risk/RiskProfile.cs) |
 | 53 | Max position notional | ✅ Uygulandı | Sembol/gross notional capacity position sizing'e uygulanıyor. [Risk testleri](../tests/TradingBot.Domain.Tests/RiskEngineTests.cs) |
@@ -103,7 +103,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 57 | Botlar arası etkileşim | ✅ Uygulandı | Benzersiz `ClientOrderId` yanında `(Exchange, ExchangeExecutionId)` anahtarı da duplicate ekonomik fill'i engelliyor. [Portfolio entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/PortfolioPersistenceIntegrationTests.cs) |
 | 58 | Liquidation yakınlığı | ➖ Kapsam dışı | Kaldıraç ve liquidation yok. |
 | 59 | Funding spread | ➖ Kapsam dışı | Spot-only; funding yok. |
-| 60 | Amend/cancel-replace yarışı | 🟡 Kısmi | Order state machine cancel/fill yarışını koruyor; exchange amend adapter'i henüz yok. [Order](../src/TradingBot.Domain/Orders/Order.cs) |
+| 60 | Amend/cancel-replace yarışı | 🟡 Kısmi | Order ve kalıcı reservation aynı transaction'da fill-first/cancel-first yarışını koruyor; exchange amend adapter'i henüz yok. [Reservation use case testleri](../tests/TradingBot.Application.Tests/SpotOrderReservationUseCaseTests.cs) |
 
 ## Bölüm 5 — Güvenlik, Kimlik Doğrulama ve Loglama
 
@@ -143,7 +143,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 87 | NaN/Infinity | ⬜ Planlandı | İndikatör katmanı geldiğinde finite-output guard testleri gerekli. |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
 | 89 | Overfitting | ⬜ Planlandı | Walk-forward, out-of-sample ve data/version kayıtları gerekli. |
-| 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarış testleri mevcut. [Order testleri](../tests/TradingBot.Domain.Tests/OrderTests.cs) |
+| 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç
 

@@ -156,16 +156,17 @@ public sealed class PersistCompletedSpotFillTests
     {
         private readonly Dictionary<(string Exchange, string Asset), AssetBalance> _balances = [];
         private readonly Dictionary<InstrumentId, SpotPosition> _positions = [];
+        private readonly Dictionary<OrderId, SpotOrderReservation> _reservations = [];
 
         public List<SpotExecutionRecord> Executions { get; } = [];
         public List<AuditRecord> Audits { get; } = [];
         public List<OutboxRecord> Outbox { get; } = [];
 
-        public Task<bool> ExecutionExistsAsync(
+        public Task<SpotExecutionRecord?> GetExecutionAsync(
             string exchange,
             string exchangeExecutionId,
             CancellationToken cancellationToken) =>
-            Task.FromResult(Executions.Any(
+            Task.FromResult(Executions.SingleOrDefault(
                 execution => execution.InstrumentId.Exchange == exchange &&
                              execution.ExchangeExecutionId == exchangeExecutionId));
 
@@ -180,11 +181,19 @@ public sealed class PersistCompletedSpotFillTests
             CancellationToken cancellationToken) =>
             Task.FromResult(_positions.GetValueOrDefault(instrumentId));
 
+        public Task<SpotOrderReservation?> GetReservationAsync(
+            OrderId orderId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(_reservations.GetValueOrDefault(orderId));
+
         public void StoreBalance(string exchange, AssetBalance balance) =>
             _balances[(exchange, balance.Asset.Value)] = balance;
 
         public void StorePosition(SpotPosition position) =>
             _positions[position.InstrumentId] = position;
+
+        public void StoreReservation(SpotOrderReservation reservation) =>
+            _reservations[reservation.OrderId] = reservation;
 
         public void AddExecution(SpotExecutionRecord execution) => Executions.Add(execution);
 

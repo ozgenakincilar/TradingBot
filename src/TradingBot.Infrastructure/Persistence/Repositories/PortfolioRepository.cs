@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TradingBot.Application.Abstractions.Persistence;
 using TradingBot.Domain.Instruments;
+using TradingBot.Domain.Orders;
 using TradingBot.Domain.Portfolio;
 using TradingBot.Infrastructure.Persistence.Entities;
 
@@ -8,14 +9,29 @@ namespace TradingBot.Infrastructure.Persistence.Repositories;
 
 public sealed class PortfolioRepository(TradingBotDbContext context) : IPortfolioRepository
 {
-    public Task<bool> ExecutionExistsAsync(
+    public async Task<SpotExecutionRecord?> GetExecutionAsync(
         string exchange,
         string exchangeExecutionId,
-        CancellationToken cancellationToken) =>
-        context.SpotExecutions.AsNoTracking().AnyAsync(
+        CancellationToken cancellationToken)
+    {
+        var entity = await context.SpotExecutions.AsNoTracking().SingleOrDefaultAsync(
             execution => execution.Exchange == exchange &&
                          execution.ExchangeExecutionId == exchangeExecutionId,
             cancellationToken);
+        return entity is null
+            ? null
+            : new SpotExecutionRecord(
+                entity.OrderId is null ? null : OrderId.From(entity.OrderId.Value),
+                entity.ExchangeExecutionId,
+                InstrumentId.Create(entity.Exchange, entity.Symbol),
+                (OrderSide)entity.Side,
+                entity.Quantity,
+                entity.Price,
+                entity.QuoteFee,
+                entity.RealizedPnl,
+                entity.OccurredAt,
+                entity.CorrelationId);
+    }
 
     public async Task<AssetBalance?> GetBalanceAsync(
         string exchange,
@@ -47,6 +63,27 @@ public sealed class PortfolioRepository(TradingBotDbContext context) : IPortfoli
                 entity.ReservedSellQuantity,
                 entity.AverageEntryPrice,
                 entity.RealizedPnl,
+                entity.UpdatedAt);
+    }
+
+    public async Task<SpotOrderReservation?> GetReservationAsync(
+        OrderId orderId,
+        CancellationToken cancellationToken)
+    {
+        var entity = await context.SpotOrderReservations.FindAsync([orderId.Value], cancellationToken);
+        return entity is null
+            ? null
+            : SpotOrderReservation.Restore(
+                orderId,
+                InstrumentId.Create(entity.Exchange, entity.Symbol),
+                AssetCode.Create(entity.BaseAsset),
+                AssetCode.Create(entity.QuoteAsset),
+                (OrderSide)entity.Side,
+                entity.ApprovedQuantity,
+                entity.FilledQuantity,
+                entity.RemainingReserved,
+                (SpotReservationStatus)entity.Status,
+                entity.CreatedAt,
                 entity.UpdatedAt);
     }
 
@@ -98,11 +135,39 @@ public sealed class PortfolioRepository(TradingBotDbContext context) : IPortfoli
         entity.UpdatedAt = position.UpdatedAt;
     }
 
+    public void StoreReservation(SpotOrderReservation reservation)
+    {
+        ArgumentNullException.ThrowIfNull(reservation);
+        var entity = context.SpotOrderReservations.Local.SingleOrDefault(
+            candidate => candidate.OrderId == reservation.OrderId.Value);
+        if (entity is null)
+        {
+            entity = new SpotOrderReservationEntity
+            {
+                OrderId = reservation.OrderId.Value,
+                Exchange = reservation.InstrumentId.Exchange,
+                Symbol = reservation.InstrumentId.Symbol,
+                BaseAsset = reservation.BaseAsset.Value,
+                QuoteAsset = reservation.QuoteAsset.Value,
+                Side = (byte)reservation.Side,
+                CreatedAt = reservation.CreatedAt
+            };
+            context.SpotOrderReservations.Add(entity);
+        }
+
+        entity.ApprovedQuantity = reservation.ApprovedQuantity;
+        entity.FilledQuantity = reservation.FilledQuantity;
+        entity.RemainingReserved = reservation.RemainingReserved;
+        entity.Status = (byte)reservation.Status;
+        entity.UpdatedAt = reservation.UpdatedAt;
+    }
+
     public void AddExecution(SpotExecutionRecord execution)
     {
         ArgumentNullException.ThrowIfNull(execution);
         context.SpotExecutions.Add(new SpotExecutionEntity
         {
+            OrderId = execution.OrderId?.Value,
             Exchange = execution.InstrumentId.Exchange,
             ExchangeExecutionId = execution.ExchangeExecutionId,
             Symbol = execution.InstrumentId.Symbol,

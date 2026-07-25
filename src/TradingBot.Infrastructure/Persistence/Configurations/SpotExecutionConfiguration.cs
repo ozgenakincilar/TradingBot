@@ -15,6 +15,11 @@ public sealed class SpotExecutionConfiguration : IEntityTypeConfiguration<SpotEx
             execution.ExchangeExecutionId
         });
         builder.HasIndex(static execution => new { execution.Exchange, execution.Symbol, execution.OccurredAt });
+        builder.HasIndex(static execution => execution.OrderId);
+        builder.HasOne<ExecutionOrderEntity>()
+            .WithMany()
+            .HasForeignKey(static execution => execution.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.Property(static execution => execution.Exchange).HasMaxLength(32).IsUnicode(false);
         builder.Property(static execution => execution.ExchangeExecutionId).HasMaxLength(128).IsUnicode(false);
         builder.Property(static execution => execution.Symbol).HasMaxLength(32).IsUnicode(false);

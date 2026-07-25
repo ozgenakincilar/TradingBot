@@ -54,6 +54,9 @@
 - Tam gerçekleşen paper fill; rezervasyon ve settlement adımlarını tek uygulama transaction'ında yürütür.
 - Borsa execution ID'si aynı borsa içinde idempotency anahtarıdır; tekrar gelen fill ikinci kez bakiye veya PnL değiştiremez.
 - `AssetBalance` ve `SpotPosition` kalıcı durumdan invariant doğrulamasıyla yeniden oluşturulur.
+- `SpotOrderReservation`, order başına ayrılan quote/base tutarını fill'ler arasında taşır; duplicate fill ekonomik etki oluşturmaz.
+- Partial fill yalnızca gerçekleşen tutarı tüketir. Final fill fiyat iyileşmesi fazlasını, cancel ise yalnız kalan rezervasyonu serbest bırakır.
+- Reservation, `Order` state machine ile aynı transaction'da `Active` durumundan yalnız `Filled` veya `Cancelled` terminal durumuna geçer.
 
 ## 3. Temel value object’ler
 

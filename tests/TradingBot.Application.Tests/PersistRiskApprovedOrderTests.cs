@@ -152,6 +152,13 @@ public sealed class PersistRiskApprovedOrderTests
 
         public void Add(Order order) => Orders.Add(order);
 
+        public Task<Order?> GetAsync(OrderId orderId, CancellationToken cancellationToken) =>
+            Task.FromResult(Orders.SingleOrDefault(order => order.Id == orderId));
+
+        public void Store(Order order)
+        {
+        }
+
         public void Add(Guid id, OrderId orderId, RiskDecision decision, DateTimeOffset occurredAt) =>
             RiskDecisions.Add(decision);
 

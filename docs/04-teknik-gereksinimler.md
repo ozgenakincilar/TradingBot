@@ -70,6 +70,8 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - `portfolio.AssetBalances` ve `portfolio.SpotPositions` güncel aggregate snapshot'larını `rowversion` ile saklar.
 - `portfolio.SpotExecutions`, `(Exchange, ExchangeExecutionId)` birleşik anahtarıyla duplicate fill'i veritabanı seviyesinde engeller.
 - Portfolio snapshot, execution ledger, audit ve outbox aynı Serializable transaction'da yazılır.
+- `portfolio.SpotOrderReservations`, `execution.Orders` ile bire bir bağlıdır ve açık/partial emir fonlarını restart sonrasında yeniden kurmak için saklar.
+- Order state, reservation, balance, position, execution ledger, audit ve outbox aynı fill/cancel kararında atomik güncellenir.
 
 ### ACID transaction gereksinimleri
 

@@ -2,6 +2,8 @@ namespace TradingBot.Infrastructure.Persistence.Entities;
 
 public sealed class SpotExecutionEntity
 {
+    public Guid? OrderId { get; set; }
+
     public required string Exchange { get; set; }
 
     public required string ExchangeExecutionId { get; set; }

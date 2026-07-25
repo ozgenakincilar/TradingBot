@@ -5,6 +5,7 @@ using TradingBot.Domain.Portfolio;
 namespace TradingBot.Application.Abstractions.Persistence;
 
 public sealed record SpotExecutionRecord(
+    OrderId? OrderId,
     string ExchangeExecutionId,
     InstrumentId InstrumentId,
     OrderSide Side,
@@ -17,7 +18,7 @@ public sealed record SpotExecutionRecord(
 
 public interface IPortfolioRepository
 {
-    Task<bool> ExecutionExistsAsync(
+    Task<SpotExecutionRecord?> GetExecutionAsync(
         string exchange,
         string exchangeExecutionId,
         CancellationToken cancellationToken);
@@ -31,9 +32,15 @@ public interface IPortfolioRepository
         InstrumentId instrumentId,
         CancellationToken cancellationToken);
 
+    Task<SpotOrderReservation?> GetReservationAsync(
+        OrderId orderId,
+        CancellationToken cancellationToken);
+
     void StoreBalance(string exchange, AssetBalance balance);
 
     void StorePosition(SpotPosition position);
+
+    void StoreReservation(SpotOrderReservation reservation);
 
     void AddExecution(SpotExecutionRecord execution);
 }

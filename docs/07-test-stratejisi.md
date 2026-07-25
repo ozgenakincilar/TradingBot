@@ -26,6 +26,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Aynı borsa execution ID'sinin tekrar uygulanmasının bakiye, pozisyon ve PnL'yi değiştirmemesi.
 - Portfolio snapshot, execution ledger, audit ve outbox'ın gerçek SQL Server transaction'ında birlikte commit edilmesi.
 - Partial fill ve cancel/fill yarışı.
+- Partial fill sonrasında yalnız kalan rezervasyonun cancel ile açılması; final fill sonrası fiyat iyileşmesi fazlasının iadesi.
+- Fill-first ve cancel-first sıralamalarında tek terminal sonucun kazanması; geç kalan olayın ekonomik durumu değiştirmemesi.
 - Duplicate/out-of-order market ve user events.
 - WebSocket gap ve REST onarımı.
 - POST timeout sonrası unknown order reconciliation.

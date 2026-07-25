@@ -215,4 +215,37 @@ sequenceDiagram
     end
 ```
 
-Bu akış ilk sürümde tamamen gerçekleşen paper fill içindir. Açık ve parçalı emirlerin uzun ömürlü rezervasyonları execution state machine ile birlikte ayrıca uygulanacaktır.
+Bu kısa yol tamamen gerçekleşen paper fill içindir. Açık ve parçalı emirler aşağıdaki kalıcı rezervasyon yaşam döngüsünü kullanır.
+
+## 10. Partial fill ve kalıcı rezervasyon yaşam döngüsü
+
+```mermaid
+sequenceDiagram
+    participant EX as Paper/Exchange Execution
+    participant APP as Reservation Use Cases
+    participant ORD as Order Aggregate
+    participant PF as Portfolio Domain
+    participant DB as SQL Server
+
+    APP->>DB: BEGIN SERIALIZABLE
+    APP->>PF: Reserve buy quote / sell base
+    APP->>DB: OrderReservation + Balance/Position + Audit + Outbox
+    APP->>DB: COMMIT
+    loop Her benzersiz partial fill
+        EX->>APP: Fill(ExecutionId, quantity, price, fee)
+        APP->>DB: BEGIN SERIALIZABLE + duplicate kontrolü
+        APP->>ORD: ApplyFill
+        APP->>PF: Consume only actual fill + fee
+        APP->>DB: Order + Reservation + Portfolio + Execution + Audit + Outbox
+        APP->>DB: COMMIT
+    end
+    alt Fill kalan miktarı tamamlar
+        APP->>PF: Fiyat/fee tahmin fazlasını serbest bırak
+        APP->>ORD: Filled
+    else Cancel onayı önce kesinleşir
+        APP->>PF: Yalnız RemainingReserved değerini serbest bırak
+        APP->>ORD: Cancelled
+    end
+```
+
+Serializable transaction ve `rowversion`, aynı order üzerindeki fill/cancel yarışında lost update'i engeller. Terminal reservation'a gelen geç olay bakiye veya PnL oluşturamaz.

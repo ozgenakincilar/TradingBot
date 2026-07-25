@@ -19,9 +19,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 16 |
-| 🟡 Kısmi | 32 |
-| ⬜ Planlandı | 46 |
+| ✅ Uygulandı | 17 |
+| 🟡 Kısmi | 33 |
+| ⬜ Planlandı | 44 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -62,7 +62,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 26 | Event subscription leak | ⬜ Planlandı | Stream/event abonelikleri eklendiğinde async-disposable yaşam döngüsü gerekli. |
 | 27 | Pinned memory | ⬜ Planlandı | Native/pinned buffer henüz yok; eklenirse profiling ve bounded lifetime zorunlu. |
 | 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; OKX hosted worker her ekonomik event için ayrı async scope açıyor ve scoped state saklamıyor. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
-| 29 | Büyük dosya okuma | ⬜ Planlandı | Backtest reader streaming olacak; büyük CSV fixture testi gerekli. |
+| 29 | Büyük dosya okuma | ✅ Uygulandı | CSV raw hash ve candle parse 64 KiB buffer ile async streaming; 25.000 candle fixture exact count/range ile testli, `ReadAllLines` yok. [CSV dataset testleri](../tests/TradingBot.Infrastructure.Tests/CsvHistoricalCandleDatasetTests.cs) |
 | 30 | AsyncLocal veri kayması | ⬜ Planlandı | Correlation context eklendiğinde immutable scope ve paralellik testi gerekli. |
 
 ## Bölüm 3 — Finansal Matematik ve Veri Doğruluğu
@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | ⬜ Planlandı | Walk-forward, out-of-sample ve data/version kayıtları gerekli. |
+| 89 | Overfitting | 🟡 Kısmi | Chronological train/validation/OOS split, parameter-selection OOS yield yasağı ve dataset/config/seed manifest hash'i testli; walk-forward ve çoklu OOS kanıtı kaldı. [Dataset governance testleri](../tests/TradingBot.Application.Tests/BacktestDatasetGovernanceTests.cs) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç

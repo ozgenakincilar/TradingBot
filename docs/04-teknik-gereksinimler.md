@@ -99,6 +99,15 @@
 - Open fill'de mevcut candle'ın henüz bilinmeyen toplam hacmi kullanılmaz. Yalnız karar anında kapanmış önceki candle base volume değeri likidite proxy'sidir.
 - Backtest allocation kullanılabilir cash ile sınırlıdır; leverage, borçlanma, short ve negatif Spot quantity oluşturamaz. Veri sonunda açık pozisyon zorla kapatılmaz.
 - Next-open OHLCV proxy intrabar order book/queue position sağlamaz; rapor production kârlılık kanıtı veya aylık hedef garantisi değildir.
+
+### Historical dataset ve run kimliği
+
+- Canonical CSV header `open_time_utc,open,high,low,close,base_volume`; UTF-8, UTC round-trip timestamp ve invariant decimal zorunludur. Quoted/ekstra kolon veya serbest locale formatı kabul edilmez.
+- CSV raw byte SHA-256 hesabı ve candle parse aynı salt-okunur file handle üzerinde iki streaming geçişle yapılır; 64 KiB file buffer kullanılır ve tüm dosya RAM'e alınmaz.
+- Reader tek kullanımlıdır. Yalnız EOF'ye ulaşan contiguous dataset `CompletedSummary` üretir; erken consumer stop, cancellation veya parse hatası manifest kanıtı oluşturamaz.
+- Manifest data/config/manifest SHA-256, dataset count/range, strategy version, execution varsayımları, split, purpose, partition listesi ve random seed taşır.
+- Train/validation/OOS split'leri UTC `[start,end)` aralıklarıdır. Parameter selection OOS candle yield edemez; final evaluation yalnız OOS partition'ıyla çalışır.
+- Split sınırları `15m/1H` boundary'lerine hizalı ve her iki dataset tarafından tamamen kapsanmış olmak zorundadır.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

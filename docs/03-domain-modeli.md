@@ -44,6 +44,9 @@
 - `DeterministicStrategyBacktest`, iki timeframe'i async/streaming işler, eşit kapanışta trendi önce alır ve yalnız karar + sanal position state replay eder; fill/PnL veya ekonomik intent üretmez.
 - `BacktestExecutionSimulator`, decision replay'i bir sonraki signal candle açılışında sentetik spread, yönsel slippage, minimum latency, iki taraflı quote fee ve önceki kapalı candle hacmine dayalı katılım sınırıyla yürütür.
 - Backtest nakdi başlangıç bakiyesini aşamaz; `SpotPosition` fee-adjusted cost/PnL üretir. Rapor gross/net return, maliyetler, net liquidation, drawdown, win rate, profit factor, expectancy, holding time, açık pozisyon ve pending target taşır.
+- `HistoricalCandleDatasetDescriptor/Summary`, dataset source/schema/SHA-256 kimliği ile tam-okuma sonrası count ve UTC aralığını taşır; EOF görülmeden summary oluşmaz.
+- `ChronologicalDatasetSplit` train/validation/OOS aralıklarını kesişmeyen zaman sınırlarıyla sınıflandırır. `BacktestExperimentPlan`, parameter selection'dan OOS'u dışlar ve final evaluation'ı yalnız OOS'a kilitler.
+- `BacktestRunManifest`, dataset, strategy, execution config, split, purpose, partition ve seed'in canonical data/config/manifest SHA-256 kimliklerini üretir.
 - `StrategyDecision` yalnız `Hold`, `EnterLong` veya `ExitToFlat` olabilir; short kararı tip sisteminde yoktur.
 - Karar yalnız tanımla aynı instrument/timeframe candle'ları kullanabilir. Sinyal candle'ı değerlendirme anında kapanmış, trend candle'ı ise sinyal kapanışından daha yeni olmamalıdır.
 - Gelecekteki `StrategyInstance` aggregate'i parametre sürümü, çalışma durumu ve son işlenen barı taşıyacaktır.

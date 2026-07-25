@@ -75,6 +75,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Reconciliation run'ları snapshot hash ile idempotent saklanır; aynı snapshot ID farklı içerikle yeniden kullanılamaz.
 - `operations.TradingSafetyStates`, reconciliation farkında `rowversion` korumalı halt durumunu taşır ve execution persistence yeni exposure'ı reddeder.
 - Temiz reconciliation sonucu halt'ı otomatik temizleyemez; recovery için ayrıca yetkili, audit edilen bir operasyon gerekir.
+- Safety recovery iki ardışık temiz snapshot, benzersiz recovery ID, operatör kimliği ve gerekçe olmadan çalışmaz.
+- Recovery kanıtı `operations.TradingSafetyRecoveries` tablosunda append-only tutulur; safety state, recovery, audit ve outbox aynı transaction'da yazılır.
+- Risk kararı son safety transition'dan eskiyse, halt kaldırılmış olsa bile execution persistence tarafından reddedilir.
 
 ### ACID transaction gereksinimleri
 

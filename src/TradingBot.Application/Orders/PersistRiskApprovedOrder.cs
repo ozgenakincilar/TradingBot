@@ -50,12 +50,19 @@ public sealed class PersistRiskApprovedOrder(
                 }
 
 
-                if (await reconciliation.IsTradingHaltedAsync(
+                var safety = await reconciliation.GetSafetyStateAsync(
                         command.Order.InstrumentId.Exchange,
-                        transactionCancellationToken))
+                        transactionCancellationToken);
+                if (safety?.IsHalted == true)
                 {
                     throw new DomainRuleViolationException(
                         "New exposure is blocked by the exchange trading safety halt.");
+                }
+
+                if (safety is not null && command.OccurredAt < safety.UpdatedAt)
+                {
+                    throw new DomainRuleViolationException(
+                        "Risk approval predates the latest trading safety transition.");
                 }
 
                 var payload = SerializeEvent(command);

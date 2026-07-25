@@ -60,6 +60,9 @@
 - `SpotReconciliationEngine`, borsanın account snapshot'ını yerel balance ve aktif order state'iyle karşılaştırır.
 - `canTrade=false`, balance farkı, kayıp/fazladan order veya fill miktarı farkı kritik discrepancy'dir ve kalıcı trading halt üretir.
 - Temiz bir snapshot mevcut halt'ı otomatik kaldırmaz; güvenli yeniden açma ayrı bir operatör sürecidir.
+- Recovery en az iki ardışık, halt sonrasında oluşmuş, tutarlı ve `canTrade=true` snapshot gerektirir.
+- Recovery ID idempotency anahtarıdır; operatör kimliği, gerekçe ve kanıt snapshot ID'leri append-only saklanır.
+- Son safety transition'dan eski risk onayı recovery sonrasında dahi yeni order oluşturamaz.
 
 ## 3. Temel value object’ler
 

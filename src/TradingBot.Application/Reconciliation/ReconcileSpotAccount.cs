@@ -74,7 +74,12 @@ public sealed class ReconcileSpotAccount(
             var safety = await reconciliation.GetSafetyStateAsync(
                 command.Snapshot.Exchange,
                 transactionCancellationToken);
-            if (safety is not null && command.Snapshot.OccurredAt < safety.UpdatedAt)
+            var latestRun = (await reconciliation.GetRecentRunsAsync(
+                command.Snapshot.Exchange,
+                1,
+                transactionCancellationToken)).SingleOrDefault();
+            if ((safety is not null && command.Snapshot.OccurredAt < safety.UpdatedAt) ||
+                (latestRun is not null && command.Snapshot.OccurredAt < latestRun.SnapshotOccurredAt))
             {
                 throw new DomainRuleViolationException(
                     "A reconciliation snapshot cannot move account safety state backwards in time.");
@@ -107,11 +112,14 @@ public sealed class ReconcileSpotAccount(
                 : result.ShouldHaltTrading
                     ? $"Reconciliation {command.Snapshot.SnapshotId} found {result.Discrepancies.Count} discrepancy(s)."
                     : null;
+            var safetyUpdatedAt = safety is null || safety.IsHalted != isHalted
+                ? command.Snapshot.OccurredAt
+                : safety.UpdatedAt;
             reconciliation.StoreSafetyState(new TradingSafetyStateRecord(
                 command.Snapshot.Exchange,
                 isHalted,
                 haltReason,
-                command.Snapshot.OccurredAt));
+                safetyUpdatedAt));
             reconciliation.AddRun(new ReconciliationRunRecord(
                 command.Snapshot.Exchange,
                 command.Snapshot.SnapshotId,

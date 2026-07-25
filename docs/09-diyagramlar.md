@@ -275,3 +275,32 @@ sequenceDiagram
         Note over REC,DB: Önceden aktif halt otomatik kaldırılmaz
     end
 ```
+
+## 12. Kontrollü trading safety recovery
+
+```mermaid
+sequenceDiagram
+    participant OP as Yetkili Operatör
+    participant REC as Reconciliation
+    participant SAFE as RecoverTradingSafety
+    participant DB as SQL Server
+    participant ORD as Order Persistence Gate
+
+    REC->>DB: Clean snapshot #1 (halt sonrasında)
+    REC->>DB: Clean snapshot #2 (halt sonrasında)
+    OP->>SAFE: RecoveryId + OperatorId + Reason
+    SAFE->>DB: BEGIN SERIALIZABLE
+    SAFE->>DB: Halt state + son 2 run + duplicate RecoveryId
+    alt Kanıt eksik veya snapshot kirli
+        SAFE-->>OP: Recovery reddedildi
+    else İki snapshot tutarlı ve canTrade=true
+        SAFE->>DB: SafetyState=Ready + Recovery + Audit + Outbox
+        SAFE->>DB: COMMIT
+        ORD->>DB: Yeni risk onayının zamanı safety transition'dan sonra mı?
+        alt Eski risk onayı
+            ORD-->>ORD: Reddet; yeniden risk değerlendirmesi gerekli
+        else Yeni risk onayı
+            ORD->>DB: Atomik order persistence
+        end
+    end
+```

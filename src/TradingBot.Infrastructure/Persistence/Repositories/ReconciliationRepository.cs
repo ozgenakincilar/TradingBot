@@ -31,6 +31,43 @@ public sealed class ReconciliationRepository(TradingBotDbContext context) : IRec
                 entity.UpdatedAt);
     }
 
+    public async Task<IReadOnlyCollection<ReconciliationRunRecord>> GetRecentRunsAsync(
+        string exchange,
+        int count,
+        CancellationToken cancellationToken)
+    {
+        if (count <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        var entities = await context.ReconciliationRuns
+            .AsNoTracking()
+            .Where(run => run.Exchange == exchange)
+            .OrderByDescending(static run => run.SnapshotOccurredAt)
+            .ThenByDescending(static run => run.SnapshotId)
+            .Take(count)
+            .ToArrayAsync(cancellationToken);
+        return entities.Select(Map).ToArray();
+    }
+
+    public async Task<TradingSafetyRecoveryRecord?> GetRecoveryAsync(
+        Guid recoveryId,
+        CancellationToken cancellationToken)
+    {
+        var entity = await context.TradingSafetyRecoveries.FindAsync([recoveryId], cancellationToken);
+        return entity is null
+            ? null
+            : new TradingSafetyRecoveryRecord(
+                entity.Id,
+                entity.Exchange,
+                entity.OperatorId,
+                entity.Reason,
+                entity.OccurredAt,
+                entity.EvidenceSnapshotIdsJson,
+                entity.CorrelationId);
+    }
+
     public Task<bool> IsTradingHaltedAsync(string exchange, CancellationToken cancellationToken) =>
         context.TradingSafetyStates.AsNoTracking().AnyAsync(
             state => state.Exchange == exchange && state.IsHalted,
@@ -67,6 +104,21 @@ public sealed class ReconciliationRepository(TradingBotDbContext context) : IRec
         entity.IsHalted = state.IsHalted;
         entity.HaltReason = state.HaltReason;
         entity.UpdatedAt = state.UpdatedAt;
+    }
+
+    public void AddRecovery(TradingSafetyRecoveryRecord recovery)
+    {
+        ArgumentNullException.ThrowIfNull(recovery);
+        context.TradingSafetyRecoveries.Add(new TradingSafetyRecoveryEntity
+        {
+            Id = recovery.Id,
+            Exchange = recovery.Exchange,
+            OperatorId = recovery.OperatorId,
+            Reason = recovery.Reason,
+            OccurredAt = recovery.OccurredAt,
+            EvidenceSnapshotIdsJson = recovery.EvidenceSnapshotIdsJson,
+            CorrelationId = recovery.CorrelationId
+        });
     }
 
     private static ReconciliationRunRecord Map(ReconciliationRunEntity entity) =>

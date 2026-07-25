@@ -34,6 +34,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Exchange/local balance ve aktif order snapshot farkının kalıcı halt oluşturması.
 - Duplicate reconciliation snapshot'ın idempotent olması ve aynı ID ile çelişen içeriğin reddedilmesi.
 - Reconciliation halt aktifken yeni ekonomik order'ın persistence kapısında reddedilmesi.
+- Tek temiz snapshot ile recovery'nin reddedilmesi; iki ardışık temiz snapshot ve operatör kanıtıyla halt'ın açılması.
+- Recovery sonrasında eski risk onayının reddedilip yalnız yeni risk kararının kabul edilmesi.
+- Duplicate recovery ID'nin idempotent, çelişen recovery içeriğinin hatalı olması.
 - Restart sırasında açık order/position reconstruction.
 - Stale data ve clock drift nedeniyle trading halt.
 - Daily loss, exposure ve kill switch kontrolleri.

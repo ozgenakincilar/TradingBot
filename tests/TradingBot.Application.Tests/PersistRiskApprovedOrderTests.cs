@@ -198,7 +198,21 @@ public sealed class PersistRiskApprovedOrderTests
         public Task<TradingSafetyStateRecord?> GetSafetyStateAsync(
             string exchange,
             CancellationToken cancellationToken) =>
-            Task.FromResult<TradingSafetyStateRecord?>(null);
+            Task.FromResult<TradingSafetyStateRecord?>(
+                IsHalted
+                    ? new TradingSafetyStateRecord(exchange, true, "Test halt", DateTimeOffset.MinValue)
+                    : null);
+
+        public Task<IReadOnlyCollection<ReconciliationRunRecord>> GetRecentRunsAsync(
+            string exchange,
+            int count,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<ReconciliationRunRecord>>([]);
+
+        public Task<TradingSafetyRecoveryRecord?> GetRecoveryAsync(
+            Guid recoveryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<TradingSafetyRecoveryRecord?>(null);
 
         public Task<bool> IsTradingHaltedAsync(string exchange, CancellationToken cancellationToken) =>
             Task.FromResult(IsHalted);
@@ -208,6 +222,10 @@ public sealed class PersistRiskApprovedOrderTests
         }
 
         public void StoreSafetyState(TradingSafetyStateRecord state)
+        {
+        }
+
+        public void AddRecovery(TradingSafetyRecoveryRecord recovery)
         {
         }
 

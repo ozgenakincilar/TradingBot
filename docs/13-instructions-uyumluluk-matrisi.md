@@ -92,7 +92,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 46 | Rate-limit score | ⬜ Planlandı | Weight header parser ve merkezi limiter gerekli. |
 | 47 | Açık emir limiti | ✅ Uygulandı | Risk profili maksimum açık emir sayısını reddediyor. [RiskEngine](../src/TradingBot.Domain/Risk/RiskEngine.cs) |
 | 48 | Cancel ratio | ⬜ Planlandı | Cancel/fill metriği ve throttle gerekli. |
-| 49 | Account freeze | 🟡 Kısmi | Snapshot `canTrade=false` durumu kalıcı halt üretip yeni order'ı engelliyor; gerçek exchange account adaptörü henüz yok. [Reconciliation SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
+| 49 | Account freeze | 🟡 Kısmi | `canTrade=false` kalıcı halt üretiyor; iki temiz snapshot ve operatör kanıtı olmadan açılamıyor. Gerçek exchange account adaptörü henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
 | 50 | Yetersiz bakiye | 🟡 Kısmi | Kalıcı rezervasyon ve exchange/local balance reconciliation farkta halt üretiyor; gerçek account adaptörü ve kontrollü state correction henüz yok. [Reconciliation motoru](../src/TradingBot.Domain/Reconciliation/SpotReconciliation.cs) |
 | 51 | Kaldıraç kısıtlaması | ➖ Kapsam dışı | Kaldıraç yok. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 52 | Asset exposure | 🟡 Kısmi | Sembol ve gross exposure var; sektör/korelasyon limiti henüz yok. [RiskProfile](../src/TradingBot.Domain/Risk/RiskProfile.cs) |
@@ -157,8 +157,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation var; açık emir politikası/checkpoint henüz yok. |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
 | 98 | Environment mix-up | 🟡 Kısmi | Paper varsayılan ve config fail-fast var; ayrık CI credential/pipeline henüz yok. [TradingOptions](../src/TradingBot.Host/TradingOptions.cs) |
-| 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; yetkili global flatten mekanizması yok. [Order persistence gate](../src/TradingBot.Application/Orders/PersistRiskApprovedOrder.cs) |
-| 100 | Manuel müdahale | 🟡 Kısmi | Account snapshot ile harici balance/order farkı algılanıp halt ediliyor; user stream, periyodik scheduler ve kontrollü state correction henüz yok. [Reconciliation use case](../src/TradingBot.Application/Reconciliation/ReconcileSpotAccount.cs) |
+| 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; recovery kanıtlı ve audit'li. Global flatten mekanizması yok. [Recovery use case](../src/TradingBot.Application/Reconciliation/RecoverTradingSafety.cs) |
+| 100 | Manuel müdahale | 🟡 Kısmi | Harici fark halt ediliyor; iki temiz snapshot+operatör onaylı recovery ve eski risk kararı reddi var. User stream ve kontrollü state correction henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
 
 ## Güncelleme politikası
 

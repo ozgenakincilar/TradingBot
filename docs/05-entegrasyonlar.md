@@ -54,6 +54,8 @@ Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uy
 - Farklar otomatik olarak yerel finansal state'in üzerine yazılmaz; run/audit/outbox ile kaydedilip kalıcı trading halt etkinleştirilir.
 - Aynı snapshot ID yalnız aynı canonical SHA-256 içerikle idempotent kabul edilir.
 - Halt kaldırma, ardışık temiz snapshot ve operatör onayı politikası uygulanana kadar otomatik değildir.
+- Kontrollü recovery iki ardışık temiz snapshot ister; recovery ID, operatör ve gerekçe audit/outbox ile kalıcılaştırılır.
+- Recovery, halt sırasında üretilmiş eski intent/risk kararlarını yeniden etkinleştirmez; yeni risk değerlendirmesi gerekir.
 
 ## 4. Dayanıklılık matrisi
 

@@ -17,6 +17,15 @@ public sealed record TradingSafetyStateRecord(
     string? HaltReason,
     DateTimeOffset UpdatedAt);
 
+public sealed record TradingSafetyRecoveryRecord(
+    Guid Id,
+    string Exchange,
+    string OperatorId,
+    string Reason,
+    DateTimeOffset OccurredAt,
+    string EvidenceSnapshotIdsJson,
+    string CorrelationId);
+
 public interface IReconciliationRepository
 {
     Task<ReconciliationRunRecord?> GetRunAsync(
@@ -28,9 +37,20 @@ public interface IReconciliationRepository
         string exchange,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<ReconciliationRunRecord>> GetRecentRunsAsync(
+        string exchange,
+        int count,
+        CancellationToken cancellationToken);
+
+    Task<TradingSafetyRecoveryRecord?> GetRecoveryAsync(
+        Guid recoveryId,
+        CancellationToken cancellationToken);
+
     Task<bool> IsTradingHaltedAsync(string exchange, CancellationToken cancellationToken);
 
     void AddRun(ReconciliationRunRecord run);
 
     void StoreSafetyState(TradingSafetyStateRecord state);
+
+    void AddRecovery(TradingSafetyRecoveryRecord recovery);
 }

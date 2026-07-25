@@ -26,6 +26,8 @@ public sealed class TradingBotDbContext(DbContextOptions<TradingBotDbContext> op
 
     public DbSet<TradingSafetyStateEntity> TradingSafetyStates => Set<TradingSafetyStateEntity>();
 
+    public DbSet<TradingSafetyRecoveryEntity> TradingSafetyRecoveries => Set<TradingSafetyRecoveryEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

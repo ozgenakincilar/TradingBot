@@ -68,6 +68,39 @@ public sealed class ReconcileSpotAccountTests
         Assert.True(store.Safety?.IsHalted);
     }
 
+    [Fact]
+    public async Task RecoveryRequiresTwoCleanSnapshotsAndOperatorEvidence()
+    {
+        var store = CreateStore(localTotal: 100m);
+        await CreateHandler(store).HandleAsync(
+            Command("snapshot-bad", remoteTotal: 99m, Now),
+            CancellationToken.None);
+        await CreateHandler(store).HandleAsync(
+            Command("snapshot-clean-1", remoteTotal: 100m, Now.AddSeconds(1)),
+            CancellationToken.None);
+
+        var recoveryId = Guid.Parse("55908a72-07ba-43b2-9964-055485e62c4c");
+        var earlyRecovery = () => CreateRecoveryHandler(store).HandleAsync(
+            RecoveryCommand(recoveryId, Now.AddSeconds(2)),
+            CancellationToken.None);
+        await Assert.ThrowsAsync<TradingBot.Domain.Common.DomainRuleViolationException>(earlyRecovery);
+
+        await CreateHandler(store).HandleAsync(
+            Command("snapshot-clean-2", remoteTotal: 100m, Now.AddSeconds(2)),
+            CancellationToken.None);
+        var recovered = await CreateRecoveryHandler(store).HandleAsync(
+            RecoveryCommand(recoveryId, Now.AddSeconds(3)),
+            CancellationToken.None);
+        var duplicate = await CreateRecoveryHandler(store).HandleAsync(
+            RecoveryCommand(recoveryId, Now.AddSeconds(3)),
+            CancellationToken.None);
+
+        Assert.Equal(TradingSafetyRecoveryResult.Recovered, recovered);
+        Assert.Equal(TradingSafetyRecoveryResult.AlreadyRecovered, duplicate);
+        Assert.False(store.Safety?.IsHalted);
+        Assert.Single(store.Recoveries);
+    }
+
     private static RecordingStore CreateStore(decimal localTotal)
     {
         var store = new RecordingStore();
@@ -97,6 +130,18 @@ public sealed class ReconcileSpotAccountTests
     private static ReconcileSpotAccount CreateHandler(RecordingStore store) =>
         new(store, store, store, store, store, store, new SystemIdGenerator());
 
+    private static RecoverTradingSafety CreateRecoveryHandler(RecordingStore store) =>
+        new(store, store, store, store, new SystemIdGenerator());
+
+    private static RecoverTradingSafetyCommand RecoveryCommand(Guid recoveryId, DateTimeOffset occurredAt) =>
+        new(
+            recoveryId,
+            "TEST",
+            "operator-1",
+            "Two clean snapshots reviewed.",
+            occurredAt,
+            "correlation-recovery");
+
     private sealed class RecordingStore :
         IOrderRepository,
         IPortfolioRepository,
@@ -109,6 +154,7 @@ public sealed class ReconcileSpotAccountTests
         public List<Order> Orders { get; } = [];
         public List<SpotExecutionRecord> Executions { get; } = [];
         public List<ReconciliationRunRecord> Runs { get; } = [];
+        public List<TradingSafetyRecoveryRecord> Recoveries { get; } = [];
         public List<AuditRecord> Audits { get; } = [];
         public List<OutboxRecord> Outbox { get; } = [];
         public TradingSafetyStateRecord? Safety { get; private set; }
@@ -182,12 +228,29 @@ public sealed class ReconcileSpotAccountTests
             CancellationToken cancellationToken) =>
             Task.FromResult(Safety);
 
+        public Task<IReadOnlyCollection<ReconciliationRunRecord>> GetRecentRunsAsync(
+            string exchange,
+            int count,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<ReconciliationRunRecord>>(
+                Runs.Where(run => run.Exchange == exchange)
+                    .OrderByDescending(run => run.SnapshotOccurredAt)
+                    .Take(count)
+                    .ToArray());
+
+        public Task<TradingSafetyRecoveryRecord?> GetRecoveryAsync(
+            Guid recoveryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(Recoveries.SingleOrDefault(recovery => recovery.Id == recoveryId));
+
         public Task<bool> IsTradingHaltedAsync(string exchange, CancellationToken cancellationToken) =>
             Task.FromResult(Safety?.IsHalted == true);
 
         public void AddRun(ReconciliationRunRecord run) => Runs.Add(run);
 
         public void StoreSafetyState(TradingSafetyStateRecord state) => Safety = state;
+
+        public void AddRecovery(TradingSafetyRecoveryRecord recovery) => Recoveries.Add(recovery);
 
         public void Add(AuditRecord record) => Audits.Add(record);
 

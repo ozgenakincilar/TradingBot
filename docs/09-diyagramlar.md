@@ -685,3 +685,27 @@ flowchart LR
 ```
 
 Her pencerenin parameter-selection çalışması yalnız train/validation görür. O pencerenin OOS aralığı ayrı final evaluation'da açılır; ardışık OOS aralıkları birbirine bitişik ve çakışmasızdır.
+
+## 28. Walk-forward kimlik, rapor ve SQL persistence
+
+```mermaid
+flowchart TD
+    S[WalkForwardSchedule] --> SH[Schedule SHA-256]
+    M0[Window 0 final-OOS manifest] --> RH[Run SHA-256]
+    MN[Window N final-OOS manifest] --> RH
+    SH --> RH
+    R0[Window 0 execution report] --> VALID{Split/index/OOS ve<br/>finansal ilişkiler geçerli mi?}
+    RN[Window N execution report] --> VALID
+    VALID -- Hayır --> FAIL[Fail closed]
+    VALID -- Evet --> AGG[Mean / median / worst / best<br/>compound / drawdown / trade / fee]
+    RH --> PH[Report SHA-256]
+    AGG --> PH
+    PH --> IDEM{Run daha önce var mı?}
+    IDEM -- Aynı report --> SAME[AlreadyStored]
+    IDEM -- Farklı report --> CONFLICT[Determinism ihlali]
+    IDEM -- Yok --> TX[Serializable SQL transaction]
+    TX --> RUN[(research.WalkForwardRuns)]
+    TX --> WINDOWS[(research.WalkForwardWindowResults)]
+```
+
+`ScheduleSha256` zaman politikasını, `RunSha256` girdileri ve `ReportSha256` sonuçları tanımlar. Compound return bağımsız OOS getirilerinin varsayımsal birleşimidir; gerçek sermaye devamlılığı veya getiri garantisi değildir.

@@ -28,6 +28,11 @@ public sealed class TradingBotDbContext(DbContextOptions<TradingBotDbContext> op
 
     public DbSet<TradingSafetyRecoveryEntity> TradingSafetyRecoveries => Set<TradingSafetyRecoveryEntity>();
 
+    public DbSet<WalkForwardRunEntity> WalkForwardRuns => Set<WalkForwardRunEntity>();
+
+    public DbSet<WalkForwardWindowResultEntity> WalkForwardWindowResults =>
+        Set<WalkForwardWindowResultEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

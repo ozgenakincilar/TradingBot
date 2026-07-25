@@ -110,6 +110,10 @@
 - Split sınırları `15m/1H` boundary'lerine hizalı ve her iki dataset tarafından tamamen kapsanmış olmak zorundadır.
 - Walk-forward schedule sabit train/validation/OOS süreleriyle rolling veya expanding üretilir. İlerleme OOS süresidir; böylece OOS pencereleri çakışmaz veya boşluk bırakmaz.
 - Süreler iki timeframe'in tam katı, dataset başlangıç/bitişi iki timeframe'e hizalı olmalıdır. Tam pencere üretilememesi ve 10.000 pencere sınırının aşılması fail-closed hatadır.
+- Walk-forward schedule hash zaman politikasını, run hash sıralı final-OOS manifestlerini, report hash ise tüm pencere execution metriklerini kapsar.
+- Birleşik rapor yalnız schedule indeks/split'iyle eşleşen final-OOS sonuçlarını kabul eder; finansal oran ve maliyet ilişkileri agregasyon öncesi yeniden doğrulanır.
+- `research.WalkForwardRuns` üst sonuç/aggregate kaydını, `research.WalkForwardWindowResults` her pencerenin manifest, split ve tam execution metriklerini tutar.
+- Run ve tüm pencere kayıtları tek kısa Serializable SQL transaction'ında yazılır. Aynı run/report idempotent; aynı run/farklı report determinism ihlalidir.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

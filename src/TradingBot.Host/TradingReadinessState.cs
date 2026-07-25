@@ -3,15 +3,35 @@ namespace TradingBot.Host;
 public sealed record TradingReadinessSnapshot(
     bool InstrumentReady,
     bool MarketDataReady,
+    bool CandleHistoryRequired,
+    bool CandleHistoryReady,
     string? Instrument,
+    int? CandleTimeframeSeconds,
+    int? WarmupCandleCount,
     string? Reason)
 {
-    public bool IsReady => InstrumentReady && MarketDataReady;
+    public bool IsReady =>
+        InstrumentReady &&
+        MarketDataReady &&
+        (!CandleHistoryRequired || CandleHistoryReady);
 }
 
 public sealed class TradingReadinessState
 {
-    private TradingReadinessSnapshot _snapshot = new(false, false, null, "starting");
+    private TradingReadinessSnapshot _snapshot;
+
+    public TradingReadinessState(bool candleHistoryRequired = false)
+    {
+        _snapshot = new(
+            false,
+            false,
+            candleHistoryRequired,
+            false,
+            null,
+            null,
+            null,
+            "starting");
+    }
 
     public TradingReadinessSnapshot Snapshot => Volatile.Read(ref _snapshot);
 
@@ -20,21 +40,64 @@ public sealed class TradingReadinessState
         {
             InstrumentReady = true,
             Instrument = instrument,
-            Reason = current.MarketDataReady ? null : "market-data-not-ready"
+            Reason = GetReason(
+                true,
+                current.MarketDataReady,
+                current.CandleHistoryRequired,
+                current.CandleHistoryReady)
         });
 
     public void MarkMarketDataReady() =>
         Update(current => current with
         {
             MarketDataReady = true,
-            Reason = current.InstrumentReady ? null : "instrument-not-ready"
+            Reason = GetReason(
+                current.InstrumentReady,
+                true,
+                current.CandleHistoryRequired,
+                current.CandleHistoryReady)
         });
+
+    public void MarkCandleHistoryReady(int timeframeSeconds, int warmupCandleCount) =>
+        Update(current => current with
+        {
+            CandleHistoryReady = true,
+            CandleTimeframeSeconds = timeframeSeconds,
+            WarmupCandleCount = warmupCandleCount,
+            Reason = GetReason(
+                current.InstrumentReady,
+                current.MarketDataReady,
+                current.CandleHistoryRequired,
+                true)
+        });
+
+    public void MarkCandleHistoryNotReady(string reason) =>
+        Update(current => current with { CandleHistoryReady = false, Reason = reason });
 
     public void MarkMarketDataNotReady(string reason) =>
         Update(current => current with { MarketDataReady = false, Reason = reason });
 
     public void MarkInstrumentNotReady(string reason) =>
         Update(current => current with { InstrumentReady = false, Reason = reason });
+
+    private static string? GetReason(
+        bool instrumentReady,
+        bool marketDataReady,
+        bool candleHistoryRequired,
+        bool candleHistoryReady)
+    {
+        if (!instrumentReady)
+        {
+            return "instrument-not-ready";
+        }
+
+        if (candleHistoryRequired && !candleHistoryReady)
+        {
+            return "candle-history-not-ready";
+        }
+
+        return marketDataReady ? null : "market-data-not-ready";
+    }
 
     private void Update(Func<TradingReadinessSnapshot, TradingReadinessSnapshot> update)
     {

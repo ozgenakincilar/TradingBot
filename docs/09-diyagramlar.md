@@ -478,7 +478,10 @@ flowchart TD
     CAT --> VALID{SPOT + live + symbol eşleşmesi\npozitif tickSz/lotSz/minSz}
     VALID -- Hayır --> STOP[Host startup fail-fast\nEndpoint erişilemez]
     VALID -- Evet --> IR[Instrument ready]
-    IR --> WORKER[OkxTradingWorker başlar]
+    IR --> WARMUP{Kapalı candle warm-up\nexact + contiguous}
+    WARMUP -- Hayır --> STOP
+    WARMUP -- Evet --> CR[Candle history ready]
+    CR --> WORKER[OkxTradingWorker başlar]
     WORKER --> WS[books5 WSS + REST recovery]
     WS --> EVENT{İlk doğrulanmış event}
     EVENT -- Hayır --> WAIT[Readiness 503]
@@ -487,7 +490,7 @@ flowchart TD
     WS -. disconnect/gap/timeout .-> WAIT
 ```
 
-Bu readiness yalnız instrument ve market-data kapılarını temsil eder. SQL Server erişimi ve startup reconciliation ayrı kontroller olarak eklenene kadar production-ready iddiası oluşturmaz.
+Bu readiness instrument, kapalı candle geçmişi ve market-data kapılarını temsil eder. SQL Server erişimi ve startup reconciliation ayrı kontroller olarak eklenene kadar production-ready iddiası oluşturmaz.
 
 ## 19. Kapalı candle gap recovery
 
@@ -517,6 +520,8 @@ flowchart TD
     COPY --> GUARD{Exact bounds + contiguous recovery}
     GUARD -- Hayır --> REJECT
     GUARD -- Evet --> READY[ClosedCandleWarmupResult]
+    READY --> HOST{OKX startup gate}
+    HOST --> CANDLE_READY[CandleHistoryReady]
 ```
 
-`boundary` son tamamen kapanmış candle'ın exclusive bitişidir; devam eden açık candle aralığa dahil edilmez.
+`boundary` son tamamen kapanmış candle'ın exclusive bitişidir; devam eden açık candle aralığa dahil edilmez. Instrument ve candle-history kapıları geçtikten sonra stream başlar; ilk doğrulanmış market event gelene kadar genel readiness yine kapalıdır.

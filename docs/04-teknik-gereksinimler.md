@@ -71,7 +71,9 @@
 - Candle serisi ilk contiguous recovery uygulanmadan ready değildir. Duplicate eski candle'ı ilerletmez; gap veya aynı open time'daki çelişkili içerik seriyi fail-closed yapar.
 - Gap recovery, beklenen ilk candle ile gözlenen kapalı candle arasını `IClosedCandleHistoryClient` üzerinden `[fromInclusive, toExclusive)` aralığında ister.
 - Recovery çağrısı maksimum candle sayısıyla bounded'dır. Eksik, fazla, sırasız, farklı instrument/timeframe veya henüz açık candle içeren yanıtın hiçbir bölümü yayınlanmaz.
-- Gerçek OKX candle history adaptörü, exchange timeframe mapping'i ve warm-up orkestrasyonu sonraki dilimdir.
+- OKX V5 `GET /api/v5/market/history-candles` adaptörü tek sayfada en fazla 300 kayıt ister; ters kronolojik cevabı sıralar ve yalnız `confirm=1` satırlarını kapalı candle olarak kabul eder.
+- OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
+- Canlı candle WebSocket/aggregation ve warm-up orkestrasyonu sonraki dilimdir.
 
 ## 5. Yapılandırma
 

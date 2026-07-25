@@ -49,10 +49,11 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Hosted OKX stream supervisor: bounded snapshot/replay session, execution pump ve reconnect backoff+jitter.
 - [x] OKX public Spot instrument metadata adapter'ı, `live`/filtre startup kapısı ve instrument+market-data readiness endpoint'i.
 - [x] Borsa-bağımsız UTC timeframe/closed-candle modeli, fail-closed sequence guard ve bounded gap-recovery application portu.
+- [x] OKX V5 kapalı candle history adapter'ı, UTC bar allowlist'i ve recorded/gerçek ağ contract testleri.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - [x] Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
-- [ ] Candle aggregation ve warm-up: closed-candle/gap çekirdeği tamamlandı; OKX history adaptörü, canlı aggregation ve lookback orkestrasyonu kaldı.
+- [ ] Candle aggregation ve warm-up: closed-candle/gap/history tamamlandı; canlı aggregation ve lookback orkestrasyonu kaldı.
 - Genişletilmiş audit/outbox dispatcher ve retention işleri.
 - [ ] Readiness/startup health: instrument+market-data readiness tamamlandı; SQL/reconciliation dependency ve ayrı startup probe kaldı.
 

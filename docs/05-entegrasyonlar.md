@@ -45,7 +45,7 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 `OkxSpotInstrumentCatalog`, public instruments endpoint'ini `ISpotInstrumentCatalog` portuna dönüştürür. `OkxInstrumentStartupGate` hosted worker sıralamasında stream supervisor'dan önce çalışır; sembol/tür/filtre/state uyumsuzluğunda host başlangıcını durdurur. Ortak `TradingReadinessState`, instrument kapısı ile ilk geçerli market event'i ayrı izler ve stream kesilince market-data readiness'i kapatır.
 
-`IClosedCandleHistoryClient`, kapalı candle geçmişini borsa DTO'sundan ayırır. `RecoverClosedCandleGap` beklenen ilk sınırdan gözlenen son kapalı sınıra kadar bounded REST aralığı ister; yanıt eksiksiz ve contiguous değilse kısmi seri döndürmez. OKX endpoint adaptörü henüz eklenmemiştir.
+`IClosedCandleHistoryClient`, kapalı candle geçmişini borsa DTO'sundan ayırır. `RecoverClosedCandleGap` beklenen ilk sınırdan gözlenen son kapalı sınıra kadar bounded REST aralığı ister; yanıt eksiksiz ve contiguous değilse kısmi seri döndürmez. `OkxClosedCandleHistoryClient`, V5 history-candles yanıtını ters kronolojik sıradan normalize eder, `confirm=1` zorunluluğunu ve UTC timeframe allowlist'ini uygular. [Resmi OKX V5 API](https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-candlesticks-history)
 
 ## 3. Emir gönderimi
 

@@ -497,7 +497,7 @@ flowchart TD
     STREAM[Yeni kapalı candle] --> CHECK{Open time expected mı?}
     CHECK -- Evet --> ACCEPT[Sequence accepted]
     CHECK -- Hayır, ileri --> PAUSE[Series not-ready]
-    PAUSE --> RANGE[Bounded REST range\nexpected..observed close]
+    PAUSE --> RANGE[OKX history-candles\nbounded expected..observed close]
     RANGE --> VALID{Tam sayı + UTC boundary +\naynı instrument/timeframe + closed}
     VALID -- Hayır --> CLOSED[Hiçbir kısmi candle yayınlama]
     VALID -- Evet --> ATOMIC[Contiguous recovery atomik uygula]

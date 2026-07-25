@@ -84,6 +84,14 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     });
     builder.Services.AddTransient<ISpotInstrumentCatalog>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotInstrumentCatalog>());
+    builder.Services.AddHttpClient<OkxClosedCandleHistoryClient>((serviceProvider, client) =>
+    {
+        var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
+        client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
+    builder.Services.AddTransient<IClosedCandleHistoryClient>(serviceProvider =>
+        serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>());
     builder.Services.AddTransient<EnsureSpotInstrumentTradable>();
     builder.Services.AddSingleton<IMarketDataStreamClient>(serviceProvider =>
     {

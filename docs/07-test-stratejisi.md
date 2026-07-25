@@ -44,6 +44,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Closed candle'ın UTC timeframe sınırı, kapanış zamanı ve OHLCV invariant'ları; açık candle'ın strategy sözleşmesine girememesi.
 - Candle sequence'in recovery öncesi kapalı olması; duplicate/out-of-order davranışı ve gap/çelişkide son güvenilir sınırı ilerletmeden fail-closed kalması.
 - Bounded candle REST recovery aralığının eksik, fazla, sırasız, yanlış instrument/timeframe veya açık candle yanıtının tamamını reddetmesi.
+- OKX history-candles ters sıra mapping'i, `confirm=0` reddi, exact range, UTC bar allowlist'i ve upstream hata mesajı sanitization contract testleri; opt-in gerçek ağda gecikmeli iki tamamlanmış `1m` candle kontrolü.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.
 - OKX `books5` payload parsing, `prevSeqId` continuity, subscribe acknowledgement, hata sanitization ve crossed-book reddi.

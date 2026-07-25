@@ -111,6 +111,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Buy ask, sell bid referansını kullanır; slippage yönü kullanıcı aleyhine uygulanır.
 - Fill miktarı görünür likidite ve maksimum katılım oranıyla sınırlanır; partial fill desteklenir.
 - Quote komisyonu gerçekleşen fiyat ve miktar üzerinden hesaplanır.
+- Paper değerlendirmesi order ve reservation durumunu `AsNoTracking` ile okur; fill transaction'ı aggregate'leri Serializable transaction içinde yeniden yükler. Böylece transaction öncesi izlenen eski entity durumu kullanılmaz.
+- Piyasa olay kimliğinden türetilen execution kimliği, application ve veritabanı idempotency kapılarında aynı olayın tekrar settle edilmesini engeller.
+- Market snapshot değerlendirmesi transaction dışında, order/reservation/balance/position/execution/audit/outbox yazımı ise tek kısa transaction içinde yapılır.
 - Bu ilk model top-of-book seviyesindedir; cumulative depth ve queue position sonraki dilimdir.
 
 ## 8. Paket yönetimi

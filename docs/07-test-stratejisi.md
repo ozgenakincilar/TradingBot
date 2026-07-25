@@ -25,6 +25,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Komisyon sonrası PnL.
 - Paper market/limit fill'in latency, bid/ask, slippage, komisyon ve likidite katılım kurallarına uyması.
 - Aynı paper execution girdisinin bit düzeyinde aynı fill sonucunu üretmesi.
+- Market snapshot'ın application pipeline üzerinden partial fill üretmesi; order, reservation, balance, position, execution, audit ve outbox kayıtlarının gerçek SQL Server transaction'ında birlikte güncellenmesi.
+- Aynı piyasa olayının tekrar işlenmesinde mevcut execution'ın dönmesi ve ikinci ekonomik etkinin oluşmaması.
 - Aynı borsa execution ID'sinin tekrar uygulanmasının bakiye, pozisyon ve PnL'yi değiştirmemesi.
 - Portfolio snapshot, execution ledger, audit ve outbox'ın gerçek SQL Server transaction'ında birlikte commit edilmesi.
 - Partial fill ve cancel/fill yarışı.

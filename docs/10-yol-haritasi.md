@@ -28,6 +28,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk Spot AssetBalance/Position modeli, rezervasyon, komisyonlu ortalama maliyet ve PnL hesapları.
 - [ ] Portfolio persistence, balance/order reconciliation, halt ve iki temiz snapshot+operatör onaylı recovery tamamlandı; kontrollü state correction ve çoklu varlık projection'ları kaldı.
 - [x] İlk deterministik paper execution/fill modeli: latency, top-of-book, limit, slippage, komisyon ve partial liquidity.
+- [x] Market snapshot → deterministik paper fill → atomik SQL settlement application pipeline'ı ve olay idempotency'si.
 - [x] Order ve Instrument için ilk unit testler.
 - [ ] Property-based testler ve genişletilmiş finansal sınır testleri.
 
@@ -39,7 +40,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] İlk versioned migration ve `execution`, `risk`, `operations` şemaları.
 - [x] Orders, RiskDecisions, AuditEvents ve Transactional Outbox tablo temeli.
 - [x] Order/RiskDecision/Audit/Outbox repository'leri, retry-aware Unit of Work ve ilk atomik application use case'i.
-- [ ] Portfolio repository, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
+- [ ] Portfolio repository, paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; sürekli market-event worker'ı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
 - Candle aggregation ve warm-up.

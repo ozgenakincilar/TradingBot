@@ -320,3 +320,37 @@ flowchart TD
     Z -- Hayır --> W3[WaitingForLiquidity]
     Z -- Evet --> F[Deterministik Partial/Full Fill + Quote Fee]
 ```
+
+## 14. Uçtan uca paper fill persistence pipeline
+
+```mermaid
+sequenceDiagram
+    participant MD as Market Event
+    participant APP as ProcessPaperOrderSnapshot
+    participant READ as PaperOrderReader
+    participant ENG as PaperExecutionEngine
+    participant FILL as ApplySpotOrderFill
+    participant DB as SQL Server
+
+    MD->>APP: OrderId + MarketEventId + TopOfBook
+    APP->>READ: Order + active reservation (AsNoTracking)
+    READ->>DB: Salt okunur snapshot
+    APP->>ENG: Evaluate(snapshot, policy)
+    alt Waiting
+        ENG-->>APP: Latency / limit / liquidity bekleniyor
+    else Fill
+        ENG-->>APP: Deterministik partial/full fill
+        APP->>FILL: PAPER-{OrderId}-{EventHash}
+        FILL->>DB: BEGIN Serializable
+        FILL->>DB: Aggregate'leri yeniden yükle + idempotency kontrolü
+        alt Execution zaten var
+            FILL->>DB: ROLLBACK/etkisiz sonuç
+            FILL-->>APP: FillAlreadyApplied
+        else Yeni execution
+            FILL->>DB: Order + Reservation + Balance + Position
+            FILL->>DB: Execution + Audit + Outbox
+            FILL->>DB: COMMIT
+            FILL-->>APP: FillApplied
+        end
+    end
+```

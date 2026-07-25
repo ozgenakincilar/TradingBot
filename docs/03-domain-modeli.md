@@ -43,6 +43,8 @@
 - `Execution` entity/value data.
 - Client order ID idempotency anahtarıdır.
 - `PaperExecutionEngine`, top-of-book snapshot, minimum latency, slippage, komisyon ve likidite katılım sınırıyla deterministik fill üretir.
+- `ProcessPaperOrderSnapshot`, kalıcı order/reservation görünümünü salt okunur yükler, paper sonucunu değerlendirir ve oluşan fill'i atomik settlement use case'ine aktarır.
+- Piyasa olay kimliği deterministik paper execution kimliğine çevrilir; aynı olay yeniden işlendiğinde ikinci ekonomik fill oluşmaz.
 - Limit order ancak slippage-adjusted gerçekleşme fiyatı limit sınırını ihlal etmiyorsa fill olabilir.
 - Tek snapshot'taki fill miktarı görünür top-of-book likiditesinin yapılandırılmış katılım oranını aşamaz; kalan miktar partial olarak bekler.
 

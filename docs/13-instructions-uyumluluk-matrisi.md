@@ -72,7 +72,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 31 | Price tick size | ✅ Uygulandı | Fiyat aşağı adım normalizasyonu ve test mevcut. [Instrument](../src/TradingBot.Domain/Instruments/Instrument.cs) |
 | 32 | Lot size | ✅ Uygulandı | Miktar aşağı adım normalizasyonu ve test mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | Min quantity/notional reddi var; çok kademeli order-decay politikası henüz yok. |
-| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu var; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs) |
+| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
 | 35 | Mum gap filling | ⬜ Planlandı | REST snapshot + WebSocket sequence recovery gerekli. |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
@@ -83,7 +83,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill var; queue position ve cancel latency henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill application ve SQL pipeline'ında testli; queue position ve cancel latency henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

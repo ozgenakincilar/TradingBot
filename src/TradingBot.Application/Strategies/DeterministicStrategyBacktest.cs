@@ -18,9 +18,54 @@ public sealed class DeterministicStrategyBacktest
         IAsyncEnumerable<Candle> trendCandles,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        await foreach (var decision in RunCoreAsync(
+                           definition,
+                           signalCandles,
+                           trendCandles,
+                           null,
+                           cancellationToken))
+        {
+            yield return decision;
+        }
+    }
+
+    public async IAsyncEnumerable<StrategyBacktestDecision> RunAsync(
+        StrategyDefinition definition,
+        IAsyncEnumerable<Candle> signalCandles,
+        IAsyncEnumerable<Candle> trendCandles,
+        DateTimeOffset evaluationStartInclusive,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(signalCandles);
         ArgumentNullException.ThrowIfNull(trendCandles);
+        if (evaluationStartInclusive == default ||
+            evaluationStartInclusive.Offset != TimeSpan.Zero ||
+            !definition.SignalTimeframe.IsBoundary(evaluationStartInclusive) ||
+            !definition.TrendTimeframe.IsBoundary(evaluationStartInclusive))
+        {
+            throw new DomainRuleViolationException(
+                "Backtest evaluation start must be UTC and align to both timeframes.");
+        }
+
+        await foreach (var decision in RunCoreAsync(
+                           definition,
+                           signalCandles,
+                           trendCandles,
+                           evaluationStartInclusive,
+                           cancellationToken))
+        {
+            yield return decision;
+        }
+    }
+
+    private static async IAsyncEnumerable<StrategyBacktestDecision> RunCoreAsync(
+        StrategyDefinition definition,
+        IAsyncEnumerable<Candle> signalCandles,
+        IAsyncEnumerable<Candle> trendCandles,
+        DateTimeOffset? evaluationStartInclusive,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
 
         var signalWindow = new BoundedCandleWindow(
             definition.SignalTimeframe,
@@ -43,6 +88,11 @@ public sealed class DeterministicStrategyBacktest
             }
 
             signalWindow.Append(definition, signal);
+            if (evaluationStartInclusive is { } start && signal.OpenTime < start)
+            {
+                continue;
+            }
+
             if (signalWindow.Count < definition.MinimumSignalWarmupCandles ||
                 trendWindow.Count < definition.MinimumTrendWarmupCandles)
             {

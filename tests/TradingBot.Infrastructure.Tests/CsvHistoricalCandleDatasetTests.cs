@@ -102,6 +102,42 @@ public sealed class CsvHistoricalCandleDatasetTests
         }
     }
 
+    [Fact]
+    public async Task FactoryOpensFreshSingleUseStreamForEveryWindowPass()
+    {
+        var path = await CreateCsvAsync(candleCount: 3);
+        try
+        {
+            var factory = new CsvHistoricalCandleDatasetFactory(
+            [
+                new CsvHistoricalCandleDatasetRegistration(
+                    Instrument,
+                    Timeframe,
+                    path,
+                    "okx-btc-usdt-15m-fixture",
+                    Start + (Timeframe.Duration * 4))
+            ]);
+            await using var first = await factory.OpenAsync(
+                Instrument,
+                Timeframe,
+                CancellationToken.None);
+            await ReadAllAsync(first);
+            await using var second = await factory.OpenAsync(
+                Instrument,
+                Timeframe,
+                CancellationToken.None);
+            await ReadAllAsync(second);
+
+            Assert.Equal(first.Descriptor.Sha256, second.Descriptor.Sha256);
+            Assert.Equal(3, first.CompletedSummary?.CandleCount);
+            Assert.Equal(3, second.CompletedSummary?.CandleCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     private static ValueTask<CsvHistoricalCandleDataset> OpenAsync(
         string path,
         int knownAtIndex) =>

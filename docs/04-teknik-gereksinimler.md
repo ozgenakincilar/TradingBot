@@ -114,6 +114,10 @@
 - Birleşik rapor yalnız schedule indeks/split'iyle eşleşen final-OOS sonuçlarını kabul eder; finansal oran ve maliyet ilişkileri agregasyon öncesi yeniden doğrulanır.
 - `research.WalkForwardRuns` üst sonuç/aggregate kaydını, `research.WalkForwardWindowResults` her pencerenin manifest, split ve tam execution metriklerini tutar.
 - Run ve tüm pencere kayıtları tek kısa Serializable SQL transaction'ında yazılır. Aynı run/report idempotent; aynı run/farklı report determinism ihlalidir.
+- Her walk-forward penceresi signal ve trend için taze single-use dataset açar ve pencereler sıralı çalışır; böylece stream sahipliği deterministik, bellek kullanımı bounded kalır.
+- Train+validation candle'ları yalnız indicator warm-up içindir. OOS değerlendirmesi `ValidationEndExclusive` sınırında `Flat` state ile başlar; pre-OOS strategy position veya ekonomik karar OOS'a taşınamaz.
+- Window filtresi stratejiye yalnız `[StartInclusive, OutOfSampleEndExclusive)` aralığını verir, ancak raw dataset tamamlanmış summary ve manifest kanıtı için EOF'ye kadar tüketilir.
+- Minimum signal/trend warm-up geçmişi bulunmayan veya OOS'ta sıfır strategy değerlendirmesi üreten pencere fail-closed olur; herhangi bir pencere hatası kısmi birleşik rapor üretmez.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

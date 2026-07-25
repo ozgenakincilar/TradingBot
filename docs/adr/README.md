@@ -18,6 +18,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0012](0012-reproducible-dataset-ve-oos-kilidi.md) | Streaming CSV, SHA-256 run manifest ve out-of-sample kilidi | Kabul edildi |
 | [ADR-0013](0013-walk-forward-pencere-politikasi.md) | Rolling/expanding ve çakışmasız OOS walk-forward pencereleri | Kabul edildi |
 | [ADR-0014](0014-walk-forward-result-kimligi-ve-persistence.md) | Schedule/run/report hash ve normalize walk-forward sonuç persistence | Kabul edildi |
+| [ADR-0015](0015-walk-forward-oos-orkestrasyonu.md) | Streaming walk-forward orchestration ve OOS state izolasyonu | Kabul edildi |
 
 Yeni ADR biçimi:
 

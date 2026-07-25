@@ -71,8 +71,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Canonical streaming CSV reader, dataset SHA-256, chronological train/validation/OOS kilidi ve reproducible run manifest.
 - [x] Deterministik rolling/expanding walk-forward pencere üreticisi ve çakışmasız OOS zaman politikası.
 - [x] Schedule/run/report SHA-256 kimliği, normalize SQL result persistence ve çoklu OOS birleşik rapor modeli.
+- [x] Streaming tarihsel walk-forward orchestration, pencere başına taze dataset, OOS-flat state izolasyonu ve final manifest/report üretimi.
 - Tick/lot rounding, order-book queue replay ve benchmark raporu.
-- Tarihsel dataset üzerinde uçtan uca walk-forward orchestration ve gerçek OOS kanıt raporu.
+- Küratörlü gerçek BTC-USDT tarihsel datasetleri üzerinde çoklu market-regime OOS kabul ve benchmark raporu.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

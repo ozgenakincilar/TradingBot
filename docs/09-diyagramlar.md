@@ -709,3 +709,28 @@ flowchart TD
 ```
 
 `ScheduleSha256` zaman politikasını, `RunSha256` girdileri ve `ReportSha256` sonuçları tanımlar. Compound return bağımsız OOS getirilerinin varsayımsal birleşimidir; gerçek sermaye devamlılığı veya getiri garantisi değildir.
+
+## 29. Streaming walk-forward OOS orkestrasyonu
+
+```mermaid
+flowchart TD
+    S[WalkForwardSchedule] --> W{Sıradaki pencere}
+    W --> FS[Taze signal dataset]
+    W --> FT[Taze trend dataset]
+    FS --> BW[Window filtresi]
+    FT --> BW
+    BW --> HIST[Train + validation<br/>bounded indicator warm-up]
+    HIST --> GATE[ValidationEndExclusive<br/>position = Flat]
+    GATE --> OOS[OOS strategy kararları]
+    OOS --> EXEC[Next-open execution simulator]
+    EXEC --> EOF[İki raw stream EOF'ye kadar tüketilir]
+    EOF --> MAN[Final-OOS manifest + window result]
+    MAN --> MORE{Pencere kaldı mı?}
+    MORE -- Evet --> W
+    MORE -- Hayır --> REPORT[Deterministik birleşik report]
+    HIST -. ekonomik state taşınmaz .-> GATE
+    BW -. OOS sonrası candle yield edilmez .-> EOF
+    FAIL[Warm-up eksik / OOS değerlendirmesi yok / stream hatası] --> NONE[Kısmi rapor yok]
+```
+
+Train ve validation geçmişi yalnız indikatörleri ısıtır. OOS state'i `Flat` başlar; buna karşılık raw dosya hash/count/range kanıtı için her dataset tam olarak EOF'ye kadar okunur.

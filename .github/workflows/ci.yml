@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_UI_LANGUAGE: en
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  quality:
+    name: .NET quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install .NET SDK from global.json
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore tools and packages
+        run: |
+          dotnet tool restore
+          dotnet restore TradingBot.slnx
+
+      - name: Verify formatting
+        run: dotnet format TradingBot.slnx --verify-no-changes --no-restore
+
+      - name: Build Release
+        run: dotnet build TradingBot.slnx --configuration Release --no-restore
+
+      - name: Run offline tests
+        run: dotnet test TradingBot.slnx --configuration Release --no-build
+
+      - name: Verify EF Core model and migrations
+        env:
+          TRADINGBOT_DB_CONNECTION: Server=localhost;Database=TradingBotCi;Integrated Security=true;TrustServerCertificate=true
+        run: |
+          dotnet ef migrations has-pending-model-changes --project src/TradingBot.Infrastructure/TradingBot.Infrastructure.csproj --context TradingBotDbContext --configuration Release --no-build
+          dotnet ef migrations script --project src/TradingBot.Infrastructure/TradingBot.Infrastructure.csproj --context TradingBotDbContext --configuration Release --no-build --idempotent --output "${{ runner.temp }}/TradingBot-migrations.sql"
+
+      - name: Scan NuGet vulnerabilities
+        shell: pwsh
+        run: |
+          dotnet list TradingBot.slnx package --vulnerable --include-transitive --format json --output-version 1 > "${{ runner.temp }}/nuget-vulnerabilities.json"
+          ./scripts/Test-NuGetVulnerabilities.ps1 -ReportPath "${{ runner.temp }}/nuget-vulnerabilities.json"
+
+      - name: Verify repository policy
+        shell: pwsh
+        run: ./scripts/Test-RepositoryPolicy.ps1

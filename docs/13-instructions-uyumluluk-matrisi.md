@@ -19,8 +19,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 10 |
-| 🟡 Kısmi | 33 |
+| ✅ Uygulandı | 11 |
+| 🟡 Kısmi | 32 |
 | ⬜ Planlandı | 51 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
@@ -114,13 +114,13 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 63 | API key bellek riski | ⬜ Planlandı | Vault provider, dar secret lifetime ve rotation gerekli. |
 | 64 | Yetkisiz Telegram komutu | ⬜ Planlandı | Komut kanalı seçilmedi; eklenirse allowlist/auth zorunlu. |
 | 65 | Veritabanı şifreleme | ⬜ Planlandı | Production TDE/volume encryption ve backup encryption kararı gerekli. |
-| 66 | Dangling API key | 🟡 Kısmi | `.env` ve production config ignore; secret scanner/CI henüz yok. [.gitignore](../.gitignore) |
+| 66 | Dangling API key | 🟡 Kısmi | `.env`/production config ignore ve CI tracked-file secret assignment/forbidden-file kapısı var; GitHub native secret scanning ve geçmiş taraması kaldı. [Repository policy](../scripts/Test-RepositoryPolicy.ps1) |
 | 67 | Senkron/aşırı log I/O | ⬜ Planlandı | Async structured rolling sink gerekli. |
 | 68 | MITM | 🟡 Kısmi | OKX adapter HTTPS dışı base address'i fail-fast reddediyor ve TLS doğrulaması kapatılmıyor; certificate policy/pinning kararı kaldı. [OKX adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketSnapshotClient.cs) |
 | 69 | SSH güvenliği | ⬜ Planlandı | Deployment hardening runbook'u gerekli. |
 | 70 | Log rotasyonu | ⬜ Planlandı | Retention/rotation ve disk alarmı gerekli. |
 | 71 | Alert fatigue | ⬜ Planlandı | Dedup/throttle/batch notification pipeline gerekli. |
-| 72 | NuGet vulnerability | 🟡 Kısmi | Manuel transitif tarama temiz; CI zorunlu kapısı henüz yok. [Test stratejisi](07-test-stratejisi.md) |
+| 72 | NuGet vulnerability | ✅ Uygulandı | CI transitif NuGet vulnerability raporunu JSON üretip bulgu varsa job'ı durduruyor; yerel tarama da kalite kapısıdır. [CI workflow](../.github/workflows/ci.yml) |
 | 73 | Runtime watchdog | 🟡 Kısmi | `/health/ready`, Spot metadata kapısı ve ilk geçerli market event tamamlanana kadar veya stream kopunca 503 döndürüyor. SQL/reconciliation dependency, ayrı startup probe ve bağımsız watchdog kaldı. [Program](../src/TradingBot.Host/Program.cs) |
 | 74 | Yedek bildirim kanalı | ⬜ Planlandı | Birincil/yedek kanal seçimi ve failover testi gerekli. |
 | 75 | Güvenlik güncellemeleri | ⬜ Planlandı | OS/runtime patch runbook ve image scanning gerekli. |
@@ -156,7 +156,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
-| 98 | Environment mix-up | 🟡 Kısmi | Trading hâlâ yalnız Paper; OKX public source, HTTPS/WSS endpoint, Spot instrument türü, `live` state ve filtreler startup'ta fail-fast doğrulanıyor. Ayrık CI credential/pipeline henüz yok. [Startup gate](../src/TradingBot.Host/OkxInstrumentStartupGate.cs) |
+| 98 | Environment mix-up | 🟡 Kısmi | Trading yalnız Paper; OKX public endpoint/instrument startup'ta fail-fast ve CI secretsiz ağsız job olarak ayrık. Testnet/live credential ve deployment pipeline'ları henüz yok. [CI workflow](../.github/workflows/ci.yml) |
 | 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; recovery kanıtlı ve audit'li. Global flatten mekanizması yok. [Recovery use case](../src/TradingBot.Application/Reconciliation/RecoverTradingSafety.cs) |
 | 100 | Manuel müdahale | 🟡 Kısmi | Harici fark halt ediliyor; iki temiz snapshot+operatör onaylı recovery ve eski risk kararı reddi var. User stream ve kontrollü state correction henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
 
@@ -166,5 +166,5 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 - `✅ Uygulandı` statüsü otomatik test veya operasyonel doğrulama olmadan verilemez.
 - `➖ Kapsam dışı` statüsü ADR bağlantısı gerektirir.
 - Kısmi kontrol production-ready kabul edilmez.
-- Matris özeti satır statülerinden CI ile doğrulanacak otomasyon kurulana kadar manuel olarak iki kez kontrol edilir.
+- Matris satır numaraları ve statü özeti CI repository-policy script'iyle doğrulanır.
 - Yeni bir anayasa maddesi eklenirse numara, kabul ölçütü ve roadmap işi aynı değişiklikte eklenir.

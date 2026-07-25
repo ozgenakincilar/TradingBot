@@ -92,6 +92,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Vulnerability ve secret scan kritik bulgu içermiyor.
 - Migration doğrulaması başarılı.
 - Domain coverage hedefi başlangıçta en az %80 branch; oran tek başına kalite ölçüsü değildir.
+- EF Core model snapshot'ında bekleyen değişiklik yok ve idempotent migration script üretilebiliyor.
+- Instructions matrisi 1-100 benzersiz satır ve güncel statü özeti taşıyor.
+- Gerçek ağ ve SQL Server testleri varsayılan CI'da gizlice çalıştırılmaz; kontrollü integration job eklenene kadar opt-in kanıt olarak raporlanır.
 
 ## 7. Production öncesi aşamalar
 

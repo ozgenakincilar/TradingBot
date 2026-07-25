@@ -16,7 +16,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [ ] Telemetry teknoloji ADR’si.
 - [x] İlk Domain test projesi ve kritik invariant testleri.
 - [ ] Application/architecture/integration test projeleri.
-- [ ] CI kalite kapıları.
+- [x] GitHub Actions CI: format, Release build, ağsız test, EF migration drift/script, NuGet vulnerability ve repository policy kapıları.
 
 **Çıkış ölçütü:** Açık ürün kararları kapanmış, solution sınır testleri ve CI çalışıyor.
 

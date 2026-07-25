@@ -170,4 +170,6 @@ dotnet test TradingBot.slnx --configuration Release --no-build
 dotnet list TradingBot.slnx package --vulnerable --include-transitive
 ```
 
-Test projesi ve CI kurulana kadar eksik kapılar yol haritasında takip edilir.
+`.github/workflows/ci.yml`, pull request ve `main` push'larında .NET SDK sürümünü `global.json` üzerinden kurar; format, Release build, ağsız test, EF pending-model/idempotent migration script, NuGet vulnerability ve repository policy kapılarını çalıştırır. Action bağımlılıkları doğrulanmış release commit SHA'larına pinlenir ve workflow yalnız `contents: read` izni taşır.
+
+Gerçek OKX connectivity ve SQL Server transaction testleri dış bağımlılık gerektirdiğinden opt-in kalır; ayrı kontrollü integration job/service kurulmadan normal CI bunları production kanıtı saymaz.

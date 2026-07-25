@@ -138,6 +138,8 @@ PR birleştirilmeden önce:
 - NuGet vulnerability taraması kritik/yüksek açık içermiyor veya onaylı istisna var.
 - Domain/mimari değişikliği ilgili doküman ve ADR ile uyumlu.
 - SQL migration script'i incelenmiş ve geri dönüş/restore planı belirtilmiş.
+
+Bu kapılar `.github/workflows/ci.yml` içindeki `.NET quality gates` job'ında otomatik çalışır. Workflow `pull_request -> main`, `push -> main` ve manuel tetiklemeyi destekler; eşzamanlı aynı ref çalışmaları eski koşuyu iptal eder. Gerçek borsa ve SQL transaction testleri ayrı izinli integration job kurulana kadar bu ağsız job'ın kapsamına dahil edilmez.
 - Execution, Risk veya Live davranış değişikliği en az bir bağımsız onay almış.
 
 ## 7. Merge politikası

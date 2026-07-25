@@ -638,3 +638,31 @@ flowchart TD
 ```
 
 Mevcut candle'ın kapanışta bilinen hacmi kendi açılış fill'inde kullanılmaz. Model gerçek order-book queue replay'i değildir ve veri sonunda yapay kapanış üretmez.
+
+## 26. Streaming dataset, split ve reproducible manifest
+
+```mermaid
+flowchart TD
+    FILE[Canonical UTF-8 candle CSV] --> OPEN[Read-only single file handle]
+    OPEN --> HASH[Streaming raw SHA-256\n64 KiB buffer]
+    HASH --> REWIND[Seek to start]
+    REWIND --> ROWS[Async line-by-line parse]
+    ROWS --> VALID{Header + UTC + decimal +\nOHLCV + boundary + contiguous}
+    VALID -- Hayır --> FAIL[Summary/manifest yok]
+    VALID -- Evet --> SPLIT{UTC chronological split}
+    SPLIT --> TRAIN[Train]
+    SPLIT --> VAL[Validation]
+    SPLIT --> OOS[Out-of-sample]
+    PLAN1[Parameter selection] --> TRAIN
+    PLAN1 --> VAL
+    OOS -. yield yasak .-> PLAN1
+    PLAN2[Final evaluation] --> OOS
+    TRAIN --> EOF[Full EOF summary]
+    VAL --> EOF
+    OOS --> EOF
+    EOF --> COVER{15m/1H aligned ve\nfull coverage mı?}
+    COVER -- Hayır --> FAIL
+    COVER -- Evet --> MANIFEST[Data hash + config hash +\nsplit/purpose/seed manifest hash]
+```
+
+OOS verisi parameter-selection stream'ine hiç verilmez. Aynı raw dosyalar, strategy/execution config, split ve seed aynı manifest kimliğini üretir.

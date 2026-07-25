@@ -57,6 +57,10 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Backtest kararının aynı candle'da değil sonraki candle open+latency anında fill edilmesi; spread, slippage ve iki taraflı fee'nin net getiriyi düşürmesi.
 - Flat market round trip'in maliyet sonrası zarar yazması, düşük geçmiş hacimde phantom fill oluşmaması ve mevcut candle toplam hacminin open fill'e sızmaması.
 - Aynı input/policy'nin aynı execution raporunu üretmesi; açık pozisyon/pending target'ın zorla kapatılmadan raporlanması.
+- Canonical CSV header/UTC/invariant decimal parse, raw SHA-256 kararlılığı, gap/malformed satır reddi ve erken consumer stop'ta summary oluşmaması.
+- 25.000 candle fixture'ın tüm dosyayı koleksiyona almadan single-pass async tüketimi ve exact count/range kanıtı.
+- Train/validation/OOS boundary sınıflandırması; parameter-selection stream'inin OOS yield etmemesi ve final planın yalnız OOS kabul etmesi.
+- Aynı dataset/config/split/seed için aynı manifest; seed değişince yalnız manifest kimliğinin değişmesi ve eksik dataset summary ile manifest üretilememesi.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.

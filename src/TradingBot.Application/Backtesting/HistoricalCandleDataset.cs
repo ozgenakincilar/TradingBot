@@ -25,6 +25,14 @@ public interface IHistoricalCandleDataset : IAsyncDisposable
     IAsyncEnumerable<Candle> ReadAsync(CancellationToken cancellationToken);
 }
 
+public interface IHistoricalCandleDatasetFactory
+{
+    ValueTask<IHistoricalCandleDataset> OpenAsync(
+        InstrumentId instrumentId,
+        Timeframe timeframe,
+        CancellationToken cancellationToken);
+}
+
 public static class HistoricalCandleDatasetContract
 {
     public const string CsvSchemaVersion = "closed-candle-csv-v1";

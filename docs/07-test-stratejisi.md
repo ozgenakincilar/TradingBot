@@ -67,6 +67,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Eksik, ters sıralı, yanlış split'li veya parameter-selection manifestli pencerenin birleşik OOS raporuna alınmaması.
 - Çoklu OOS mean/median/worst/best/compound return, mean drawdown ve maliyet agregasyonlarının exact decimal sonucu.
 - Gerçek SQL Server'da walk-forward run+window satırlarının atomik yazılması ve aynı rapor tekrarının ikinci kayıt oluşturmaması.
+- Walk-forward orkestratörünün her pencere/timeframe için taze single-use dataset açması, pencereleri sıralı tamamlaması ve aynı girdilerde aynı run/report hash üretmesi.
+- Train/validation candle'larının indicator warm-up sağlaması fakat pre-OOS pozisyon state'inin taşınmaması; ilk OOS kararının `Flat` state üzerinden değerlendirilmesi.
+- Window filtresi OOS sonrasını stratejiye vermese de dataset'i EOF'ye kadar tüketerek final summary/manifest üretmesi; yetersiz warm-up ve sıfır OOS değerlendirmesinde fail-closed olması.
 - Startup ve reconnect sonrasında iki timeframe'in tam warm-up ile store'a yeniden seed edilmesi; readiness açıldığında her seride en az 200 kapalı candle bulunması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
 - OKX public instrument payload'ının Spot türü, sembol, base/quote, `tickSz`, `lotSz`, `minSz` ve `state` mapping contract testleri; suspend veya geçersiz filtrelerin fail-closed reddi.

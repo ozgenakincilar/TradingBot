@@ -44,6 +44,28 @@ public sealed class DeterministicStrategyBacktestTests
         await Assert.ThrowsAsync<DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public async Task PreEvaluationSignalsWarmIndicatorsWithoutCarryingPositionIntoOos()
+    {
+        var signals = SignalSeries().Append(Create(Signal, End, 100m));
+        var results = new List<StrategyBacktestDecision>();
+
+        await foreach (var result in new DeterministicStrategyBacktest().RunAsync(
+                           Definition(),
+                           ToAsync(signals),
+                           ToAsync(TrendSeries(includeFuture: false)),
+                           evaluationStartInclusive: End,
+                           CancellationToken.None))
+        {
+            results.Add(result);
+        }
+
+        var decision = Assert.Single(results);
+        Assert.Equal(End, decision.SignalCandle.OpenTime);
+        Assert.Equal(StrategyAction.Hold, decision.Decision.Action);
+        Assert.Equal(StrategyPositionState.Flat, decision.PositionAfterDecision);
+    }
+
     private static async Task<List<StrategyBacktestDecision>> RunAsync(
         DeterministicStrategyBacktest backtest,
         IEnumerable<Candle> signals,

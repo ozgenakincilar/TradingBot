@@ -35,6 +35,24 @@ public readonly record struct Timeframe
             Duration.Ticks == 0;
     }
 
+    public DateTimeOffset GetBoundaryAtOrBefore(DateTimeOffset timestamp)
+    {
+        if (this == default)
+        {
+            throw new DomainRuleViolationException("Timeframe is required.");
+        }
+
+        EnsureUtc(timestamp, nameof(timestamp));
+        var elapsedTicks = timestamp.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.UtcDateTime.Ticks;
+        var remainder = elapsedTicks % Duration.Ticks;
+        if (remainder < 0)
+        {
+            remainder += Duration.Ticks;
+        }
+
+        return new DateTimeOffset(timestamp.UtcDateTime.Ticks - remainder, TimeSpan.Zero);
+    }
+
     internal static void EnsureUtc(DateTimeOffset timestamp, string parameterName)
     {
         if (timestamp == default || timestamp.Offset != TimeSpan.Zero)

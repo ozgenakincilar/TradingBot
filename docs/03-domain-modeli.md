@@ -28,6 +28,7 @@
 - `Timeframe` pozitif tam saniyeli sabit UTC periyottur; candle açılışı Unix epoch tabanlı periyot sınırına hizalanır.
 - `Candle.CreateClosed`, kapanış zamanı henüz gelmemiş mumu ve geçersiz OHLCV ilişkilerini reddeder. Strateji hattına açık mum tipi taşınmaz.
 - `ClosedCandleSequenceGuard`, ilk contiguous recovery serisi olmadan ready olmaz; gap veya aynı sınırdaki çelişkili candle sonrası son güvenilir candle'ı ilerletmeden fail-closed kalır.
+- `WarmUpClosedCandles`, değerlendirme zamanını UTC timeframe sınırına aşağı yuvarlar ve yalnız son tamamen kapanmış `N` candle eksiksiz/contiguous geldiyse warm-up sonucu üretir.
 - Sequence ve timestamp doğrulama.
 - `MarketDataIntegrityGuard`, REST recovery snapshot uygulanmadan instrument'ı ready kabul etmez.
 - Beklenen sequence atlanırsa, aynı sequence farklı event ID ile gelirse veya event/receive zamanı gerilerse instrument recovery tamamlanana kadar not-ready olur.

@@ -63,7 +63,11 @@ public sealed class ProcessPaperOrderSnapshotTests
 
         var outcome = await cycle.HandleAsync(
             new ProcessPaperMarketEventCommand(
-                new PaperMarketEvent(snapshotCommand.MarketEventId, snapshotCommand.Market),
+                new PaperMarketEvent(
+                    snapshotCommand.MarketEventId,
+                    1,
+                    snapshotCommand.Market.OccurredAt,
+                    snapshotCommand.Market),
                 snapshotCommand.Policy,
                 snapshotCommand.CorrelationId),
             CancellationToken.None);

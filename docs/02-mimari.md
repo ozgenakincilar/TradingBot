@@ -70,6 +70,7 @@ Host -------------> Application <------------- Infrastructure
 
 - Process içi komutlar doğrudan application handler çağrısıdır.
 - Yüksek hacimli market data bounded `Channel<T>` üzerinden akar.
+- `MarketSnapshotService`, instrument başına integrity guard'ı process ömründe tutar; aynı instrument değerlendirmelerini `SemaphoreSlim` ile sıralar ve yalnız fresh/ready event'i execution hattına verir.
 - Domain event aynı transaction içindeki yan etkileri ayırır.
 - Integration event ancak dış servis veya gelecekte ayrılacak modül sınırında kullanılır.
 - Kuyruk dolduğunda veri türüne göre açık backpressure politikası uygulanır; kritik execution olayı sessizce düşürülemez.

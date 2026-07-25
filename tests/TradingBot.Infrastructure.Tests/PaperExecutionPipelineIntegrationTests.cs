@@ -52,6 +52,8 @@ public sealed class PaperExecutionPipelineIntegrationTests
             await MarkOpenAsync(connectionString, order.Id, order.UpdatedAt.AddSeconds(2));
             var marketEvent = new PaperMarketEvent(
                 $"market-{unique}",
+                1,
+                order.UpdatedAt.AddSeconds(3),
                 new PaperTopOfBookSnapshot(
                     order.InstrumentId,
                     Price.From(89m),

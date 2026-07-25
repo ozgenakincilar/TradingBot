@@ -33,6 +33,8 @@ Borsa adaptörü yalnızca Spot market-data, account ve order endpoint'lerini uy
 
 Sequence/timestamp invariant'ları borsa DTO'sundan bağımsız `MarketDataIntegrityGuard` içinde uygulanır. Adaptör, borsanın update ID/sequence değerini ve kararlı event ID'yi `MarketDataCursor` sözleşmesine dönüştürür; çelişki veya gap sonrası doğrudan ready açamaz.
 
+Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı, `GetRecoverySnapshotAsync` ile authoritative snapshot'ı ayırır. `MarketSnapshotService` ilk event'te ve her gap/conflict sonrasında recovery çağırır; duplicate, out-of-order veya stale sonuç `TradingWorker` tarafından execution cycle'a geçirilmez.
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

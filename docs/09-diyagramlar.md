@@ -97,6 +97,18 @@ stateDiagram-v2
 
 Guard son güvenilir cursor'u gap sırasında ilerletmez. Bu sayede recovery adapter'ı hangi sequence'den itibaren snapshot/replay gerektiğini kesin olarak bilir.
 
+```mermaid
+flowchart LR
+    STREAM[GetTopOfBookAsync] --> SERVICE[MarketSnapshotService]
+    SERVICE --> GUARD[Instrument Integrity Guard]
+    GUARD -- Accepted + fresh --> EXEC[Paper execution cycle]
+    GUARD -- Duplicate / out-of-order / stale --> DROP[Withhold event]
+    GUARD -- Gap / conflict / time regression --> REST[GetRecoverySnapshotAsync]
+    REST --> GUARD
+    GUARD -- Recovery applied + fresh --> EXEC
+    GUARD -- Recovery rejected --> HALT[Fail closed]
+```
+
 ## 4. Emir yaşam döngüsü
 
 ```mermaid

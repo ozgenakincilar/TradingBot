@@ -14,6 +14,8 @@ public sealed class TradingOptions
 
     public int PollingIntervalSeconds { get; init; } = 5;
 
+    public int MaximumMarketDataAgeSeconds { get; init; } = 15;
+
     public int MinimumFillLatencyMilliseconds { get; init; } = 100;
 
     public decimal CommissionPercent { get; init; } = 0.1m;

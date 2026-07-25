@@ -27,6 +27,8 @@ builder.Services
         "Trading borsası zorunludur.")
     .Validate(static options => options.PollingIntervalSeconds is >= 1 and <= 300,
         "Polling aralığı 1-300 saniye arasında olmalıdır.")
+    .Validate(static options => options.MaximumMarketDataAgeSeconds is >= 1 and <= 300,
+        "Market data maksimum yaşı 1-300 saniye arasında olmalıdır.")
     .Validate(static options => options.MinimumFillLatencyMilliseconds is >= 1 and <= 60_000,
         "Paper fill gecikmesi 1-60000 milisaniye arasında olmalıdır.")
     .Validate(static options => options.CommissionPercent is >= 0 and <= 5,

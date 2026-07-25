@@ -28,20 +28,34 @@ public sealed class TradingWorker(
         {
             try
             {
-                var marketEvent = await snapshots.GetAsync(instrumentId, stoppingToken);
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var processor = scope.ServiceProvider.GetRequiredService<ProcessPaperMarketEvent>();
-                var outcome = await processor.HandleAsync(
-                    new ProcessPaperMarketEventCommand(
-                        marketEvent,
-                        policy,
-                        CreateCorrelationId(marketEvent.EventId)),
+                var read = await snapshots.GetAsync(
+                    instrumentId,
+                    TimeSpan.FromSeconds(settings.MaximumMarketDataAgeSeconds),
                     stoppingToken);
-                logger.LogInformation(
-                    "Paper market event {MarketEventId} processed {OrderCount} active orders for {Instrument}",
-                    marketEvent.EventId,
-                    outcome.Orders.Count,
-                    instrumentId);
+                if (read.MarketEvent is null)
+                {
+                    logger.LogWarning(
+                        "Market event withheld for {Instrument}: {IntegrityStatus}, fresh={IsFresh}",
+                        instrumentId,
+                        read.IntegrityStatus,
+                        read.IsFresh);
+                }
+                else
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var processor = scope.ServiceProvider.GetRequiredService<ProcessPaperMarketEvent>();
+                    var outcome = await processor.HandleAsync(
+                        new ProcessPaperMarketEventCommand(
+                            read.MarketEvent,
+                            policy,
+                            CreateCorrelationId(read.MarketEvent.EventId)),
+                        stoppingToken);
+                    logger.LogInformation(
+                        "Paper market event {MarketEventId} processed {OrderCount} active orders for {Instrument}",
+                        read.MarketEvent.EventId,
+                        outcome.Orders.Count,
+                        instrumentId);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

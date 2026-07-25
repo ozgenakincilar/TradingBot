@@ -38,8 +38,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 7 | Proxy/CDN bayat yanıt | ⬜ Planlandı | Signed timestamp/nonce ve cache-control politikası gerekli. |
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
 | 9 | Reconnection storm | ⬜ Planlandı | Exponential backoff + full jitter uygulanacak. |
-| 10 | Paket kaybı/sequence | 🟡 Kısmi | Sequence gap, duplicate, out-of-order ve conflicting sequence Domain guard ile fail-closed; WebSocket buffer ve REST adapter bağlantısı kaldı. [Integrity guard testleri](../tests/TradingBot.Domain.Tests/MarketDataIntegrityGuardTests.cs) |
-| 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | Recovery cursor eski sequence/event/receive time ile state'i geri saramıyor; exchange-specific snapshot authority ve replay kaldı. [Integrity guard](../src/TradingBot.Domain/MarketData/MarketDataIntegrity.cs) |
+| 10 | Paket kaybı/sequence | 🟡 Kısmi | Sequence gap application servisinde recovery snapshot çağırıp event'i fail-closed tutuyor; gerçek WebSocket buffer/replay adapter'ı kaldı. [Snapshot service testleri](../tests/TradingBot.Application.Tests/MarketSnapshotServiceTests.cs) |
+| 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | Normal event ve authoritative recovery portları ayrıldı; eski cursor reddi ve freshness gate testli, exchange-specific authority kaldı. [Snapshot service](../src/TradingBot.Application/MarketSnapshotService.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
 | 13 | Partial network writes | ⬜ Planlandı | Stream framing ve parçalı payload testleri gerekli. |
 | 14 | API versiyon değişimi | 🟡 Kısmi | Ports & Adapters kararı var; gerçek versioned exchange adapter henüz yok. [Mimari](02-mimari.md) |
@@ -55,7 +55,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 19 | Closure referans sızıntısı | 🟡 Kısmi | Kritik EF configuration callback'leri static; tüm hot-path closure'ları için analyzer/benchmark gerekli. |
 | 20 | Async deadlock | 🟡 Kısmi | Async transaction ve I/O var; gelecekteki paylaşılan state için async-lock politikası/testi gerekli. |
 | 21 | String allocation | ⬜ Planlandı | Market-data hot path oluştuğunda allocation bütçesi ve structured logging uygulanacak. |
-| 22 | ConcurrentDictionary factory | ⬜ Planlandı | Cache/registry eklendiğinde side-effect-free factory testi gerekli. |
+| 22 | ConcurrentDictionary factory | 🟡 Kısmi | Instrument guard registry'sinin `GetOrAdd` factory'si static ve dış yan etkisiz; paralel yarış/stress testi kaldı. [Snapshot service](../src/TradingBot.Application/MarketSnapshotService.cs) |
 | 23 | CancellationToken | ✅ Uygulandı | Application, repository ve Unit of Work async sözleşmelerinde token taşınıyor. [Unit of Work](../src/TradingBot.Infrastructure/Persistence/TradingUnitOfWork.cs) |
 | 24 | Boxing/unboxing | ⬜ Planlandı | Hot-path profiling sonrası generic/value-type iyileştirmeleri yapılacak. |
 | 25 | ValueTask kuralları | ✅ Uygulandı | Mevcut `ValueTask` tek await/return sözleşmesiyle kullanılıyor. [Market data portu](../src/TradingBot.Application/Abstractions/IMarketDataClient.cs) |
@@ -73,7 +73,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 32 | Lot size | ✅ Uygulandı | Miktar aşağı adım normalizasyonu ve test mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | Min quantity/notional reddi var; çok kademeli order-decay politikası henüz yok. |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu gerçek SQL settlement pipeline'ında testli; exchange fee-asset çeşitleri ve live parity henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
-| 35 | Mum gap filling | 🟡 Kısmi | Borsa-bağımsız gap/recovery cursor invariant'ları testli; candle REST snapshot, buffer alignment ve replay adapter'ı kaldı. [Integrity guard testleri](../tests/TradingBot.Domain.Tests/MarketDataIntegrityGuardTests.cs) |
+| 35 | Mum gap filling | 🟡 Kısmi | Gap artık recovery portunu çağırıp fresh snapshot'ı yayınlıyor; candle REST adapter'ı, buffer alignment ve replay kaldı. [Snapshot service testleri](../tests/TradingBot.Application.Tests/MarketSnapshotServiceTests.cs) |
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |

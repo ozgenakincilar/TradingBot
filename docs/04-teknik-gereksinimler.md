@@ -43,6 +43,8 @@
 - Gap veya çelişkili sequence algılandığında son güvenilir cursor korunur ve yeni market event trading hattına yayınlanmaz.
 - Recovery snapshot son kabul edilen sequence, event time veya receive time değerini geriye saramaz.
 - Freshness yalnız integrity state ready ise ve son receive time yapılandırılmış maksimum yaşı aşmıyorsa doğrudur.
+- `IMarketDataClient`, normal top-of-book event'i ile authoritative recovery snapshot çağrısını ayrı port metotları olarak sunar; her ikisi sequence, event time ve receive time taşır.
+- `MarketSnapshotService`, duplicate/out-of-order event'i aşağı akışa vermez; gap/conflict/timestamp regression durumunda recovery snapshot ister ve recovery reddedilirse fail-closed davranır.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.
 

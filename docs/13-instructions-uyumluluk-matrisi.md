@@ -77,7 +77,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
-| 39 | Warm-up period | 🟡 Kısmi | Bounded warm-up son `N` tamamen kapanmış candle'ı exact UTC aralık ve contiguous recovery ile doğruluyor; OKX startup/readiness kapısı eksik geçmişte hostu fail-closed durduruyor. Nihai strateji lookback kararı kaldı. [Host warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
+| 39 | Warm-up period | 🟡 Kısmi | Signal ve trend için 200 candle ürün kararı alındı; bounded warm-up ile mevcut `15m/200` host kapısı eksik geçmişte fail-closed. Ayrı `1H/200` trend readiness bağlantısı kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
 | 40 | Sell slippage/depth | 🟡 Kısmi | Sell bid referansı, aleyhte slippage ve görünür likidite katılım sınırı var; cumulative multi-level depth henüz yok. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
@@ -129,7 +129,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 76 | Closed-candle sinyali | 🟡 Kısmi | Domain yalnız UTC sınırı tamamlanmış kapalı candle oluşturuyor ve açık candle'ı reddediyor; strategy engine bağlantısı kaldı. [Candle](../src/TradingBot.Domain/MarketData/Candle.cs) |
+| 76 | Closed-candle sinyali | 🟡 Kısmi | Sürümlü strategy decision yalnız tanımla eşleşen, değerlendirme anında kapanmış signal candle ve signal kapanışından yeni olmayan trend candle kabul ediyor; strategy engine bağlantısı kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
 | 77 | FOMO koruması | ⬜ Planlandı | Strateji momentum/spike giriş filtresi gerekli. |
 | 78 | Trailing-stop flaw | ⬜ Planlandı | Volatilite tabanlı mesafe ve monotonic stop testleri gerekli. |
 | 79 | İndikatör çelişkisi | ⬜ Planlandı | Ağırlıklı scoring sözleşmesi gerekli. |
@@ -137,7 +137,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 81 | News/event blackout | ⬜ Planlandı | Güvenilir ekonomik takvim adapter'i ve safe mode gerekli. |
 | 82 | Risk/reward dengesizliği | ⬜ Planlandı | Minimum reward/risk ve exit-policy testleri gerekli. |
 | 83 | Grid trap | ⬜ Planlandı | Grid ilk sürümde yok; eklenirse sermaye tüketimi ve maksimum kademe koruması zorunlu. |
-| 84 | Timeframe senkronu | 🟡 Kısmi | Sabit timeframe ve candle open time Unix epoch tabanlı UTC sınıra zorlanıyor; OKX UTC bar mapping'i allowlist ve contract testli. Calendar timeframe stratejisi kaldı. [OKX candle adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxClosedCandleHistoryClient.cs) |
+| 84 | Timeframe senkronu | 🟡 Kısmi | `15m` signal ve `1H` trend exact-multiple invariant'ı ile future trend verisi reddi testli; canlı multi-timeframe stream hizalama kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
 | 85 | Black-swan stop | ⬜ Planlandı | Spot server-side hard stop ve emergency policy gerekli. |
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ⬜ Planlandı | İndikatör katmanı geldiğinde finite-output guard testleri gerekli. |

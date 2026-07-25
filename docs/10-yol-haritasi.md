@@ -11,7 +11,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Başlangıç dokümantasyon paketi.
 - [x] Ürün türü kararı: yalnızca kaldıraçsız Spot.
 - [x] İlk Spot borsası kararı: OKX TR V5 Spot API.
-- [ ] İlk strateji, timeframe ve ürün kapsamı.
+- [x] İlk strateji zarfı: BTC-USDT long/flat, 15m sinyal, 1H EMA200 trend, 200 candle warm-up ve sürümleme.
 - [x] Persistence teknolojisi ADR’si: Microsoft SQL Server.
 - [ ] Telemetry teknoloji ADR’si.
 - [x] İlk Domain test projesi ve kritik invariant testleri.
@@ -54,7 +54,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - [x] Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.
-- [ ] Candle aggregation ve warm-up: closed-candle/gap/history, genel warm-up ve host readiness bağlantısı tamamlandı; canlı aggregation ile nihai timeframe/lookback ürün kararı kaldı.
+- [ ] Candle aggregation ve warm-up: closed-candle/gap/history, genel warm-up, host readiness ve timeframe/lookback ürün kararı tamamlandı; canlı multi-timeframe aggregation/readiness kaldı.
 - Genişletilmiş audit/outbox dispatcher ve retention işleri.
 - [ ] Readiness/startup health: instrument+candle-history+market-data readiness tamamlandı; SQL/reconciliation dependency ve ayrı startup probe kaldı.
 
@@ -62,7 +62,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 
 ## Aşama 3 — Strateji ve backtest
 
-- İlk strateji sözleşmesi ve sürümleme.
+- [x] İlk strateji sözleşmesi ve sürümleme zarfı; exact entry/exit parametreleri backtest kararı bekliyor.
 - Closed candle sinyal akışı.
 - Tarihsel streaming reader.
 - Komisyon/slippage/latency fill modeli.

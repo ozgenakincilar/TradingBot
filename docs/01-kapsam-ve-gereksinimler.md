@@ -12,12 +12,13 @@ Kârlılık garanti değildir. Öncelik; sermayenin korunması, tutarlı durum y
 
 ## 2. İlk sürüm kapsamı
 
-- Tek borsa adaptörü; borsa ayrıca seçilecektir.
+- Tek borsa adaptörü: ilk hedef OKX TR Spot V5.
 - Yalnızca kaldıraçsız Spot piyasa.
 - Paper trading ve testnet desteği.
 - REST snapshot ve WebSocket piyasa verisi.
 - Mum verisi doğrulama ve gap filling.
 - Tek stratejinin takılabilir şekilde çalıştırılması.
+- İlk strateji zarfı: `BTC-USDT`, long/flat, `15m` kapalı candle sinyali, `1H EMA(200)` trend filtresi ve sürümlü karar sözleşmesi.
 - Emir öncesi ve portföy seviyesinde risk kontrolleri.
 - Emir yaşam döngüsü ve reconciliation.
 - Sağlık kontrolü, metrik, yapılandırılmış log ve alarm.
@@ -87,8 +88,7 @@ Kimlikler test ve izlenebilirlik için sabittir.
 
 ## 7. Açık ürün kararları
 
-- İlk borsa hangisi?
-- İlk strateji ve zaman dilimi nedir?
+- Kesin v1 entry/exit formülü; walk-forward ve out-of-sample kanıtıyla ayrıca kabul edilecektir.
 - Başlangıç sermayesi ve risk limitleri nedir?
 - Kurulu SQL Server instance/sürümü, bağlantı yöntemi ve production lisanslama modeli nedir?
 - Bildirim kanalları hangileridir?

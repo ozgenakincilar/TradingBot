@@ -12,6 +12,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0006](0006-trunk-based-git-stratejisi.md) | Trunk-based Git ve Pull Request stratejisi | Kabul edildi |
 | [ADR-0007](0007-kaldiracsiz-spot-only.md) | Kaldıraçsız Spot-only ürün sınırı | Kabul edildi |
 | [ADR-0008](0008-okx-tr-spot-ilk-borsa.md) | İlk borsa olarak OKX TR Spot V5 API | Kabul edildi |
+| [ADR-0009](0009-ilk-strateji-zarfi.md) | BTC-USDT long/flat, 15m sinyal ve 1H EMA200 strateji zarfı | Kabul edildi |
 
 Yeni ADR biçimi:
 

@@ -8,7 +8,8 @@ public sealed record MarketDataCursor(
     string EventId,
     long Sequence,
     DateTimeOffset OccurredAt,
-    DateTimeOffset ReceivedAt)
+    DateTimeOffset ReceivedAt,
+    long? PreviousSequence = null)
 {
     public void Validate()
     {
@@ -22,7 +23,7 @@ public sealed record MarketDataCursor(
             throw new DomainRuleViolationException("Market data event id is invalid.");
         }
 
-        if (Sequence <= 0 || OccurredAt == default || ReceivedAt == default)
+        if (Sequence < 0 || OccurredAt == default || ReceivedAt == default)
         {
             throw new DomainRuleViolationException("Market data sequence and timestamps are required.");
         }
@@ -92,7 +93,10 @@ public sealed class MarketDataIntegrityGuard
             return Result(MarketDataIntegrityStatus.OutOfOrder);
         }
 
-        if (marketEvent.Sequence != _lastSequence + 1)
+        var isContinuous = marketEvent.PreviousSequence is not null
+            ? marketEvent.PreviousSequence == _lastSequence
+            : marketEvent.Sequence == _lastSequence + 1;
+        if (!isContinuous)
         {
             IsReady = false;
             return Result(MarketDataIntegrityStatus.GapDetected);

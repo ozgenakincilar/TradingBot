@@ -50,6 +50,9 @@
 - İlk gerçek REST recovery adapter'ı OKX TR V5 `GET /api/v5/market/books?sz=1` yanıtındaki `seqId`, `ts`, best bid/ask ve miktarları normalize eder.
 - OKX adapter'ı yalnız HTTPS base address ve `OKX/BASE-QUOTE` instrument kabul eder; API serbest metin hata mesajını exception/log sınırına taşımaz.
 - OKX order-book continuity için `seqId/prevSeqId` kullanılır; deprecated checksum doğrulama kaynağı değildir.
+- OKX public market stream `wss://` üzerinden `books5` kanalına subscribe olur; fragmented text frame'leri 64 KiB bounded mesaj sınırı ve pooled receive buffer ile birleştirir.
+- Stream 20 saniye sessizlikte `ping` gönderir; takip eden heartbeat penceresinde `pong` veya veri gelmezse bağlantıyı hatalı kabul eder.
+- OKX `seqId` değerlerinin ardışık sayı olması beklenmez; continuity yalnız mesajdaki `prevSeqId` ile son kabul edilen `seqId` eşleşmesine göre doğrulanır.
 - `MarketSnapshotService`, duplicate/out-of-order event'i aşağı akışa vermez; gap/conflict/timestamp regression durumunda recovery snapshot ister ve recovery reddedilirse fail-closed davranır.
 - TLS sertifika doğrulaması kapatılamaz.
 - DNS/connection lifetime ölçülerek yapılandırılır; sabit IP’ye kör pinleme yapılmaz.

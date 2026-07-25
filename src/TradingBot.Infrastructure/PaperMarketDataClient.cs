@@ -50,6 +50,7 @@ public sealed class PaperMarketDataClient(TimeProvider timeProvider) : IMarketDa
                 1m,
                 Price.From(100_001m),
                 1m,
-                occurredAt));
+                occurredAt),
+            sequence > 1 ? sequence - 1 : null);
     }
 }

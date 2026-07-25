@@ -32,16 +32,16 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 1 | Network jitter | ⬜ Planlandı | Exchange latency ölçümü ve dinamik giriş ofseti gerekli. |
 | 2 | WebSocket buffer overflow | 🟡 Kısmi | Bounded channel `FullMode=Wait` backpressure ve cancellation testli; gerçek socket buffer metriği/adapter bağlantısı kaldı. [Buffer testleri](../tests/TradingBot.Application.Tests/MarketDataEventBufferTests.cs) |
 | 3 | DNS resolution lag | ⬜ Planlandı | Exchange adaptörü sonrası DNS/connection lifetime politikası uygulanacak. |
-| 4 | TLS handshake gecikmesi | ⬜ Planlandı | `IHttpClientFactory`, HTTP/2/keep-alive ve connection pooling gerekli. |
-| 5 | WebSocket half-open | ⬜ Planlandı | Heartbeat, TCP keep-alive ve stale-stream watchdog gerekli. |
+| 4 | TLS handshake gecikmesi | 🟡 Kısmi | OKX REST HTTPS ve WebSocket WSS zorunlu; connection pooling/handshake metriği kaldı. [OKX stream client](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketStreamClient.cs) |
+| 5 | WebSocket half-open | 🟡 Kısmi | ClientWebSocket keep-alive ve uygulama ping/pong timeout'u var; reconnect supervisor metriği kaldı. [OKX stream client](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketStreamClient.cs) |
 | 6 | Borsa bakım modu | ⬜ Planlandı | Exchange system-status poll ve trading-ready kapısı gerekli. |
 | 7 | Proxy/CDN bayat yanıt | ⬜ Planlandı | Signed timestamp/nonce ve cache-control politikası gerekli. |
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
 | 9 | Reconnection storm | ⬜ Planlandı | Exponential backoff + full jitter uygulanacak. |
-| 10 | Paket kaybı/sequence | 🟡 Kısmi | Snapshot overlap ve buffered replay gap/conflict halinde hiçbir kısmi event yayınlamıyor; gerçek WebSocket adapter bağlantısı kaldı. [Replay testleri](../tests/TradingBot.Application.Tests/MarketDataReplayAlignerTests.cs) |
+| 10 | Paket kaybı/sequence | 🟡 Kısmi | Gerçek OKX stream `prevSeqId/seqId` taşıyor ve guard/replay fail-closed; reconnect sonrası hosted replay pump kaldı. [OKX parser testleri](../tests/TradingBot.Infrastructure.Tests/OkxBooks5MessageParserTests.cs) |
 | 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | OKX REST snapshot `seqId` authority'si recovery portuna bağlandı; WebSocket `prevSeqId/seqId` adapter'ı kaldı. [OKX contract testleri](../tests/TradingBot.Infrastructure.Tests/OkxSpotMarketSnapshotClientTests.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
-| 13 | Partial network writes | ⬜ Planlandı | Stream framing ve parçalı payload testleri gerekli. |
+| 13 | Partial network writes | 🟡 Kısmi | Fragmented WebSocket text frame'leri pooled buffer ve bounded 64 KiB limit ile birleştiriliyor; sentetik fragmentation transport testi/Pipelines değerlendirmesi kaldı. [OKX stream client](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketStreamClient.cs) |
 | 14 | API versiyon değişimi | 🟡 Kısmi | İlk gerçek adapter OKX V5 namespace ve application portu arkasında izole; changelog/contract CI izlemesi kaldı. [OKX adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketSnapshotClient.cs) |
 | 15 | Socket exhaustion | ⬜ Planlandı | Gerçek HTTP adaptöründe factory/uzun ömürlü handler uygulanacak. |
 

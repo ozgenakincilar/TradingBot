@@ -68,6 +68,19 @@ public sealed class MarketDataReplayAlignerTests
         Assert.Equal([101L, 102L], result.Events.Select(x => x.Sequence));
     }
 
+    [Fact]
+    public void ExchangePreviousSequenceAlignsJumpingSequenceIds()
+    {
+        var first = Event(150) with { PreviousSequence = 100 };
+        var second = Event(225) with { PreviousSequence = 150 };
+
+        var result = _aligner.Align(Event(100, "snapshot-100"), [first, second]);
+
+        Assert.Equal(MarketDataReplayStatus.Aligned, result.Status);
+        Assert.Equal([150L, 225L], result.Events.Select(x => x.Sequence));
+        Assert.Equal(225, result.LastAcceptedSequence);
+    }
+
     private static PaperMarketEvent Event(
         long sequence,
         string? eventId = null,

@@ -7,11 +7,19 @@ public sealed record PaperMarketEvent(
     string EventId,
     long Sequence,
     DateTimeOffset ReceivedAt,
-    PaperTopOfBookSnapshot Snapshot);
+    PaperTopOfBookSnapshot Snapshot,
+    long? PreviousSequence = null);
 
 public interface IMarketDataSnapshotClient
 {
     ValueTask<PaperMarketEvent> GetRecoverySnapshotAsync(
+        InstrumentId instrumentId,
+        CancellationToken cancellationToken);
+}
+
+public interface IMarketDataStreamClient
+{
+    IAsyncEnumerable<PaperMarketEvent> ReadTopOfBookAsync(
         InstrumentId instrumentId,
         CancellationToken cancellationToken);
 }

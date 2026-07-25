@@ -91,7 +91,8 @@ public sealed class MarketSnapshotService(
             marketEvent.EventId,
             marketEvent.Sequence,
             marketEvent.Snapshot.OccurredAt,
-            marketEvent.ReceivedAt);
+            marketEvent.ReceivedAt,
+            marketEvent.PreviousSequence);
 
     private sealed record IntegrityEntry(
         MarketDataIntegrityGuard Guard)

@@ -121,6 +121,31 @@ public sealed class MarketDataIntegrityGuardTests
         Assert.Equal(100, rejected.LastAcceptedSequence);
     }
 
+    [Fact]
+    public void ExchangePreviousSequenceCanProveNonConsecutiveSequenceContinuity()
+    {
+        var guard = ReadyGuard(100);
+        var marketEvent = Cursor(125, Now.AddMilliseconds(1)) with { PreviousSequence = 100 };
+
+        var accepted = guard.Observe(marketEvent);
+
+        Assert.Equal(MarketDataIntegrityStatus.Accepted, accepted.Status);
+        Assert.True(accepted.IsReady);
+        Assert.Equal(125, accepted.LastAcceptedSequence);
+    }
+
+    [Fact]
+    public void MismatchedExchangePreviousSequencePausesInstrument()
+    {
+        var guard = ReadyGuard(100);
+        var marketEvent = Cursor(125, Now.AddMilliseconds(1)) with { PreviousSequence = 99 };
+
+        var gap = guard.Observe(marketEvent);
+
+        Assert.Equal(MarketDataIntegrityStatus.GapDetected, gap.Status);
+        Assert.False(gap.IsReady);
+    }
+
     private static MarketDataIntegrityGuard ReadyGuard(long sequence)
     {
         var guard = new MarketDataIntegrityGuard(Instrument);

@@ -45,6 +45,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Integrity-aware market snapshot application servisi: initial/gap recovery, duplicate suppression ve freshness gate.
 - [x] Bounded market-event buffer ve atomik snapshot/replay hizalama algoritması.
 - [x] İlk OKX TR public REST order-book recovery adapter'ı ve recorded contract testleri.
+- [x] OKX public `books5` TLS WebSocket client, heartbeat, `prevSeqId` continuity ve gerçek connectivity smoke testi.
 - [ ] Portfolio repository, hosted paper fill pipeline, fill/reservation, idempotent account reconciliation ve kontrollü halt recovery tamamlandı; gerçek WebSocket/REST adapter bağlantısı, market-data repository, user-stream/trade-history reconciliation ve state correction kaldı.
 - Exchange metadata/REST adaptörü.
 - WebSocket stream, heartbeat, sequence/gap fill.

@@ -425,3 +425,28 @@ flowchart TD
 ```
 
 Worker singleton olsa da scoped persistence nesnesi taşımaz. Market event fan-out sıralıdır; bu ilk sürümde aynı order üzerinde paralel settlement yarışı üretilmez.
+
+## 16. OKX public books5 WebSocket taşıması
+
+```mermaid
+sequenceDiagram
+    participant C as OkxSpotMarketStreamClient
+    participant WS as OKX WSS / books5
+    participant P as Books5 Parser
+    participant G as Integrity Guard
+
+    C->>WS: TLS connect + subscribe(BASE-QUOTE)
+    WS-->>C: Subscribe acknowledgement
+    C-->>C: Control mesajı; yayınlama
+    WS-->>C: Fragmented books5 snapshot
+    C->>C: ArrayPool buffer + 64 KiB limit
+    C->>P: Complete UTF-8 JSON
+    P->>G: seqId + prevSeqId + event/receive time
+    alt 20 saniye veri yok
+        C->>WS: ping
+        WS-->>C: pong
+    end
+    alt İkinci heartbeat timeout
+        C-->>C: Connection failure; supervisor yeniden bağlar
+    end
+```

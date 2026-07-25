@@ -42,6 +42,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Bounded market event buffer dolduğunda producer'ın beklemesi ve bekleyen write'ın cancellation ile sonlanması.
 - Snapshot overlap temizliği ve contiguous replay; gap/conflict/timestamp regression durumunda hiçbir kısmi event'in yayınlanmaması.
 - OKX REST order-book resmi payload mapping'i, `seqId`/timestamp/bid/ask dönüşümü, symbol format guard'ı ve upstream hata mesajı sanitization contract testleri.
+- OKX `books5` payload parsing, `prevSeqId` continuity, subscribe acknowledgement, hata sanitization ve crossed-book reddi.
+- Opt-in gerçek ağ smoke testiyle WSS subscribe sonrası BTC-USDT public snapshot alınması; normal test suite ağsız kalır.
 - POST timeout sonrası unknown order reconciliation.
 - Exchange/local balance ve aktif order snapshot farkının kalıcı halt oluşturması.
 - Duplicate reconciliation snapshot'ın idempotent olması ve aynı ID ile çelişen içeriğin reddedilmesi.

@@ -51,17 +51,19 @@ public sealed class OkxSpotMarketSnapshotClient(
         }
 
         var occurredAt = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+        var snapshot = new PaperTopOfBookSnapshot(
+            instrumentId,
+            Price.From(bidPrice),
+            bidQuantity,
+            Price.From(askPrice),
+            askQuantity,
+            occurredAt);
+        snapshot.Validate();
         return new PaperMarketEvent(
             $"okx-rest-{instrumentId.Symbol}-{book.Sequence}",
             book.Sequence,
             timeProvider.GetUtcNow(),
-            new PaperTopOfBookSnapshot(
-                instrumentId,
-                Price.From(bidPrice),
-                bidQuantity,
-                Price.From(askPrice),
-                askQuantity,
-                occurredAt));
+            snapshot);
     }
 
     private void EnsureConfiguration(InstrumentId instrumentId)

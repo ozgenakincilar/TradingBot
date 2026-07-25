@@ -80,5 +80,6 @@ public sealed class MarketDataReplayAligner
             marketEvent.EventId,
             marketEvent.Sequence,
             marketEvent.Snapshot.OccurredAt,
-            marketEvent.ReceivedAt);
+            marketEvent.ReceivedAt,
+            marketEvent.PreviousSequence);
 }

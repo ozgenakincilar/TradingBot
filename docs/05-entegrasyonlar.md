@@ -37,6 +37,8 @@ Mevcut application portu `IMarketDataClient.GetTopOfBookAsync` ile normal olayı
 
 `MarketDataEventBuffer` bounded ve wait-backpressure politikalıdır. `MarketDataReplayAligner`, snapshot sequence'ine eşit/eski overlap'i atar, daha yeni event'leri geliş sırasıyla doğrular ve tüm seri contiguous değilse boş sonuç döndürür. Böylece replay'in doğrulanmış ilk kısmı bile yanlışlıkla strategy/execution hattına sızmaz.
 
+`OkxSpotMarketStreamClient`, OKX public `books5` WebSocket snapshot kanalını `IMarketDataStreamClient` portuna dönüştürür. Subscribe acknowledgement market event sayılmaz; API error serbest metni sanitize edilir. Gerçek endpoint connectivity testi opt-in environment flag ile çalışır. Reconnect/backoff supervisor ve stream-to-host pump sonraki dilimdir.
+
 ## 3. Emir gönderimi
 
 - Risk kararı ve intent aynı correlation içinde tutulur.

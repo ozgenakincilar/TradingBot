@@ -3,22 +3,28 @@ namespace TradingBot.Host.Tests;
 public sealed class TradingReadinessStateTests
 {
     [Fact]
-    public void OkxReadinessRequiresValidatedCandleHistory()
+    public void OkxReadinessRequiresBothValidatedCandleHistories()
     {
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-
         readiness.MarkInstrumentReady("OKX:BTC-USDT");
         readiness.MarkMarketDataReady();
 
+        readiness.MarkSignalCandleHistoryReady(timeframeSeconds: 900, warmupCandleCount: 200);
+
         Assert.False(readiness.Snapshot.IsReady);
+        Assert.False(readiness.Snapshot.CandleHistoryReady);
         Assert.Equal("candle-history-not-ready", readiness.Snapshot.Reason);
 
-        readiness.MarkCandleHistoryReady(timeframeSeconds: 900, warmupCandleCount: 200);
+        readiness.MarkTrendCandleHistoryReady(timeframeSeconds: 3600, warmupCandleCount: 200);
 
-        Assert.True(readiness.Snapshot.IsReady);
-        Assert.Null(readiness.Snapshot.Reason);
-        Assert.Equal(900, readiness.Snapshot.CandleTimeframeSeconds);
-        Assert.Equal(200, readiness.Snapshot.WarmupCandleCount);
+        var snapshot = readiness.Snapshot;
+        Assert.True(snapshot.IsReady);
+        Assert.True(snapshot.CandleHistoryReady);
+        Assert.Null(snapshot.Reason);
+        Assert.Equal(900, snapshot.SignalCandleTimeframeSeconds);
+        Assert.Equal(200, snapshot.SignalWarmupCandleCount);
+        Assert.Equal(3600, snapshot.TrendCandleTimeframeSeconds);
+        Assert.Equal(200, snapshot.TrendWarmupCandleCount);
     }
 
     [Fact]
@@ -34,16 +40,18 @@ public sealed class TradingReadinessStateTests
     }
 
     [Fact]
-    public void LosingCandleHistoryClosesOkxReadiness()
+    public void LosingEitherCandleHistoryClosesOkxReadiness()
     {
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
         readiness.MarkInstrumentReady("OKX:BTC-USDT");
-        readiness.MarkCandleHistoryReady(timeframeSeconds: 900, warmupCandleCount: 200);
+        readiness.MarkSignalCandleHistoryReady(timeframeSeconds: 900, warmupCandleCount: 200);
+        readiness.MarkTrendCandleHistoryReady(timeframeSeconds: 3600, warmupCandleCount: 200);
         readiness.MarkMarketDataReady();
 
-        readiness.MarkCandleHistoryNotReady("history-gap");
+        readiness.MarkTrendCandleHistoryNotReady("trend-history-gap");
 
         Assert.False(readiness.Snapshot.IsReady);
-        Assert.Equal("history-gap", readiness.Snapshot.Reason);
+        Assert.False(readiness.Snapshot.CandleHistoryReady);
+        Assert.Equal("trend-history-gap", readiness.Snapshot.Reason);
     }
 }

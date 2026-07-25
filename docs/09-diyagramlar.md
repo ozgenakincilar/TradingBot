@@ -478,9 +478,11 @@ flowchart TD
     CAT --> VALID{SPOT + live + symbol eşleşmesi\npozitif tickSz/lotSz/minSz}
     VALID -- Hayır --> STOP[Host startup fail-fast\nEndpoint erişilemez]
     VALID -- Evet --> IR[Instrument ready]
-    IR --> WARMUP{Kapalı candle warm-up\nexact + contiguous}
-    WARMUP -- Hayır --> STOP
-    WARMUP -- Evet --> CR[Candle history ready]
+    IR --> SIGNAL{15m / 200 signal warm-up\nexact + contiguous}
+    SIGNAL -- Hayır --> STOP
+    SIGNAL -- Evet --> TREND{1H / 200 trend warm-up\nexact + contiguous}
+    TREND -- Hayır --> STOP
+    TREND -- Evet --> CR[Dual candle history ready]
     CR --> WORKER[OkxTradingWorker başlar]
     WORKER --> WS[books5 WSS + REST recovery]
     WS --> EVENT{İlk doğrulanmış event}
@@ -511,20 +513,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    NOW[KnownAt UTC] --> FLOOR[Timeframe boundary at-or-before]
-    FLOOR --> RANGE[Range = boundary - N x timeframe .. boundary]
-    RANGE --> LIMIT{N bounded policy içinde mi?}
-    LIMIT -- Hayır --> REJECT[Warm-up not-ready]
-    LIMIT -- Evet --> HISTORY[IClosedCandleHistoryClient]
-    HISTORY --> COPY[Immutable local copy]
-    COPY --> GUARD{Exact bounds + contiguous recovery}
-    GUARD -- Hayır --> REJECT
-    GUARD -- Evet --> READY[ClosedCandleWarmupResult]
-    READY --> HOST{OKX startup gate}
-    HOST --> CANDLE_READY[CandleHistoryReady]
+    NOW[Ortak KnownAt UTC] --> SIGNAL[15m / 200 signal range]
+    SIGNAL --> SGUARD{Exact + closed + contiguous}
+    SGUARD -- Hayır --> REJECT[Host startup fail-closed]
+    SGUARD -- Evet --> TREND[1H / 200 trend range]
+    TREND --> TGUARD{Exact + closed + contiguous}
+    TGUARD -- Hayır --> REJECT
+    TGUARD -- Evet --> CANDLE_READY[Signal + Trend CandleHistoryReady]
 ```
 
-`boundary` son tamamen kapanmış candle'ın exclusive bitişidir; devam eden açık candle aralığa dahil edilmez. Instrument ve candle-history kapıları geçtikten sonra stream başlar; ilk doğrulanmış market event gelene kadar genel readiness yine kapalıdır.
+Her seri kendi timeframe sınırını aynı UTC `knownAt` değerinden hesaplar; devam eden açık candle hiçbir aralığa dahil edilmez. Instrument ve iki candle-history kapısı geçtikten sonra stream başlar; ilk doğrulanmış market event gelene kadar genel readiness yine kapalıdır.
 
 ## 21. İlk sürümlü strateji zarfı
 

@@ -75,8 +75,9 @@
 - OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
 - Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.
-- OKX host başlangıcında `CandleTimeframeSeconds` explicit allowlist'ten seçilir ve `WarmupCandleCount` 1-300 aralığında doğrulanır. Instrument kapısından sonra warm-up tamamlanmadan candle-history readiness açılmaz; hata host başlangıcını fail-closed durdurur.
-- `appsettings.json` içindeki mevcut `15m/200`, onaylanan signal-serisi gereksinimiyle uyumludur; ancak tek başına `1H/200` trend warm-up'ını karşılamaz. Canlı multi-timeframe WebSocket/aggregation ve iki ayrı readiness serisi sonraki dilimdir.
+- OKX host başlangıcında ilk strateji sürümü için signal timeframe tam `15m`, trend timeframe tam `1H`; iki warm-up sayısı da 200-300 aralığında doğrulanır.
+- Instrument kapısından sonra aynı UTC `knownAt` ile önce `15m` signal, sonra `1H` trend warm-up çalışır. İki seri de exact/contiguous 200 kapalı candle sağlamadan candle-history readiness açılmaz; herhangi bir hata host başlangıcını fail-closed durdurur.
+- Readiness snapshot signal ve trend serilerinin durum, timeframe ve doğrulanmış candle sayılarını ayrı taşır. Canlı multi-timeframe WebSocket/aggregation ve reconnect gap recovery sonraki dilimdir.
 
 ### Strateji sözleşmesi
 

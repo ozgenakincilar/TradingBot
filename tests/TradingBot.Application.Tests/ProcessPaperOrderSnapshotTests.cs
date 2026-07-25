@@ -54,6 +54,27 @@ public sealed class ProcessPaperOrderSnapshotTests
         Assert.Equal(1_000m, setup.Store.Balance(Usdt).Total);
     }
 
+    [Fact]
+    public async Task MarketEventCycleDiscoversAndProcessesActiveOrders()
+    {
+        var setup = await CreateOpenReservedOrderAsync();
+        var snapshotCommand = Command(setup.Order.Id, "market-cycle-1", Now.AddSeconds(3));
+        var cycle = new ProcessPaperMarketEvent(setup.Store, CreateHandler(setup.Store));
+
+        var outcome = await cycle.HandleAsync(
+            new ProcessPaperMarketEventCommand(
+                new PaperMarketEvent(snapshotCommand.MarketEventId, snapshotCommand.Market),
+                snapshotCommand.Policy,
+                snapshotCommand.CorrelationId),
+            CancellationToken.None);
+
+        var processed = Assert.Single(outcome.Orders);
+        Assert.Equal(setup.Order.Id, processed.OrderId);
+        Assert.Equal(PaperOrderProcessingStatus.FillApplied, processed.Outcome.Status);
+        Assert.Equal(0.5m, setup.Order.FilledQuantity);
+        Assert.Single(setup.Store.Executions);
+    }
+
     private static ProcessPaperOrderSnapshotCommand Command(
         OrderId orderId,
         string marketEventId,
@@ -167,6 +188,20 @@ public sealed class ProcessPaperOrderSnapshotTests
                     reservation.Status,
                     reservation.CreatedAt);
         }
+
+        public Task<IReadOnlyCollection<OrderId>> GetActiveOrderIdsAsync(
+            InstrumentId instrumentId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<OrderId>>(
+                _orders.Values
+                    .Where(order => order.InstrumentId == instrumentId &&
+                                    (order.Status is OrderStatus.Open or
+                                        OrderStatus.PartiallyFilled or
+                                        OrderStatus.CancelPending) &&
+                                    _reservations.GetValueOrDefault(order.Id)?.Status ==
+                                        SpotReservationStatus.Active)
+                    .Select(order => order.Id)
+                    .ToArray());
 
         public Task<IReadOnlyCollection<Order>> GetActiveAsync(
             string exchange,

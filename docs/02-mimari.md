@@ -64,6 +64,7 @@ Host -------------> Application <------------- Infrastructure
 - Worker/API endpoint’leri.
 - Options validation, health checks ve telemetry wiring.
 - Ortam seçimi; secret değerleri okumadan sadece sağlayıcıları bağlar.
+- `TradingWorker` singleton yaşam döngüsündedir fakat her market-event turunda yeni async DI scope açar; scoped `DbContext`, repository veya application handler saklamaz.
 
 ## 5. İletişim modeli
 

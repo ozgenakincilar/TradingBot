@@ -1,18 +1,28 @@
 using TradingBot.Application.Abstractions;
-using TradingBot.Domain;
+using TradingBot.Domain.Execution;
+using TradingBot.Domain.Instruments;
 
 namespace TradingBot.Infrastructure;
 
 public sealed class PaperMarketDataClient(TimeProvider timeProvider) : IMarketDataClient
 {
-    public ValueTask<MarketPrice> GetLatestPriceAsync(
-        string symbol,
+    public ValueTask<PaperMarketEvent> GetTopOfBookAsync(
+        InstrumentId instrumentId,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         // Deterministic placeholder until an exchange adapter is selected.
+        var occurredAt = timeProvider.GetUtcNow();
         return ValueTask.FromResult(
-            MarketPrice.Create(symbol, 100_000m, timeProvider.GetUtcNow()));
+            new PaperMarketEvent(
+                $"paper-{instrumentId.Exchange}-{instrumentId.Symbol}-{occurredAt.UtcTicks}",
+                new PaperTopOfBookSnapshot(
+                    instrumentId,
+                    Price.From(99_999m),
+                    1m,
+                    Price.From(100_001m),
+                    1m,
+                    occurredAt)));
     }
 }

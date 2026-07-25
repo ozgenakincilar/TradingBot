@@ -8,6 +8,29 @@ namespace TradingBot.Infrastructure.Persistence.Repositories;
 
 public sealed class PaperOrderReader(TradingBotDbContext context) : IPaperOrderReader
 {
+    public async Task<IReadOnlyCollection<OrderId>> GetActiveOrderIdsAsync(
+        InstrumentId instrumentId,
+        CancellationToken cancellationToken)
+    {
+        var activeStatuses = new byte[]
+        {
+            (byte)OrderStatus.Open,
+            (byte)OrderStatus.PartiallyFilled,
+            (byte)OrderStatus.CancelPending
+        };
+        var ids = await (
+            from order in context.Orders.AsNoTracking()
+            join reservation in context.SpotOrderReservations.AsNoTracking()
+                on order.Id equals reservation.OrderId
+            where order.Exchange == instrumentId.Exchange &&
+                  order.Symbol == instrumentId.Symbol &&
+                  activeStatuses.Contains(order.Status) &&
+                  reservation.Status == (byte)SpotReservationStatus.Active
+            orderby order.CreatedAt, order.Id
+            select order.Id).ToArrayAsync(cancellationToken);
+        return ids.Select(OrderId.From).ToArray();
+    }
+
     public async Task<PaperOrderState?> GetAsync(
         OrderId orderId,
         CancellationToken cancellationToken)

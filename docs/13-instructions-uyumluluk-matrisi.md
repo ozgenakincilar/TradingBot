@@ -49,7 +49,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 16 | İzlenmeyen background task | 🟡 Kısmi | Worker host tarafından sahipleniliyor; ilerideki tüm dispatcher/stream task'ları için supervisor gerekli. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
+| 16 | İzlenmeyen background task | 🟡 Kısmi | Paper worker host tarafından sahipleniliyor, tur hatalarını gözlemleyip logluyor; ilerideki dispatcher/stream task'ları için supervisor gerekli. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 17 | Thread-pool starvation | ✅ Uygulandı | Üretim kodunda `.Result`/`.Wait()` yok; async akış testlerle derleniyor. |
 | 18 | LOH parçalanması | ⬜ Planlandı | Büyük WebSocket/tarihsel veri buffer'ları oluştuğunda `ArrayPool<T>` ve allocation benchmark gerekli. |
 | 19 | Closure referans sızıntısı | 🟡 Kısmi | Kritik EF configuration callback'leri static; tüm hot-path closure'ları için analyzer/benchmark gerekli. |
@@ -61,7 +61,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 25 | ValueTask kuralları | ✅ Uygulandı | Mevcut `ValueTask` tek await/return sözleşmesiyle kullanılıyor. [Market data portu](../src/TradingBot.Application/Abstractions/IMarketDataClient.cs) |
 | 26 | Event subscription leak | ⬜ Planlandı | Stream/event abonelikleri eklendiğinde async-disposable yaşam döngüsü gerekli. |
 | 27 | Pinned memory | ⬜ Planlandı | Native/pinned buffer henüz yok; eklenirse profiling ve bounded lifetime zorunlu. |
-| 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped, stateless ID generator singleton kayıtlı. [DI](../src/TradingBot.Infrastructure/DependencyInjection.cs) |
+| 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; singleton hosted worker her turda yeni async scope açıyor ve scoped state saklamıyor. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 29 | Büyük dosya okuma | ⬜ Planlandı | Backtest reader streaming olacak; büyük CSV fixture testi gerekli. |
 | 30 | AsyncLocal veri kayması | ⬜ Planlandı | Correlation context eklendiğinde immutable scope ve paralellik testi gerekli. |
 
@@ -83,7 +83,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill application ve SQL pipeline'ında testli; queue position ve cancel latency henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Hosted market-event cycle minimum latency, limit koşulu ve likidite kaynaklı waiting/partial fill'i SQL pipeline'ına taşıyor; queue position ve cancel latency henüz yok. [Paper pipeline SQL testi](../tests/TradingBot.Infrastructure.Tests/PaperExecutionPipelineIntegrationTests.cs) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 
@@ -154,7 +154,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 93 | Altyapı failover | ⬜ Planlandı | Single-active ownership/reconciliation çözülmeden failover açılmayacak. |
 | 94 | DB/tick I/O şişmesi | ⬜ Planlandı | Batch insert, partition/retention ve disk metriği gerekli. |
 | 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
-| 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation var; açık emir politikası/checkpoint henüz yok. |
+| 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
 | 98 | Environment mix-up | 🟡 Kısmi | Paper varsayılan ve config fail-fast var; ayrık CI credential/pipeline henüz yok. [TradingOptions](../src/TradingBot.Host/TradingOptions.cs) |
 | 99 | Global kill switch | 🟡 Kısmi | RiskEngine kill-switch ve kalıcı reconciliation halt yeni exposure'ı reddediyor; recovery kanıtlı ve audit'li. Global flatten mekanizması yok. [Recovery use case](../src/TradingBot.Application/Reconciliation/RecoverTradingSafety.cs) |

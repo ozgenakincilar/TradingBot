@@ -354,3 +354,24 @@ sequenceDiagram
         end
     end
 ```
+
+## 15. Hosted paper market-event döngüsü
+
+```mermaid
+flowchart TD
+    HOST[Generic Host / TradingWorker] --> MD[IMarketDataClient: Top-of-book event]
+    MD --> SCOPE[Her turda yeni async DI scope]
+    SCOPE --> CYCLE[ProcessPaperMarketEvent]
+    CYCLE --> QUERY[Instrument + active reservation order sorgusu]
+    QUERY --> LOOP{Her aktif order}
+    LOOP --> PIPE[ProcessPaperOrderSnapshot]
+    PIPE --> TX[Bağımsız Serializable settlement]
+    TX --> LOOP
+    LOOP --> DELAY[Bounded polling delay]
+    DELAY --> HOST
+    HOST -. CancellationToken .-> STOP[Graceful cycle stop]
+    CYCLE -. Hata .-> LOG[Structured error log]
+    LOG --> DELAY
+```
+
+Worker singleton olsa da scoped persistence nesnesi taşımaz. Market event fan-out sıralıdır; bu ilk sürümde aynı order üzerinde paralel settlement yarışı üretilmez.

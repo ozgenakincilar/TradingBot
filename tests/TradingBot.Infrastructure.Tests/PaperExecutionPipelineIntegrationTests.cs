@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TradingBot.Application.Abstractions;
 using TradingBot.Application.Execution;
 using TradingBot.Application.Portfolio;
 using TradingBot.Domain.Common;
@@ -49,8 +50,7 @@ public sealed class PaperExecutionPipelineIntegrationTests
             }
 
             await MarkOpenAsync(connectionString, order.Id, order.UpdatedAt.AddSeconds(2));
-            var command = new ProcessPaperOrderSnapshotCommand(
-                order.Id,
+            var marketEvent = new PaperMarketEvent(
                 $"market-{unique}",
                 new PaperTopOfBookSnapshot(
                     order.InstrumentId,
@@ -58,7 +58,9 @@ public sealed class PaperExecutionPipelineIntegrationTests
                     2m,
                     Price.From(90m),
                     2m,
-                    order.UpdatedAt.AddSeconds(3)),
+                    order.UpdatedAt.AddSeconds(3)));
+            var command = new ProcessPaperMarketEventCommand(
+                marketEvent,
                 new PaperExecutionPolicy(
                     TimeSpan.FromMilliseconds(100),
                     Percentage.FromPercent(0.1m),
@@ -70,18 +72,18 @@ public sealed class PaperExecutionPipelineIntegrationTests
             {
                 Assert.Equal(
                     PaperOrderProcessingStatus.FillApplied,
-                    (await CreateProcessHandler(processContext).HandleAsync(
+                    Assert.Single((await CreateEventHandler(processContext).HandleAsync(
                         command,
-                        CancellationToken.None)).Status);
+                        CancellationToken.None)).Orders).Outcome.Status);
             }
 
             await using (var duplicateContext = CreateContext(connectionString))
             {
                 Assert.Equal(
                     PaperOrderProcessingStatus.FillAlreadyApplied,
-                    (await CreateProcessHandler(duplicateContext).HandleAsync(
+                    Assert.Single((await CreateEventHandler(duplicateContext).HandleAsync(
                         command,
-                        CancellationToken.None)).Status);
+                        CancellationToken.None)).Orders).Outcome.Status);
             }
 
             await using var verification = CreateContext(connectionString);
@@ -177,6 +179,12 @@ public sealed class PaperExecutionPipelineIntegrationTests
             new TradingUnitOfWork(context),
             new SystemIdGenerator());
         return new ProcessPaperOrderSnapshot(new PaperOrderReader(context), fill);
+    }
+
+    private static ProcessPaperMarketEvent CreateEventHandler(TradingBotDbContext context)
+    {
+        var reader = new PaperOrderReader(context);
+        return new ProcessPaperMarketEvent(reader, CreateProcessHandler(context));
     }
 
     private static async Task CleanupAsync(

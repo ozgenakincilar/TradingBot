@@ -114,6 +114,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Paper değerlendirmesi order ve reservation durumunu `AsNoTracking` ile okur; fill transaction'ı aggregate'leri Serializable transaction içinde yeniden yükler. Böylece transaction öncesi izlenen eski entity durumu kullanılmaz.
 - Piyasa olay kimliğinden türetilen execution kimliği, application ve veritabanı idempotency kapılarında aynı olayın tekrar settle edilmesini engeller.
 - Market snapshot değerlendirmesi transaction dışında, order/reservation/balance/position/execution/audit/outbox yazımı ise tek kısa transaction içinde yapılır.
+- Hosted worker her turda yeni async DI scope oluşturur; scoped persistence bağımlılıkları singleton worker alanında tutulmaz.
+- Worker bütün async çağrılara host cancellation token'ını taşır, beklenen kapanış iptalini normal sonlandırır ve tur hatasını loglayıp bounded polling aralığından sonra yeniden dener.
+- Bir top-of-book olayı yalnız aynı instrument'a ait aktif ve kalıcı rezervasyonu bulunan order'lara fan-out edilir; aynı olay/order çifti deterministik execution ID ile idempotenttir.
 - Bu ilk model top-of-book seviyesindedir; cumulative depth ve queue position sonraki dilimdir.
 
 ## 8. Paket yönetimi

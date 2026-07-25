@@ -1,10 +1,15 @@
-using TradingBot.Domain;
+using TradingBot.Domain.Execution;
+using TradingBot.Domain.Instruments;
 
 namespace TradingBot.Application.Abstractions;
 
+public sealed record PaperMarketEvent(
+    string EventId,
+    PaperTopOfBookSnapshot Snapshot);
+
 public interface IMarketDataClient
 {
-    ValueTask<MarketPrice> GetLatestPriceAsync(
-        string symbol,
+    ValueTask<PaperMarketEvent> GetTopOfBookAsync(
+        InstrumentId instrumentId,
         CancellationToken cancellationToken);
 }

@@ -20,4 +20,8 @@ public sealed record PaperOrderState(
 public interface IPaperOrderReader
 {
     Task<PaperOrderState?> GetAsync(OrderId orderId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<OrderId>> GetActiveOrderIdsAsync(
+        InstrumentId instrumentId,
+        CancellationToken cancellationToken);
 }

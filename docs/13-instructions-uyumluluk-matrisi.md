@@ -19,9 +19,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 14 |
-| 🟡 Kısmi | 30 |
-| ⬜ Planlandı | 50 |
+| ✅ Uygulandı | 15 |
+| 🟡 Kısmi | 31 |
+| ⬜ Planlandı | 48 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -133,14 +133,14 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 77 | FOMO koruması | ⬜ Planlandı | Strateji momentum/spike giriş filtresi gerekli. |
 | 78 | Trailing-stop flaw | ⬜ Planlandı | Volatilite tabanlı mesafe ve monotonic stop testleri gerekli. |
 | 79 | İndikatör çelişkisi | ⬜ Planlandı | Ağırlıklı scoring sözleşmesi gerekli. |
-| 80 | Regime switching | ⬜ Planlandı | Trend/range filtresi ve out-of-sample testi gerekli. |
+| 80 | Regime switching | 🟡 Kısmi | Deterministik `1H close > EMA200` makro trend filtresi mevcut; range/ADX benzeri rejim ayrımı ve out-of-sample kanıtı kaldı. [EMA trend testleri](../tests/TradingBot.Domain.Tests/EmaTrendFilterTests.cs) |
 | 81 | News/event blackout | ⬜ Planlandı | Güvenilir ekonomik takvim adapter'i ve safe mode gerekli. |
 | 82 | Risk/reward dengesizliği | ⬜ Planlandı | Minimum reward/risk ve exit-policy testleri gerekli. |
 | 83 | Grid trap | ⬜ Planlandı | Grid ilk sürümde yok; eklenirse sermaye tüketimi ve maksimum kademe koruması zorunlu. |
 | 84 | Timeframe senkronu | ✅ Uygulandı | `15m/1H` exact-multiple strategy invariant'ı, UTC boundary, future-data reddi ve canlı channel-to-timeframe allowlist'i testli; iki stream bağımsız guard ve ortak reconnect anchor bilgisi taşır. [OKX candle parser testleri](../tests/TradingBot.Infrastructure.Tests/OkxCandleMessageParserTests.cs) |
 | 85 | Black-swan stop | ⬜ Planlandı | Spot server-side hard stop ve emergency policy gerekli. |
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
-| 87 | NaN/Infinity | ⬜ Planlandı | İndikatör katmanı geldiğinde finite-output guard testleri gerekli. |
+| 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
 | 89 | Overfitting | ⬜ Planlandı | Walk-forward, out-of-sample ve data/version kayıtları gerekli. |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |

@@ -82,12 +82,16 @@
 - Candle parser `confirm=0` açık güncellemeyi yayınlamaz; yalnız `confirm=1` satırını UTC boundary/OHLCV invariant'larıyla `Candle`a dönüştürür. Bilinmeyen kanal, instrument, timeframe veya serbest upstream hata detayı fail-closed/sanitize edilir.
 - Canlı stream REST anchor kurulurken 64 kapasiteli bounded channel'da bekletilir. Her timeframe bağımsız `ClosedCandleSequenceGuard` taşır; duplicate/out-of-order kesilir, gap en fazla 300 candle ile REST'ten atomik tamamlanır.
 - Candle worker bağlantı kurulana veya reconnect anchor'ı tamamlanana kadar signal/trend readiness'i kapatır; heartbeat, stream sonu veya integrity hatasında 1-16 saniye exponential backoff ve jitter ile yeniden bağlanır.
+- Warm-up ve canlı güncellemeler timeframe başına 300 kapasiteli singleton `ClosedCandleSeriesStore` içinde birleşir. Store seed edilmeden canlı candle kabul etmez; immutable snapshot verir, duplicate/eski candle'ı ilerletmez; disconnect, gap veya çelişkide kanıtı koruyup seriyi not-ready yapar.
+- Her reconnect sonrasında iki timeframe de aynı UTC `knownAt` üzerinden tam warm-up ile yeniden seed edilir; stream buffer'ında bekleyen duplicate veya yeni candle'lar daha sonra deterministik olarak işlenir.
 
 ### Strateji sözleşmesi
 
 - İlk tanım `btc-usdt-long-flat-baseline/v1`, `OKX:BTC-USDT`, `15m` sinyal ve `1H` trend timeframe'lerini taşır.
 - Trend timeframe, signal timeframe'den büyük ve onun tam katı olmak zorundadır.
 - `EMA(200)` için hem signal hem trend serisinde minimum warm-up 200 kapalı candle'dan kısa olamaz.
+- EMA hesabı `decimal` kullanır, son tam 200 candle penceresinin ilk kapanışından seed edilir ve checked arithmetic taşmasında karar üretmeden hata verir.
+- Long trend izni yalnız son kapalı `1H` candle kapanışı EMA(200)'ün kesin olarak üzerindeyken verilir; bu çıktı strategy engine/backtest kabulünden önce execution'a bağlanmaz.
 - Strategy action allowlist'i yalnız `Hold`, `EnterLong` ve `ExitToFlat` değerlerinden oluşur; short action yoktur.
 - Karardaki signal candle değerlendirme anında kapanmış olmalı; trend candle signal kapanışından daha yeni olamaz.
 - Strategy ID/version ve makine-okunur reason code her kararda taşınır. Kesin entry/exit algoritması backtest kararı alınmadan execution'a bağlanmaz.

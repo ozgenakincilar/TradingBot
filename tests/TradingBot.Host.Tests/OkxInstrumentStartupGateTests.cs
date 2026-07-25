@@ -24,7 +24,8 @@ public sealed class OkxInstrumentStartupGateTests
         var history = new StubHistoryClient();
         await using var provider = CreateProvider(history);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-        var gate = CreateGate(provider, readiness);
+        var store = new ClosedCandleSeriesStore(capacityPerSeries: 300);
+        var gate = CreateGate(provider, store, readiness);
 
         await gate.StartAsync(CancellationToken.None);
 
@@ -36,6 +37,14 @@ public sealed class OkxInstrumentStartupGateTests
         Assert.False(snapshot.MarketDataReady);
         Assert.False(snapshot.IsReady);
         Assert.Equal("market-data-not-ready", snapshot.Reason);
+        Assert.Equal(200, (await store.GetSnapshotAsync(
+            Instrument,
+            SignalTimeframe,
+            CancellationToken.None)).Candles.Count);
+        Assert.Equal(200, (await store.GetSnapshotAsync(
+            Instrument,
+            TrendTimeframe,
+            CancellationToken.None)).Candles.Count);
         Assert.Collection(
             history.Requests,
             request =>
@@ -58,7 +67,7 @@ public sealed class OkxInstrumentStartupGateTests
         var history = new StubHistoryClient(incompleteTimeframe: SignalTimeframe);
         await using var provider = CreateProvider(history);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-        var gate = CreateGate(provider, readiness);
+        var gate = CreateGate(provider, new ClosedCandleSeriesStore(300), readiness);
 
         var action = () => gate.StartAsync(CancellationToken.None);
 
@@ -76,7 +85,7 @@ public sealed class OkxInstrumentStartupGateTests
         var history = new StubHistoryClient(incompleteTimeframe: TrendTimeframe);
         await using var provider = CreateProvider(history);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-        var gate = CreateGate(provider, readiness);
+        var gate = CreateGate(provider, new ClosedCandleSeriesStore(300), readiness);
 
         var action = () => gate.StartAsync(CancellationToken.None);
 
@@ -102,6 +111,7 @@ public sealed class OkxInstrumentStartupGateTests
 
     private static OkxInstrumentStartupGate CreateGate(
         ServiceProvider provider,
+        ClosedCandleSeriesStore store,
         TradingReadinessState readiness) =>
         new(
             provider.GetRequiredService<IServiceScopeFactory>(),
@@ -116,6 +126,7 @@ public sealed class OkxInstrumentStartupGateTests
                 TrendWarmupCandleCount = 200
             }),
             new FixedTimeProvider(Now),
+            store,
             readiness,
             NullLogger<OkxInstrumentStartupGate>.Instance);
 

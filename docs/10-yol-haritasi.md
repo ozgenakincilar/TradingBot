@@ -63,7 +63,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 ## Aşama 3 — Strateji ve backtest
 
 - [x] İlk strateji sözleşmesi ve sürümleme zarfı; exact entry/exit parametreleri backtest kararı bekliyor.
-- Closed candle sinyal akışı.
+- [x] Warm-up ve canlı candle'ları birleştiren bounded, fail-closed seri store'u.
+- [x] Deterministik decimal EMA(200) ve `1H close > EMA` long trend filtresi; execution bağlantısı yok.
+- Closed candle sinyal akışı ve strategy decision bağlantısı.
 - Tarihsel streaming reader.
 - Komisyon/slippage/latency fill modeli.
 - Walk-forward ve out-of-sample raporu.

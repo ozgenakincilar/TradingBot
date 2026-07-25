@@ -75,6 +75,7 @@ builder.Services
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(
     new TradingReadinessState(marketDataSource == MarketDataSource.OkxPublic));
+builder.Services.AddSingleton(new ClosedCandleSeriesStore(capacityPerSeries: 300));
 builder.Services.AddScoped<PersistRiskApprovedOrder>();
 builder.Services.AddScoped<ApplySpotOrderFill>();
 builder.Services.AddScoped<ProcessPaperOrderSnapshot>();

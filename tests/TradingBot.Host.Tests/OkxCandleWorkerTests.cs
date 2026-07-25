@@ -20,11 +20,14 @@ public sealed class OkxCandleWorkerTests
         var stream = new BlockingStreamClient();
         await using var provider = CreateProvider(stream);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
+        var store = new ClosedCandleSeriesStore(capacityPerSeries: 300);
         readiness.MarkInstrumentReady("OKX:BTC-USDT");
         readiness.MarkMarketDataReady();
         var worker = new OkxCandleWorker(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(Settings()),
+            provider.GetRequiredService<TimeProvider>(),
+            store,
             readiness,
             NullLogger<OkxCandleWorker>.Instance);
 
@@ -35,6 +38,10 @@ public sealed class OkxCandleWorkerTests
 
         Assert.True(readiness.Snapshot.IsReady);
         Assert.Equal(2, stream.RequestedTimeframes?.Count);
+        Assert.Equal(200, (await store.GetSnapshotAsync(
+            InstrumentId.Create("OKX", "BTC-USDT"),
+            Timeframe.Create(TimeSpan.FromMinutes(15)),
+            CancellationToken.None)).Candles.Count);
 
         await worker.StopAsync(CancellationToken.None);
     }
@@ -45,6 +52,9 @@ public sealed class OkxCandleWorkerTests
         services.AddSingleton(stream);
         services.AddSingleton<IClosedCandleHistoryClient>(new GeneratingHistoryClient());
         services.AddSingleton<TimeProvider>(new FixedTimeProvider(Now));
+        services.AddTransient(serviceProvider => new WarmUpClosedCandles(
+            serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
+            maximumCandlesPerRequest: 300));
         services.AddTransient(serviceProvider => new ClosedCandleStreamSession(
             serviceProvider.GetRequiredService<IClosedCandleStreamClient>(),
             serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
@@ -95,19 +105,23 @@ public sealed class OkxCandleWorkerTests
             Timeframe timeframe,
             DateTimeOffset fromInclusive,
             DateTimeOffset toExclusive,
-            CancellationToken cancellationToken) =>
-            ValueTask.FromResult<IReadOnlyList<Candle>>([
-                Candle.CreateClosed(
-                    instrumentId,
-                    timeframe,
-                    fromInclusive,
-                    Now,
-                    100m,
-                    101m,
-                    99m,
-                    100m,
-                    1m)
-            ]);
+            CancellationToken cancellationToken)
+        {
+            var count = (int)((toExclusive - fromInclusive).Ticks / timeframe.Duration.Ticks);
+            return ValueTask.FromResult<IReadOnlyList<Candle>>(
+                Enumerable.Range(0, count)
+                    .Select(index => Candle.CreateClosed(
+                        instrumentId,
+                        timeframe,
+                        fromInclusive + (timeframe.Duration * index),
+                        Now,
+                        100m,
+                        101m,
+                        99m,
+                        100m,
+                        1m))
+                    .ToArray());
+        }
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

@@ -4,12 +4,18 @@ public sealed record TradingReadinessSnapshot(
     bool InstrumentReady,
     bool MarketDataReady,
     bool CandleHistoryRequired,
-    bool CandleHistoryReady,
+    bool SignalCandleHistoryReady,
+    bool TrendCandleHistoryReady,
     string? Instrument,
-    int? CandleTimeframeSeconds,
-    int? WarmupCandleCount,
+    int? SignalCandleTimeframeSeconds,
+    int? SignalWarmupCandleCount,
+    int? TrendCandleTimeframeSeconds,
+    int? TrendWarmupCandleCount,
     string? Reason)
 {
+    public bool CandleHistoryReady =>
+        SignalCandleHistoryReady && TrendCandleHistoryReady;
+
     public bool IsReady =>
         InstrumentReady &&
         MarketDataReady &&
@@ -27,6 +33,9 @@ public sealed class TradingReadinessState
             false,
             candleHistoryRequired,
             false,
+            false,
+            null,
+            null,
             null,
             null,
             null,
@@ -58,21 +67,37 @@ public sealed class TradingReadinessState
                 current.CandleHistoryReady)
         });
 
-    public void MarkCandleHistoryReady(int timeframeSeconds, int warmupCandleCount) =>
+    public void MarkSignalCandleHistoryReady(int timeframeSeconds, int warmupCandleCount) =>
         Update(current => current with
         {
-            CandleHistoryReady = true,
-            CandleTimeframeSeconds = timeframeSeconds,
-            WarmupCandleCount = warmupCandleCount,
+            SignalCandleHistoryReady = true,
+            SignalCandleTimeframeSeconds = timeframeSeconds,
+            SignalWarmupCandleCount = warmupCandleCount,
             Reason = GetReason(
                 current.InstrumentReady,
                 current.MarketDataReady,
                 current.CandleHistoryRequired,
-                true)
+                current.TrendCandleHistoryReady)
         });
 
-    public void MarkCandleHistoryNotReady(string reason) =>
-        Update(current => current with { CandleHistoryReady = false, Reason = reason });
+    public void MarkSignalCandleHistoryNotReady(string reason) =>
+        Update(current => current with { SignalCandleHistoryReady = false, Reason = reason });
+
+    public void MarkTrendCandleHistoryReady(int timeframeSeconds, int warmupCandleCount) =>
+        Update(current => current with
+        {
+            TrendCandleHistoryReady = true,
+            TrendCandleTimeframeSeconds = timeframeSeconds,
+            TrendWarmupCandleCount = warmupCandleCount,
+            Reason = GetReason(
+                current.InstrumentReady,
+                current.MarketDataReady,
+                current.CandleHistoryRequired,
+                current.SignalCandleHistoryReady)
+        });
+
+    public void MarkTrendCandleHistoryNotReady(string reason) =>
+        Update(current => current with { TrendCandleHistoryReady = false, Reason = reason });
 
     public void MarkMarketDataNotReady(string reason) =>
         Update(current => current with { MarketDataReady = false, Reason = reason });

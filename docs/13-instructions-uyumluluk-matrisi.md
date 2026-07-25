@@ -19,8 +19,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 11 |
-| 🟡 Kısmi | 33 |
+| ✅ Uygulandı | 12 |
+| 🟡 Kısmi | 32 |
 | ⬜ Planlandı | 50 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
@@ -77,7 +77,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 36 | Look-ahead bias | ⬜ Planlandı | Backtest engine ve future-data guard testleri gerekli. |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
-| 39 | Warm-up period | 🟡 Kısmi | Signal ve trend için 200 candle ürün kararı alındı; bounded warm-up ile mevcut `15m/200` host kapısı eksik geçmişte fail-closed. Ayrı `1H/200` trend readiness bağlantısı kaldı. [Strategy contract testleri](../tests/TradingBot.Domain.Tests/StrategyContractTests.cs) |
+| 39 | Warm-up period | ✅ Uygulandı | OKX startup kapısı aynı UTC bilgi anında sıralı `15m/200` signal ve `1H/200` trend geçmişi ister; iki seri exact, kapalı ve contiguous olmadan readiness açılmaz. [Dual warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
 | 40 | Sell slippage/depth | 🟡 Kısmi | Sell bid referansı, aleyhte slippage ve görünür likidite katılım sınırı var; cumulative multi-level depth henüz yok. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |

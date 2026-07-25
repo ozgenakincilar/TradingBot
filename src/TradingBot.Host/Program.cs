@@ -56,12 +56,17 @@ builder.Services
     .Validate(static options => options.MaximumLiquidityParticipationPercent is > 0 and <= 100,
         "Paper likidite katılımı yüzde 0-100 arasında olmalıdır.")
     .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
-                                options.CandleTimeframeSeconds is 1 or 60 or 180 or 300 or 900 or 1800 or
-                                    3600 or 7200 or 14400 or 21600 or 43200 or 86400,
-        "OKX candle timeframe desteklenen sabit UTC aralıklarından biri olmalıdır.")
+                                options.SignalCandleTimeframeSeconds == 900,
+        "İlk strateji sürümü için signal candle timeframe 15 dakika olmalıdır.")
     .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
-                                options.WarmupCandleCount is >= 1 and <= 300,
-        "OKX warm-up candle sayısı 1-300 arasında olmalıdır.")
+                                options.TrendCandleTimeframeSeconds == 3600,
+        "İlk strateji sürümü için trend candle timeframe 1 saat olmalıdır.")
+    .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
+                                options.SignalWarmupCandleCount is >= 200 and <= 300,
+        "Signal warm-up candle sayısı EMA200 için 200-300 arasında olmalıdır.")
+    .Validate(static options => options.MarketDataSource != MarketDataSource.OkxPublic ||
+                                options.TrendWarmupCandleCount is >= 200 and <= 300,
+        "Trend warm-up candle sayısı EMA200 için 200-300 arasında olmalıdır.")
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);

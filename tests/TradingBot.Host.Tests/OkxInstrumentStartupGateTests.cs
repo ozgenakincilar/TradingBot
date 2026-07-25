@@ -13,52 +13,79 @@ namespace TradingBot.Host.Tests;
 public sealed class OkxInstrumentStartupGateTests
 {
     private static readonly InstrumentId Instrument = InstrumentId.Create("OKX", "BTC-USDT");
+    private static readonly Timeframe SignalTimeframe = Timeframe.Create(TimeSpan.FromMinutes(15));
+    private static readonly Timeframe TrendTimeframe = Timeframe.Create(TimeSpan.FromHours(1));
     private static readonly DateTimeOffset Now =
         new(2026, 7, 25, 12, 7, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task CompleteClosedHistoryOpensCandleReadiness()
+    public async Task CompleteSignalAndTrendHistoryOpenCandleReadiness()
     {
-        var history = new StubHistoryClient(returnCompleteRange: true);
+        var history = new StubHistoryClient();
         await using var provider = CreateProvider(history);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-        var gate = CreateGate(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            readiness);
+        var gate = CreateGate(provider, readiness);
 
         await gate.StartAsync(CancellationToken.None);
 
         var snapshot = readiness.Snapshot;
         Assert.True(snapshot.InstrumentReady);
+        Assert.True(snapshot.SignalCandleHistoryReady);
+        Assert.True(snapshot.TrendCandleHistoryReady);
         Assert.True(snapshot.CandleHistoryReady);
         Assert.False(snapshot.MarketDataReady);
         Assert.False(snapshot.IsReady);
         Assert.Equal("market-data-not-ready", snapshot.Reason);
-        Assert.Equal(900, snapshot.CandleTimeframeSeconds);
-        Assert.Equal(200, snapshot.WarmupCandleCount);
-        Assert.Equal(200, history.RequestedCount);
-        Assert.Equal(new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero), history.ToExclusive);
+        Assert.Collection(
+            history.Requests,
+            request =>
+            {
+                Assert.Equal(SignalTimeframe, request.Timeframe);
+                Assert.Equal(200, request.Count);
+                Assert.Equal(new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero), request.ToExclusive);
+            },
+            request =>
+            {
+                Assert.Equal(TrendTimeframe, request.Timeframe);
+                Assert.Equal(200, request.Count);
+                Assert.Equal(new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero), request.ToExclusive);
+            });
     }
 
     [Fact]
-    public async Task IncompleteHistoryFailsStartupAndKeepsReadinessClosed()
+    public async Task IncompleteSignalHistoryFailsBeforeTrendRequest()
     {
-        var history = new StubHistoryClient(returnCompleteRange: false);
+        var history = new StubHistoryClient(incompleteTimeframe: SignalTimeframe);
         await using var provider = CreateProvider(history);
         var readiness = new TradingReadinessState(candleHistoryRequired: true);
-        var gate = CreateGate(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            readiness);
+        var gate = CreateGate(provider, readiness);
 
         var action = () => gate.StartAsync(CancellationToken.None);
 
         await Assert.ThrowsAsync<DomainRuleViolationException>(action);
         Assert.True(readiness.Snapshot.InstrumentReady);
+        Assert.False(readiness.Snapshot.SignalCandleHistoryReady);
+        Assert.False(readiness.Snapshot.TrendCandleHistoryReady);
+        Assert.Single(history.Requests);
+        Assert.Equal(nameof(DomainRuleViolationException), readiness.Snapshot.Reason);
+    }
+
+    [Fact]
+    public async Task IncompleteTrendHistoryPreservesSignalEvidenceButKeepsReadinessClosed()
+    {
+        var history = new StubHistoryClient(incompleteTimeframe: TrendTimeframe);
+        await using var provider = CreateProvider(history);
+        var readiness = new TradingReadinessState(candleHistoryRequired: true);
+        var gate = CreateGate(provider, readiness);
+
+        var action = () => gate.StartAsync(CancellationToken.None);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+        Assert.True(readiness.Snapshot.SignalCandleHistoryReady);
+        Assert.False(readiness.Snapshot.TrendCandleHistoryReady);
         Assert.False(readiness.Snapshot.CandleHistoryReady);
-        Assert.False(readiness.Snapshot.IsReady);
-        Assert.Equal(
-            nameof(DomainRuleViolationException),
-            readiness.Snapshot.Reason);
+        Assert.Equal(2, history.Requests.Count);
+        Assert.Equal(nameof(DomainRuleViolationException), readiness.Snapshot.Reason);
     }
 
     private static ServiceProvider CreateProvider(IClosedCandleHistoryClient history)
@@ -74,17 +101,19 @@ public sealed class OkxInstrumentStartupGateTests
     }
 
     private static OkxInstrumentStartupGate CreateGate(
-        IServiceScopeFactory scopeFactory,
+        ServiceProvider provider,
         TradingReadinessState readiness) =>
         new(
-            scopeFactory,
+            provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new TradingOptions
             {
                 MarketDataSource = MarketDataSource.OkxPublic,
                 Exchange = "OKX",
                 Symbol = "BTC-USDT",
-                CandleTimeframeSeconds = 900,
-                WarmupCandleCount = 200
+                SignalCandleTimeframeSeconds = 900,
+                SignalWarmupCandleCount = 200,
+                TrendCandleTimeframeSeconds = 3600,
+                TrendWarmupCandleCount = 200
             }),
             new FixedTimeProvider(Now),
             readiness,
@@ -106,11 +135,10 @@ public sealed class OkxInstrumentStartupGateTests
                 "live"));
     }
 
-    private sealed class StubHistoryClient(bool returnCompleteRange) : IClosedCandleHistoryClient
+    private sealed class StubHistoryClient(Timeframe? incompleteTimeframe = null)
+        : IClosedCandleHistoryClient
     {
-        public int RequestedCount { get; private set; }
-
-        public DateTimeOffset? ToExclusive { get; private set; }
+        public List<HistoryRequest> Requests { get; } = [];
 
         public ValueTask<IReadOnlyList<Candle>> GetAsync(
             InstrumentId instrumentId,
@@ -119,14 +147,14 @@ public sealed class OkxInstrumentStartupGateTests
             DateTimeOffset toExclusive,
             CancellationToken cancellationToken)
         {
-            RequestedCount = (int)((toExclusive - fromInclusive).Ticks / timeframe.Duration.Ticks);
-            ToExclusive = toExclusive;
-            if (!returnCompleteRange)
+            var count = (int)((toExclusive - fromInclusive).Ticks / timeframe.Duration.Ticks);
+            Requests.Add(new HistoryRequest(timeframe, count, toExclusive));
+            if (timeframe == incompleteTimeframe)
             {
                 return ValueTask.FromResult<IReadOnlyList<Candle>>(Array.Empty<Candle>());
             }
 
-            var candles = new Candle[RequestedCount];
+            var candles = new Candle[count];
             for (var index = 0; index < candles.Length; index++)
             {
                 candles[index] = Candle.CreateClosed(
@@ -144,6 +172,11 @@ public sealed class OkxInstrumentStartupGateTests
             return ValueTask.FromResult<IReadOnlyList<Candle>>(candles);
         }
     }
+
+    private sealed record HistoryRequest(
+        Timeframe Timeframe,
+        int Count,
+        DateTimeOffset ToExclusive);
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
     {

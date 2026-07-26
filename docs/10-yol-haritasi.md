@@ -79,7 +79,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - Tick/lot rounding ve order-book queue replay.
 - [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
 - [x] v1 hash/karar uyumluluğunu koruyan, round-trip maliyetinden türetilmiş 30 bps EMA hysteresis v2 araştırma sözleşmesi.
-- v2 train/validation kabul çalışması, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
+- [x] v1-v2 validation-only karşılaştırma, önceden kayıtlı acceptance evaluator ve fail-closed research CLI.
+- Ayrı development datasetinde v2 train/validation kabul çalışması, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

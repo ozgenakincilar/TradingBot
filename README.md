@@ -82,6 +82,8 @@ dotnet run --project src/TradingBot.Research --configuration Release -- `
 
 Komut yalnızca `BTC-USDT`, canonical `15m/1H` CSV çifti ve v1 strateji zarfını kullanır. Execution policy rapor manifestinde sabittir: `1.000 USDT`, `%10` allocation, `20 bps` sentetik spread, `%0,1` komisyon, `10 bps` slippage, `%5` önceki-candle likidite katılımı ve `100 ms` latency. Çıktı `walk-forward-report-v2` JSON raporudur; strateji ile maliyetli buy-and-hold benchmark karşılaştırmasını içerir.
 
+v1 ile cost-derived `30 bps` hysteresis v2 adayını yalnız train/validation pencerelerinde karşılaştırmak için aynı argümanlarla `run-walk-forward` yerine `validate-hysteresis-v2` kullanılır. Komut OOS candle'larını strategy stream'ine vermez; `strategy-validation-report-v1` JSON üretir. Tüm önceden kayıtlı kapılar geçerse exit code `0`, aday reddedilirse exit code `3` döner. Ret kodu bir uygulama arızası değil, fail-closed araştırma sonucudur.
+
 ## Güvenlik
 
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.

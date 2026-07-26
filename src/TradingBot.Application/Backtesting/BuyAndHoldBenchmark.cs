@@ -25,20 +25,42 @@ public sealed record BuyAndHoldBenchmarkReport(
 
 public sealed class BuyAndHoldBenchmark
 {
-    public async Task<BuyAndHoldBenchmarkReport> RunAsync(
+    public Task<BuyAndHoldBenchmarkReport> RunAsync(
         IAsyncEnumerable<Candle> candles,
         ChronologicalDatasetSplit split,
         BacktestExecutionPolicy policy,
         InstrumentId instrumentId,
         Timeframe signalTimeframe,
         CancellationToken cancellationToken)
+        => RunRangeAsync(
+            candles,
+            split.ValidationEndExclusive,
+            split.OutOfSampleEndExclusive,
+            policy,
+            instrumentId,
+            signalTimeframe,
+            cancellationToken);
+
+    public async Task<BuyAndHoldBenchmarkReport> RunRangeAsync(
+        IAsyncEnumerable<Candle> candles,
+        DateTimeOffset evaluationStartInclusive,
+        DateTimeOffset evaluationEndExclusive,
+        BacktestExecutionPolicy policy,
+        InstrumentId instrumentId,
+        Timeframe signalTimeframe,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(candles);
-        ArgumentNullException.ThrowIfNull(split);
         ArgumentNullException.ThrowIfNull(policy);
-        if (instrumentId == default)
+        if (instrumentId == default || evaluationStartInclusive == default ||
+            evaluationEndExclusive == default ||
+            evaluationStartInclusive.Offset != TimeSpan.Zero ||
+            evaluationEndExclusive.Offset != TimeSpan.Zero ||
+            evaluationStartInclusive >= evaluationEndExclusive ||
+            !signalTimeframe.IsBoundary(evaluationStartInclusive) ||
+            !signalTimeframe.IsBoundary(evaluationEndExclusive))
         {
-            throw new DomainRuleViolationException("Benchmark instrument is required.");
+            throw new DomainRuleViolationException("Benchmark identity and evaluation range are invalid.");
         }
 
         policy.Validate(signalTimeframe);
@@ -55,19 +77,19 @@ public sealed class BuyAndHoldBenchmark
                     "Benchmark candles must use the configured instrument and signal timeframe.");
             }
 
-            if (candle.OpenTime < split.ValidationEndExclusive)
+            if (candle.OpenTime < evaluationStartInclusive)
             {
                 continue;
             }
 
-            if (candle.OpenTime >= split.OutOfSampleEndExclusive)
+            if (candle.OpenTime >= evaluationEndExclusive)
             {
                 break;
             }
 
             if (first is null)
             {
-                if (candle.OpenTime != split.ValidationEndExclusive)
+                if (candle.OpenTime != evaluationStartInclusive)
                 {
                     throw new DomainRuleViolationException(
                         "Benchmark OOS candles must start at the split boundary.");
@@ -87,7 +109,7 @@ public sealed class BuyAndHoldBenchmark
         }
 
         if (first is null || previous is null ||
-            previous.CloseTime != split.OutOfSampleEndExclusive)
+            previous.CloseTime != evaluationEndExclusive)
         {
             throw new DomainRuleViolationException(
                 "Benchmark requires one complete OOS candle window.");

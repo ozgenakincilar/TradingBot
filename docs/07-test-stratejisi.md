@@ -61,6 +61,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Streaming replay'in eşit close time'da trend-first davranışı, gelecekteki trend candle'ı dışlaması, aynı girdide aynı karar/state ve historical gap'te fail-closed olması.
 - Backtest kararının aynı candle'da değil sonraki candle open+latency anında fill edilmesi; spread, slippage ve iki taraflı fee'nin net getiriyi düşürmesi.
 - Flat market round trip'in maliyet sonrası zarar yazması, düşük geçmiş hacimde phantom fill oluşmaması ve mevcut candle toplam hacminin open fill'e sızmaması.
+- Alış fiyatının tick'e yukarı, satış fiyatının aşağı; quantity'nin lot step'e aşağı yuvarlanması, minimum altı girişin fillsiz reddi ve satılamayan remainder'ın açık/pending kalması.
+- Quantized buy-and-hold'un aynı kuralları kullanması, tradable olmayan liquidation'ı reddetmesi; instrument kuralları değişince configuration hash'in değişmesi ve legacy v1 hash'inin korunması.
 - Aynı input/policy'nin aynı execution raporunu üretmesi; açık pozisyon/pending target'ın zorla kapatılmadan raporlanması.
 - Canonical CSV header/UTC/invariant decimal parse, raw SHA-256 kararlılığı, gap/malformed satır reddi ve erken consumer stop'ta summary oluşmaması.
 - 25.000 candle fixture'ın tüm dosyayı koleksiyona almadan single-pass async tüketimi ve exact count/range kanıtı.
@@ -106,7 +108,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Gözlemlenmiş 2025 v1 OOS pencereleri yeni strateji seçimine kapalıdır. Cost-derived hysteresis v2 ancak trade ve toplam maliyeti v1'e göre en az `%30` azaltır, pozitif net ve negatif olmayan benchmark excess üretir, her pencerede drawdown `%5` altında kalır ve pencerelerin en az `%60`ını kârlı kapatırsa yeni OOS'a açılır.
 - Walk-forward ve farklı market regime testleri uygulanır.
 - Sonuçlar strategy version, data version, seed ve config hash ile tekrar üretilebilir olmalıdır.
-- Mevcut next-open execution proxy fee/spread/slippage/latency/PnL modellemektedir; order-book queue, tick/lot rounding ve out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.
+- Mevcut next-open execution proxy fee/spread/slippage/latency/PnL ve opsiyonel tick/lot/minimum emir kurallarını modellemektedir; order-book queue ve quantized out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.
 
 ## 5. Determinizm
 

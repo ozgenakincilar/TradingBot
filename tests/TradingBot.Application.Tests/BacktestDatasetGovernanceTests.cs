@@ -135,6 +135,37 @@ public sealed class BacktestDatasetGovernanceTests
     }
 
     [Fact]
+    public void InstrumentRulesChangeConfigurationIdentity()
+    {
+        var legacy = CreateManifest(Definition(), ExecutionPolicy());
+        var quantized = CreateManifest(
+            Definition(),
+            ExecutionPolicy() with
+            {
+                InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                    Instrument,
+                    priceTickSize: 0.1m,
+                    quantityStepSize: 0.00000001m,
+                    minimumQuantity: 0.00001m,
+                    minimumNotional: 1m)
+            });
+        var changedTick = CreateManifest(
+            Definition(),
+            quantizedPolicy: ExecutionPolicy() with
+            {
+                InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                    Instrument,
+                    priceTickSize: 0.01m,
+                    quantityStepSize: 0.00000001m,
+                    minimumQuantity: 0.00001m,
+                    minimumNotional: 1m)
+            });
+
+        Assert.NotEqual(legacy.ConfigurationSha256, quantized.ConfigurationSha256);
+        Assert.NotEqual(quantized.ConfigurationSha256, changedTick.ConfigurationSha256);
+    }
+
+    [Fact]
     public void IncompleteDatasetCannotProduceManifest()
     {
         var action = () => BacktestRunManifestFactory.Create(
@@ -219,9 +250,14 @@ public sealed class BacktestDatasetGovernanceTests
             randomSeed);
 
     private static BacktestRunManifest CreateManifest(StrategyDefinition definition) =>
+        CreateManifest(definition, ExecutionPolicy());
+
+    private static BacktestRunManifest CreateManifest(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy quantizedPolicy) =>
         BacktestRunManifestFactory.Create(
             definition,
-            ExecutionPolicy(),
+            quantizedPolicy,
             Descriptor("signal-data", Signal, 'A'),
             Summary(),
             Descriptor("trend-data", Trend, 'B'),

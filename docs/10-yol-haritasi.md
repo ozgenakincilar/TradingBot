@@ -76,7 +76,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Secretsiz public OKX research export CLI ve sıkı UTC/timeframe/path komut sözleşmesi.
 - [x] Maliyetli buy-and-hold OOS benchmark, excess getiri, report identity ve SQL persistence.
 - [x] Canonical gerçek CSV çifti üzerinde versioned baseline walk-forward raporu çalıştıran secretsiz research CLI.
-- Tick/lot rounding ve order-book queue replay.
+- [x] Strategy ve benchmark için muhafazakâr tick/lot rounding, minimum quantity/notional kapısı, versioned configuration hash ve legacy kanıt uyumluluğu.
+- Order-book queue replay, market impact ve cancel latency.
 - [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
 - [x] v1 hash/karar uyumluluğunu koruyan, round-trip maliyetinden türetilmiş 30 bps EMA hysteresis v2 araştırma sözleşmesi.
 - [x] v1-v2 validation-only karşılaştırma, önceden kayıtlı acceptance evaluator ve fail-closed research CLI.

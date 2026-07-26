@@ -100,6 +100,9 @@
 - Sentetik top-of-book, next-open midpoint ± half-spread olarak kurulur; `PaperExecutionEngine` yönsel slippage, iki taraflı quote fee ve maximum liquidity participation uygular.
 - Open fill'de mevcut candle'ın henüz bilinmeyen toplam hacmi kullanılmaz. Yalnız karar anında kapanmış önceki candle base volume değeri likidite proxy'sidir.
 - Backtest allocation kullanılabilir cash ile sınırlıdır; leverage, borçlanma, short ve negatif Spot quantity oluşturamaz. Veri sonunda açık pozisyon zorla kapatılmaz.
+- Instrument-filter'lı backtest alış fiyatını tick'e yukarı, satış fiyatını tick'e aşağı ve quantity'yi lot step'e aşağı yuvarlar. Minimum quantity/notional altındaki giriş fill üretmez; satılamayan remainder açık ve pending kalır. Benchmark aynı kuralları kullanır.
+- Tick/lot/minimum değerleri hep birlikte açıkça verilir ve `instrument-quantized-backtest-v1` configuration hash'ine girer. Kısmi veya instrument kimliği uyuşmayan kural seti fail-closed olur; exchange tarafından yayımlanmayan minimum notional uydurulmaz.
+- Kuralsız execution policy legacy hash/rapor uyumluluğunu korur. Research CLI quantized run için dört opsiyonun tamamını birlikte ister: `--tick-size`, `--quantity-step`, `--minimum-quantity`, `--minimum-notional`.
 - Next-open OHLCV proxy intrabar order book/queue position sağlamaz; rapor production kârlılık kanıtı veya aylık hedef garantisi değildir.
 
 ### Historical dataset ve run kimliği

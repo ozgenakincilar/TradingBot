@@ -71,7 +71,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 |---:|---|---|---|
 | 31 | Price tick size | ✅ Uygulandı | OKX `tickSz` dinamik okunuyor; fiyat aşağı adım normalizasyonu ve contract/domain testleri mevcut. [Instrument catalog](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotInstrumentCatalog.cs) |
 | 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
-| 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor ve Domain min quantity/notional reddi var. Public instrument yanıtı minimum notional sağlamadığından bu değer uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli order-decay politikası kaldı. |
+| 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor; backtest/benchmark açıkça verilen tick/lot/minimum quantity/notional snapshot'ını hash'leyip minimum altı girişi reddediyor ve satılamayan remainder'ı pending bırakıyor. Public metadata minimum notional sağlamadığından uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli live order-decay politikası kaldı. [ADR-0019](adr/0019-backtest-instrument-quantization.md) |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu SQL settlement'ta; backtest alış/satış maliyetleri de net return'de testli. Exchange fee-asset çeşitleri ve live parity henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 | 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
 | 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız bilinen trend verisini alır; execution aynı candle'da fill etmez ve next-open likiditesi için mevcut candle toplam hacmi yerine önceki kapalı candle hacmini kullanır. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
@@ -83,7 +83,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper ve backtest aynı minimum latency/slippage/participation motorunu kullanıyor; backtest next-open proxy ve pending target taşır. Order-book queue ve cancel latency henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper ve backtest aynı minimum latency/slippage/participation motorunu kullanıyor; backtest next-open proxy, muhafazakâr tick/lot rounding ve pending target taşır. Order-book queue, market impact ve cancel latency henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

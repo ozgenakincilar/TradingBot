@@ -32,18 +32,24 @@ public static class ResearchWalkForwardCommand
         Timeframe.Create(TimeSpan.FromMinutes(15));
     private static readonly Timeframe TrendTimeframe =
         Timeframe.Create(TimeSpan.FromHours(1));
-    private static readonly IReadOnlySet<string> AllowedOptions = new HashSet<string>(
+    private static readonly IReadOnlySet<string> RequiredOptions = new HashSet<string>(
         [
             "--instrument", "--signal", "--signal-source", "--trend", "--trend-source",
             "--from", "--to", "--training-days", "--validation-days", "--oos-days",
             "--mode", "--seed"
         ],
         StringComparer.Ordinal);
+    private static readonly IReadOnlySet<string> InstrumentRuleOptions = new HashSet<string>(
+        ["--tick-size", "--quantity-step", "--minimum-quantity", "--minimum-notional"],
+        StringComparer.Ordinal);
+    private static readonly IReadOnlySet<string> AllowedOptions = new HashSet<string>(
+        RequiredOptions.Concat(InstrumentRuleOptions),
+        StringComparer.Ordinal);
 
     public static ResearchWalkForwardRequest Parse(IReadOnlyList<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
-        if (arguments.Count != 25 ||
+        if (arguments.Count is not (25 or 33) ||
             !string.Equals(arguments[0], "run-walk-forward", StringComparison.Ordinal))
         {
             throw InvalidCommand();
@@ -61,7 +67,9 @@ public static class ResearchWalkForwardCommand
             }
         }
 
-        if (values.Count != AllowedOptions.Count ||
+        var instrumentRuleCount = InstrumentRuleOptions.Count(values.ContainsKey);
+        if (!RequiredOptions.All(values.ContainsKey) ||
+            instrumentRuleCount is not (0 or 4) ||
             !string.Equals(values["--instrument"], "BTC-USDT", StringComparison.Ordinal) ||
             !TryUtc(values["--from"], out var from) ||
             !TryUtc(values["--to"], out var to) ||
@@ -85,6 +93,14 @@ public static class ResearchWalkForwardCommand
         try
         {
             var instrument = InstrumentId.Create("OKX", "BTC-USDT");
+            var instrumentRules = instrumentRuleCount == 0
+                ? null
+                : TradingBot.Domain.Instruments.Instrument.Create(
+                    instrument,
+                    ParsePositiveDecimal(values["--tick-size"]),
+                    ParsePositiveDecimal(values["--quantity-step"]),
+                    ParsePositiveDecimal(values["--minimum-quantity"]),
+                    ParsePositiveDecimal(values["--minimum-notional"]));
             var definition = StrategyDefinition.Create(
                 "btc-usdt-long-flat-baseline",
                 1,
@@ -106,7 +122,8 @@ public static class ResearchWalkForwardCommand
                     TimeSpan.FromMilliseconds(100),
                     Percentage.FromPercent(0.1m),
                     SlippageBasisPoints: 10m,
-                    Percentage.FromPercent(5m)));
+                    Percentage.FromPercent(5m)),
+                instrumentRules);
             var schedule = WalkForwardSchedule.Create(
                 from,
                 to,
@@ -143,7 +160,7 @@ public static class ResearchWalkForwardCommand
         IReadOnlyList<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
-        if (arguments.Count != 25 ||
+        if (arguments.Count is not (25 or 33) ||
             !string.Equals(arguments[0], "validate-hysteresis-v2", StringComparison.Ordinal))
         {
             throw InvalidValidationCommand();
@@ -184,7 +201,9 @@ public static class ResearchWalkForwardCommand
         "Usage: run-walk-forward --instrument BTC-USDT --signal <15m.csv> " +
         "--signal-source <id> --trend <1H.csv> --trend-source <id> " +
         "--from <UTC-O> --to <UTC-O> --training-days <n> --validation-days <n> " +
-        "--oos-days <n> --mode rolling|expanding --seed <int>";
+        "--oos-days <n> --mode rolling|expanding --seed <int> " +
+        "[--tick-size <decimal> --quantity-step <decimal> " +
+        "--minimum-quantity <decimal> --minimum-notional <decimal>]";
 
     public static string ValidationUsage => Usage.Replace(
         "run-walk-forward",
@@ -214,6 +233,20 @@ public static class ResearchWalkForwardCommand
 
     private static bool IsCsv(string value) =>
         string.Equals(Path.GetExtension(value), ".csv", StringComparison.OrdinalIgnoreCase);
+
+    private static decimal ParsePositiveDecimal(string value)
+    {
+        if (!decimal.TryParse(
+                value,
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out var parsed) || parsed <= 0m)
+        {
+            throw InvalidCommand();
+        }
+
+        return parsed;
+    }
 
     private static DomainRuleViolationException InvalidCommand() => new(
         "Research walk-forward command is invalid. " + Usage);

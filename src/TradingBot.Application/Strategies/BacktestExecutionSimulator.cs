@@ -14,9 +14,10 @@ public sealed record BacktestExecutionPolicy(
     AssetCode QuoteAsset,
     Percentage QuoteAllocation,
     decimal SyntheticSpreadBasisPoints,
-    PaperExecutionPolicy PaperExecution)
+    PaperExecutionPolicy PaperExecution,
+    Instrument? InstrumentRules = null)
 {
-    public void Validate(Timeframe signalTimeframe)
+    public void Validate(Timeframe signalTimeframe, InstrumentId? expectedInstrumentId = null)
     {
         if (InitialQuoteBalance <= 0m || BaseAsset == default || QuoteAsset == default ||
             BaseAsset == QuoteAsset || QuoteAllocation.Fraction <= 0m)
@@ -28,6 +29,13 @@ public sealed record BacktestExecutionPolicy(
         {
             throw new DomainRuleViolationException(
                 "Backtest synthetic spread must be between 0 and 1,000 basis points.");
+        }
+
+        if (InstrumentRules is not null && expectedInstrumentId is { } instrumentId &&
+            InstrumentRules.Id != instrumentId)
+        {
+            throw new DomainRuleViolationException(
+                "Backtest instrument rules must match the strategy instrument.");
         }
 
         PaperExecution.Validate();
@@ -82,7 +90,7 @@ public sealed class BacktestExecutionSimulator
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(decisions);
         ArgumentNullException.ThrowIfNull(policy);
-        policy.Validate(definition.SignalTimeframe);
+        policy.Validate(definition.SignalTimeframe, definition.InstrumentId);
 
         var position = SpotPosition.Open(
             definition.InstrumentId,
@@ -154,12 +162,23 @@ public sealed class BacktestExecutionSimulator
         }
 
         var maximumCost = Math.Min(state.RemainingEntryBudget, state.Cash);
-        var expectedPrice = ApplySlippage(
-            market.BestAsk.Value,
+        var expectedPrice = BacktestInstrumentQuantization.NormalizePrice(
+            policy,
             OrderSide.Buy,
-            policy.PaperExecution.SlippageBasisPoints);
+            ApplySlippage(
+                market.BestAsk.Value,
+                OrderSide.Buy,
+                policy.PaperExecution.SlippageBasisPoints));
         var unitCost = Checked(expectedPrice * (1m + policy.PaperExecution.CommissionRate.Fraction));
-        var requestedQuantity = maximumCost / unitCost;
+        var requestedQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
+            policy,
+            maximumCost / unitCost);
+        if (!BacktestInstrumentQuantization.IsTradable(policy, expectedPrice, requestedQuantity))
+        {
+            state.ClearTarget();
+            return;
+        }
+
         var result = _execution.Evaluate(
             policy.PaperExecution,
             new PaperExecutionRequest(
@@ -172,7 +191,11 @@ public sealed class BacktestExecutionSimulator
                 null,
                 state.TargetSubmittedAt),
             market);
-        if (result.Fill is not { } fill)
+        if (result.Fill is not { } rawFill ||
+            BacktestInstrumentQuantization.NormalizeFill(
+                policy,
+                rawFill,
+                OrderSide.Buy) is not { } fill)
         {
             return;
         }
@@ -182,7 +205,14 @@ public sealed class BacktestExecutionSimulator
         state.RemainingEntryBudget = Math.Max(0m, state.RemainingEntryBudget - totalCost);
         position.ApplyBuyFill(fill.Quantity, fill.Price, fill.QuoteFee, fill.OccurredAt);
         state.RecordFill(fill, market, OrderSide.Buy);
-        if (state.RemainingEntryBudget <= 0.00000001m || state.Cash <= 0.00000001m)
+        var remainingQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
+            policy,
+            state.RemainingEntryBudget / unitCost);
+        if (state.RemainingEntryBudget <= 0.00000001m || state.Cash <= 0.00000001m ||
+            !BacktestInstrumentQuantization.IsTradable(
+                policy,
+                expectedPrice,
+                remainingQuantity))
         {
             state.ClearTarget();
         }
@@ -201,6 +231,21 @@ public sealed class BacktestExecutionSimulator
             return;
         }
 
+        var requestedQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
+            policy,
+            position.AvailableQuantity);
+        var expectedPrice = BacktestInstrumentQuantization.NormalizePrice(
+            policy,
+            OrderSide.Sell,
+            ApplySlippage(
+                market.BestBid.Value,
+                OrderSide.Sell,
+                policy.PaperExecution.SlippageBasisPoints));
+        if (!BacktestInstrumentQuantization.IsTradable(policy, expectedPrice, requestedQuantity))
+        {
+            return;
+        }
+
         var result = _execution.Evaluate(
             policy.PaperExecution,
             new PaperExecutionRequest(
@@ -209,11 +254,15 @@ public sealed class BacktestExecutionSimulator
                 policy.QuoteAsset,
                 OrderSide.Sell,
                 OrderType.Market,
-                Quantity.From(position.AvailableQuantity),
+                Quantity.From(requestedQuantity),
                 null,
                 state.TargetSubmittedAt),
             market);
-        if (result.Fill is not { } fill)
+        if (result.Fill is not { } rawFill ||
+            BacktestInstrumentQuantization.NormalizeFill(
+                policy,
+                rawFill,
+                OrderSide.Sell) is not { } fill)
         {
             return;
         }
@@ -278,8 +327,14 @@ public sealed class BacktestExecutionSimulator
         BacktestExecutionPolicy policy)
     {
         var halfSpread = policy.SyntheticSpreadBasisPoints / 20_000m;
-        var bid = Checked(candle.Open * (1m - halfSpread));
-        var ask = Checked(candle.Open * (1m + halfSpread));
+        var bid = BacktestInstrumentQuantization.NormalizePrice(
+            policy,
+            OrderSide.Sell,
+            Checked(candle.Open * (1m - halfSpread)));
+        var ask = BacktestInstrumentQuantization.NormalizePrice(
+            policy,
+            OrderSide.Buy,
+            Checked(candle.Open * (1m + halfSpread)));
         return new PaperTopOfBookSnapshot(
             instrumentId,
             Price.From(bid),
@@ -302,10 +357,13 @@ public sealed class BacktestExecutionSimulator
 
         var halfSpread = policy.SyntheticSpreadBasisPoints / 20_000m;
         var bid = Checked(candle.Close * (1m - halfSpread));
-        var sellPrice = ApplySlippage(
-            bid,
+        var sellPrice = BacktestInstrumentQuantization.NormalizePrice(
+            policy,
             OrderSide.Sell,
-            policy.PaperExecution.SlippageBasisPoints);
+            ApplySlippage(
+                bid,
+                OrderSide.Sell,
+                policy.PaperExecution.SlippageBasisPoints));
         var gross = Checked(sellPrice * position.OpenQuantity);
         var fee = Checked(gross * policy.PaperExecution.CommissionRate.Fraction);
         return Checked(cash + gross - fee);

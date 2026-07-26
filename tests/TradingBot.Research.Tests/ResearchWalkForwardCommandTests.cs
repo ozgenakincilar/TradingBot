@@ -16,6 +16,7 @@ public sealed class ResearchWalkForwardCommandTests
         Assert.Equal(200, result.Definition.TrendEmaPeriod);
         Assert.Equal(1_000m, result.ExecutionPolicy.InitialQuoteBalance);
         Assert.Equal(0.10m, result.ExecutionPolicy.QuoteAllocation.Fraction);
+        Assert.Null(result.ExecutionPolicy.InstrumentRules);
         Assert.Equal(42, result.RandomSeed);
         Assert.Equal(2, result.Schedule.Windows.Count);
     }
@@ -61,6 +62,47 @@ public sealed class ResearchWalkForwardCommandTests
         Assert.Equal(0m, result.Baseline.SignalEmaHysteresisBasisPoints);
         Assert.Equal(2, result.Candidate.Version);
         Assert.Equal(30m, result.Candidate.SignalEmaHysteresisBasisPoints);
+    }
+
+    [Fact]
+    public void CompleteInstrumentRulesEnableQuantizedExecution()
+    {
+        var arguments = ValidArguments()
+            .Concat([
+                "--tick-size", "0.1",
+                "--quantity-step", "0.00000001",
+                "--minimum-quantity", "0.00001",
+                "--minimum-notional", "1"
+            ])
+            .ToArray();
+
+        var result = ResearchWalkForwardCommand.Parse(arguments);
+
+        var rules = Assert.IsType<TradingBot.Domain.Instruments.Instrument>(
+            result.ExecutionPolicy.InstrumentRules);
+        Assert.Equal(0.1m, rules.PriceTickSize);
+        Assert.Equal(0.00000001m, rules.QuantityStepSize);
+        Assert.Equal(0.00001m, rules.MinimumQuantity);
+        Assert.Equal(1m, rules.MinimumNotional);
+    }
+
+    [Fact]
+    public void PartialOrInvalidInstrumentRulesAreRejected()
+    {
+        var partial = ValidArguments().Concat(["--tick-size", "0.1"]).ToArray();
+        var invalid = ValidArguments()
+            .Concat([
+                "--tick-size", "0.1",
+                "--quantity-step", "0",
+                "--minimum-quantity", "0.00001",
+                "--minimum-notional", "1"
+            ])
+            .ToArray();
+
+        Assert.Throws<DomainRuleViolationException>(
+            () => ResearchWalkForwardCommand.Parse(partial));
+        Assert.Throws<DomainRuleViolationException>(
+            () => ResearchWalkForwardCommand.Parse(invalid));
     }
 
     private static string[] ValidArguments() =>

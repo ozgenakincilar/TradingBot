@@ -74,8 +74,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Streaming tarihsel walk-forward orchestration, pencere başına taze dataset, OOS-flat state izolasyonu ve final manifest/report üretimi.
 - [x] OKX tarihsel candle'larını bounded 100'lü sayfalarla atomik canonical CSV dataset'e aktaran export pipeline'ı.
 - [x] Secretsiz public OKX research export CLI ve sıkı UTC/timeframe/path komut sözleşmesi.
-- Tick/lot rounding, order-book queue replay ve benchmark raporu.
-- Küratörlü gerçek BTC-USDT dataset üretimi, çoklu market-regime OOS kabul ve benchmark raporu.
+- [x] Maliyetli buy-and-hold OOS benchmark, excess getiri, report identity ve SQL persistence.
+- Tick/lot rounding ve order-book queue replay.
+- Küratörlü gerçek BTC-USDT dataset üretimi, çoklu market-regime OOS kabul ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

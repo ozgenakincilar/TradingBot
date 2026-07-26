@@ -62,5 +62,35 @@ public sealed class WalkForwardWindowResultEntity
 
     public DateTimeOffset? LastFillAt { get; set; }
 
+    public decimal? BenchmarkAllocatedQuoteBalance { get; set; }
+
+    public decimal? BenchmarkEndingCashBalance { get; set; }
+
+    public decimal? BenchmarkBaseQuantity { get; set; }
+
+    public decimal? BenchmarkEntryPrice { get; set; }
+
+    public decimal? BenchmarkExitPrice { get; set; }
+
+    public decimal? BenchmarkNetLiquidationValue { get; set; }
+
+    public decimal? BenchmarkGrossReturnPercent { get; set; }
+
+    public decimal? BenchmarkNetReturnPercent { get; set; }
+
+    public decimal? BenchmarkTotalFees { get; set; }
+
+    public decimal? BenchmarkEstimatedSpreadCost { get; set; }
+
+    public decimal? BenchmarkEstimatedSlippageCost { get; set; }
+
+    public decimal? BenchmarkMaximumDrawdownPercent { get; set; }
+
+    public int? BenchmarkCandleCount { get; set; }
+
+    public DateTimeOffset? BenchmarkEntryAt { get; set; }
+
+    public DateTimeOffset? BenchmarkExitAt { get; set; }
+
     public WalkForwardRunEntity? Run { get; set; }
 }

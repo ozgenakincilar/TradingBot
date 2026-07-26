@@ -20,6 +20,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0014](0014-walk-forward-result-kimligi-ve-persistence.md) | Schedule/run/report hash ve normalize walk-forward sonuç persistence | Kabul edildi |
 | [ADR-0015](0015-walk-forward-oos-orkestrasyonu.md) | Streaming walk-forward orchestration ve OOS state izolasyonu | Kabul edildi |
 | [ADR-0016](0016-atomik-tarihsel-dataset-export.md) | OKX geçmişinden sayfalı ve atomik canonical CSV dataset export | Kabul edildi |
+| [ADR-0017](0017-maliyetli-buy-and-hold-benchmark.md) | Aynı OOS pencere ve maliyetlerle buy-and-hold benchmark | Kabul edildi |
 
 Yeni ADR biçimi:
 

@@ -11,18 +11,22 @@ public sealed class WalkForwardBacktestOrchestrator
     private readonly IHistoricalCandleDatasetFactory _datasets;
     private readonly DeterministicStrategyBacktest _strategyBacktest;
     private readonly BacktestExecutionSimulator _executionSimulator;
+    private readonly BuyAndHoldBenchmark _benchmark;
 
     public WalkForwardBacktestOrchestrator(
         IHistoricalCandleDatasetFactory datasets,
         DeterministicStrategyBacktest strategyBacktest,
-        BacktestExecutionSimulator executionSimulator)
+        BacktestExecutionSimulator executionSimulator,
+        BuyAndHoldBenchmark benchmark)
     {
         ArgumentNullException.ThrowIfNull(datasets);
         ArgumentNullException.ThrowIfNull(strategyBacktest);
         ArgumentNullException.ThrowIfNull(executionSimulator);
+        ArgumentNullException.ThrowIfNull(benchmark);
         _datasets = datasets;
         _strategyBacktest = strategyBacktest;
         _executionSimulator = executionSimulator;
+        _benchmark = benchmark;
     }
 
     public async Task<WalkForwardReport> RunAsync(
@@ -70,6 +74,17 @@ public sealed class WalkForwardBacktestOrchestrator
                 CountAsync(decisions, counter, cancellationToken),
                 executionPolicy,
                 cancellationToken);
+            await using var benchmarkDataset = await _datasets.OpenAsync(
+                definition.InstrumentId,
+                definition.SignalTimeframe,
+                cancellationToken);
+            var benchmark = await _benchmark.RunAsync(
+                benchmarkDataset.ReadAsync(cancellationToken),
+                split,
+                executionPolicy,
+                definition.InstrumentId,
+                definition.SignalTimeframe,
+                cancellationToken);
             if (counter.Count == 0)
             {
                 throw new DomainRuleViolationException(
@@ -88,7 +103,7 @@ public sealed class WalkForwardBacktestOrchestrator
                     BacktestRunPurpose.FinalOutOfSampleEvaluation,
                     BacktestDatasetPartition.OutOfSample),
                 randomSeed);
-            results.Add(new WalkForwardWindowResult(window.Index, manifest, execution));
+            results.Add(new WalkForwardWindowResult(window.Index, manifest, execution, benchmark));
         }
 
         return WalkForwardReportFactory.Create(schedule, results);

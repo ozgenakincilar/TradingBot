@@ -756,3 +756,21 @@ flowchart TD
 ```
 
 Hiçbir aşamada tüm dataset RAM'e alınmaz. Final `.csv`, ancak bütün istek aralığı doğrulanıp diske yazıldıktan ve raw SHA-256 hesaplandıktan sonra görünür olur.
+
+## 31. OOS buy-and-hold benchmark
+
+```mermaid
+flowchart TD
+    W[Walk-forward OOS window] --> S[Bağımsız signal dataset stream]
+    S --> V{UTC timeframe, başlangıç, bitiş ve contiguity geçerli mi?}
+    V -- Hayır --> F[Fail closed; rapor yok]
+    V -- Evet --> B[İlk OOS open: quote allocation ile buy]
+    B --> C[Her close: maliyetli liquidation equity ve drawdown]
+    C --> E[Son OOS close: raporlama amaçlı sell]
+    E --> M[Net/gross return + fee/spread/slippage]
+    M --> X[Strategy net return - benchmark net return]
+    X --> H[walk-forward-report-v2 SHA-256]
+    H --> SQL[(research WalkForwardRuns + WindowResults)]
+```
+
+Benchmark ve strateji aynı başlangıç sermayesi, allocation ve execution maliyet politikasını kullanır. Benchmark strateji kararı üretmez ve risk limitlerini değiştirmez.

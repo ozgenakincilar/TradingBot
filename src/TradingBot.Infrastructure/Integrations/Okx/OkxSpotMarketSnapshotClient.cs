@@ -19,7 +19,7 @@ public sealed class OkxSpotMarketSnapshotClient(
         EnsureConfiguration(instrumentId);
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
-            $"api/v5/market/books?instId={Uri.EscapeDataString(instrumentId.Symbol)}&sz=1");
+            $"api/v5/market/books?instId={Uri.EscapeDataString(instrumentId.Symbol)}&sz=5");
         using var response = await httpClient.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
@@ -37,27 +37,24 @@ public sealed class OkxSpotMarketSnapshotClient(
 
         var book = payload.Data[0];
         if (book.Sequence <= 0 ||
-            book.Bids is not { Length: > 0 } ||
-            book.Asks is not { Length: > 0 } ||
-            book.Bids[0].Length < 2 ||
-            book.Asks[0].Length < 2 ||
-            !TryPositiveDecimal(book.Bids[0][0], out var bidPrice) ||
-            !TryPositiveDecimal(book.Bids[0][1], out var bidQuantity) ||
-            !TryPositiveDecimal(book.Asks[0][0], out var askPrice) ||
-            !TryPositiveDecimal(book.Asks[0][1], out var askQuantity) ||
             !long.TryParse(book.Timestamp, NumberStyles.None, CultureInfo.InvariantCulture, out var timestamp))
         {
             throw new DomainRuleViolationException("OKX order book payload was invalid.");
         }
 
+        var bids = OkxOrderBookDepthParser.Parse(book.Bids);
+        var asks = OkxOrderBookDepthParser.Parse(book.Asks);
+
         var occurredAt = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
         var snapshot = new PaperTopOfBookSnapshot(
             instrumentId,
-            Price.From(bidPrice),
-            bidQuantity,
-            Price.From(askPrice),
-            askQuantity,
-            occurredAt);
+            bids[0].Price,
+            bids[0].Quantity,
+            asks[0].Price,
+            asks[0].Quantity,
+            occurredAt,
+            bids,
+            asks);
         snapshot.Validate();
         return new PaperMarketEvent(
             $"okx-rest-{instrumentId.Symbol}-{book.Sequence}",
@@ -80,9 +77,6 @@ public sealed class OkxSpotMarketSnapshotClient(
             throw new DomainRuleViolationException("OKX Spot instrument must use the BASE-QUOTE symbol format.");
         }
     }
-
-    private static bool TryPositiveDecimal(string value, out decimal parsed) =>
-        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed) && parsed > 0m;
 
     private static string SanitizeCode(string? code) =>
         string.IsNullOrWhiteSpace(code) || code.Length > 16 ? "unknown" : code;

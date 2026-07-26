@@ -78,12 +78,12 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
 | 39 | Warm-up period | ✅ Uygulandı | OKX startup kapısı aynı UTC bilgi anında sıralı `15m/200` signal ve `1H/200` trend geçmişi ister; iki seri exact, kapalı ve contiguous olmadan readiness açılmaz. [Dual warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
-| 40 | Sell slippage/depth | 🟡 Kısmi | Sell bid referansı, aleyhte slippage ve görünür likidite katılım sınırı var; cumulative multi-level depth henüz yok. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs) |
+| 40 | Sell slippage/depth | 🟡 Kısmi | Paper market buy/sell, OKX'in bounded beş seviyesini participation oranıyla tüketip her seviyeye aleyhte slippage uygulayarak VWAP üretir. Historical backtest hâlâ candle-volume proxy kullandığı için gerçek depth replay kanıtı kaldı. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs), [ADR-0020](adr/0020-bounded-cumulative-order-book-depth.md) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper ve backtest aynı minimum latency/slippage/participation motorunu kullanıyor; backtest next-open proxy, muhafazakâr tick/lot rounding ve pending target taşır. Order-book queue, market impact ve cancel latency henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper execution minimum latency ve beş seviyeli cumulative market impact; backtest next-open proxy, muhafazakâr tick/lot rounding ve pending target taşır. Gerçek limit-order queue position, hidden liquidity ve cancel latency henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs), [ADR-0020](adr/0020-bounded-cumulative-order-book-depth.md) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

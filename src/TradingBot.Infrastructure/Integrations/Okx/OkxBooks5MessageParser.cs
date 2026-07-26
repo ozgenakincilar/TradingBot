@@ -39,24 +39,23 @@ public sealed class OkxBooks5MessageParser
 
         var book = payload.Data[0];
         if (book.Sequence < 0 || book.PreviousSequence < -1 ||
-            book.Bids is not { Length: > 0 } || book.Asks is not { Length: > 0 } ||
-            book.Bids[0].Length < 2 || book.Asks[0].Length < 2 ||
-            !TryPositiveDecimal(book.Bids[0][0], out var bidPrice) ||
-            !TryPositiveDecimal(book.Bids[0][1], out var bidQuantity) ||
-            !TryPositiveDecimal(book.Asks[0][0], out var askPrice) ||
-            !TryPositiveDecimal(book.Asks[0][1], out var askQuantity) ||
             !long.TryParse(book.Timestamp, NumberStyles.None, CultureInfo.InvariantCulture, out var timestamp))
         {
             throw new DomainRuleViolationException("OKX books5 data was invalid.");
         }
 
+        var bids = OkxOrderBookDepthParser.Parse(book.Bids);
+        var asks = OkxOrderBookDepthParser.Parse(book.Asks);
+
         var snapshot = new PaperTopOfBookSnapshot(
             expectedInstrument,
-            Price.From(bidPrice),
-            bidQuantity,
-            Price.From(askPrice),
-            askQuantity,
-            DateTimeOffset.FromUnixTimeMilliseconds(timestamp));
+            bids[0].Price,
+            bids[0].Quantity,
+            asks[0].Price,
+            asks[0].Quantity,
+            DateTimeOffset.FromUnixTimeMilliseconds(timestamp),
+            bids,
+            asks);
         snapshot.Validate();
         return new PaperMarketEvent(
             $"okx-ws-books5-{expectedInstrument.Symbol}-{book.Sequence}",
@@ -65,9 +64,6 @@ public sealed class OkxBooks5MessageParser
             snapshot,
             book.PreviousSequence >= 0 ? book.PreviousSequence : null);
     }
-
-    private static bool TryPositiveDecimal(string value, out decimal parsed) =>
-        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed) && parsed > 0m;
 
     private static string SanitizeCode(string? code) =>
         string.IsNullOrWhiteSpace(code) || code.Length > 16 ? "unknown" : code;

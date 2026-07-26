@@ -54,6 +54,7 @@
 - OKX adapter'ı yalnız HTTPS base address ve `OKX/BASE-QUOTE` instrument kabul eder; API serbest metin hata mesajını exception/log sınırına taşımaz.
 - OKX order-book continuity için `seqId/prevSeqId` kullanılır; deprecated checksum doğrulama kaynağı değildir.
 - OKX public market stream `wss://` üzerinden `books5` kanalına subscribe olur; fragmented text frame'leri 64 KiB bounded mesaj sınırı ve pooled receive buffer ile birleştirir.
+- `books5` ve REST `sz=5` payload'ları yalnız ilk seviyeye indirgenmez. Her iki tarafın 1–5 pozitif seviyesi strict bid-descending/ask-ascending sırasıyla korunur; ilk seviye best bid/ask ile eşleşmezse snapshot reddedilir.
 - Stream 20 saniye sessizlikte `ping` gönderir; takip eden heartbeat penceresinde `pong` veya veri gelmezse bağlantıyı hatalı kabul eder.
 - OKX `seqId` değerlerinin ardışık sayı olması beklenmez. Incremental `books` kullanılırsa continuity `prevSeqId == son seqId` ile doğrulanır; mevcut `books5` kanalında her mesaj bağımsız tam snapshot'tır ve delta zinciri gibi yorumlanmaz.
 - Hosted OKX supervisor stream producer'ını bounded buffer üzerinden başlatır; REST snapshot cross-source freshness kontrolü, ilk `books5` mesajı sequence anchor'ı olur. Session producer task'ı cancellation ve exception dahil her terminal durumda await edilir.
@@ -205,7 +206,8 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Hosted worker her turda yeni async DI scope oluşturur; scoped persistence bağımlılıkları singleton worker alanında tutulmaz.
 - Worker bütün async çağrılara host cancellation token'ını taşır, beklenen kapanış iptalini normal sonlandırır ve tur hatasını loglayıp bounded polling aralığından sonra yeniden dener.
 - Bir top-of-book olayı yalnız aynı instrument'a ait aktif ve kalıcı rezervasyonu bulunan order'lara fan-out edilir; aynı olay/order çifti deterministik execution ID ile idempotenttir.
-- Bu ilk model top-of-book seviyesindedir; cumulative depth ve queue position sonraki dilimdir.
+- Paper market fill, depth varsa seviyeleri en iyi fiyattan başlayarak participation sınırıyla tüketir; yönsel slippage sonrası tek fill fiyatı cumulative notional/quantity VWAP değeridir. Limit emir yalnız uygun seviyelerde kısmi fill alır.
+- Depth olmayan sentetik/legacy snapshot top-of-book matematiğini korur. Beş seviyeli cumulative depth gerçek queue position, hidden liquidity veya cancel latency modeli değildir.
 
 ## 8. Paket yönetimi
 

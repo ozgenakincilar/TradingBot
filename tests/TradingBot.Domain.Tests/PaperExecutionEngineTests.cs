@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using TradingBot.Domain.Common;
 using TradingBot.Domain.Execution;
 using TradingBot.Domain.Instruments;
@@ -99,6 +100,75 @@ public sealed class PaperExecutionEngineTests
         Assert.Equal(first, second);
     }
 
+    [Fact]
+    public void DepthAwareMarketBuyConsumesLevelsAtVolumeWeightedPrice()
+    {
+        var result = Evaluate(
+            Request(OrderSide.Buy, OrderType.Market, 1m),
+            DepthMarket());
+
+        var fill = Assert.IsType<PaperFill>(result.Fill);
+        Assert.Equal(1m, fill.Quantity.Value);
+        Assert.Equal(100.6005m, fill.Price.Value);
+        Assert.Equal(0.1006005m, fill.QuoteFee.Amount);
+    }
+
+    [Fact]
+    public void DepthAwareFillIsBoundedByCumulativeParticipation()
+    {
+        var result = Evaluate(
+            Request(OrderSide.Buy, OrderType.Market, 5m),
+            DepthMarket());
+
+        var fill = Assert.IsType<PaperFill>(result.Fill);
+        Assert.Equal(1.5m, fill.Quantity.Value);
+        Assert.True(fill.Price.Value > 100.1m);
+    }
+
+    [Fact]
+    public void DepthAwareMarketSellConsumesBidsAtAdverseVolumeWeightedPrice()
+    {
+        var result = Evaluate(
+            Request(OrderSide.Sell, OrderType.Market, 1m),
+            DepthMarket());
+
+        var fill = Assert.IsType<PaperFill>(result.Fill);
+        Assert.Equal(1m, fill.Quantity.Value);
+        Assert.Equal(98.65125m, fill.Price.Value);
+        Assert.Equal(0.09865125m, fill.QuoteFee.Amount);
+    }
+
+    [Fact]
+    public void DepthAwareLimitPartiallyFillsOnlyEligibleLevels()
+    {
+        var result = Evaluate(
+            Request(OrderSide.Buy, OrderType.Limit, 1m, limit: 100.5m),
+            DepthMarket());
+
+        var fill = Assert.IsType<PaperFill>(result.Fill);
+        Assert.Equal(0.5m, fill.Quantity.Value);
+        Assert.Equal(100.1m, fill.Price.Value);
+    }
+
+    [Fact]
+    public void UnorderedDepthIsRejected()
+    {
+        var market = DepthMarket() with
+        {
+            AskDepth =
+            [
+                new PaperOrderBookLevel(Price.From(100m), 2m),
+                new PaperOrderBookLevel(Price.From(99m), 4m)
+            ]
+        };
+
+        var action = () => Evaluate(
+            Request(OrderSide.Buy, OrderType.Market, 1m),
+            market);
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
     private static PaperExecutionResult Evaluate(
         PaperExecutionRequest request,
         PaperTopOfBookSnapshot market) =>
@@ -139,4 +209,18 @@ public sealed class PaperExecutionEngineTests
             Price.From(ask),
             askQuantity,
             occurredAt ?? SubmittedAt.AddMilliseconds(100));
+
+    private static PaperTopOfBookSnapshot DepthMarket() => new(
+        Instrument,
+        Price.From(99m),
+        3m,
+        Price.From(100m),
+        2m,
+        SubmittedAt.AddMilliseconds(100),
+        ImmutableArray.Create(
+            new PaperOrderBookLevel(Price.From(99m), 3m),
+            new PaperOrderBookLevel(Price.From(98m), 5m)),
+        ImmutableArray.Create(
+            new PaperOrderBookLevel(Price.From(100m), 2m),
+            new PaperOrderBookLevel(Price.From(101m), 4m)));
 }

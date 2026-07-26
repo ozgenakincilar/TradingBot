@@ -24,7 +24,7 @@
 - `Instrument` aggregate: tick size, lot size, min/max notional, status.
 - OKX Spot metadata adaptörü `tickSz`, `lotSz`, `minSz` ve `state` alanlarını dinamik okur; yapılandırılmış instrument yalnız `SPOT` ve `live` ise başlangıç kapısını geçer.
 - `minSz` minimum base-asset miktarıdır; borsa ayrıca minimum notional yayımlamıyorsa bu değer `MinNotional` gibi yorumlanamaz.
-- `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data.
+- `Candle`, `TradeTick`, `OrderBookSnapshot` immutable value data. Paper order-book snapshot'ı top-of-book alanlarına ek olarak iki taraflı, strict sıralı ve taraf başına en fazla beş immutable depth seviyesi taşıyabilir.
 - `Timeframe` pozitif tam saniyeli sabit UTC periyottur; candle açılışı Unix epoch tabanlı periyot sınırına hizalanır.
 - `Candle.CreateClosed`, kapanış zamanı henüz gelmemiş mumu ve geçersiz OHLCV ilişkilerini reddeder. Strateji hattına açık mum tipi taşınmaz.
 - `ClosedCandleSequenceGuard`, ilk contiguous recovery serisi olmadan ready olmaz; gap veya aynı sınırdaki çelişkili candle sonrası son güvenilir candle'ı ilerletmeden fail-closed kalır.

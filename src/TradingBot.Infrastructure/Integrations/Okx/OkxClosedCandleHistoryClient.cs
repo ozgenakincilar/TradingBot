@@ -12,7 +12,7 @@ public sealed class OkxClosedCandleHistoryClient(
     HttpClient httpClient,
     TimeProvider timeProvider) : IClosedCandleHistoryClient
 {
-    private const int MaximumPageSize = 300;
+    private const int MaximumPageSize = 100;
 
     public async ValueTask<IReadOnlyList<Candle>> GetAsync(
         InstrumentId instrumentId,

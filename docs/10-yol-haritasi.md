@@ -72,8 +72,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Deterministik rolling/expanding walk-forward pencere üreticisi ve çakışmasız OOS zaman politikası.
 - [x] Schedule/run/report SHA-256 kimliği, normalize SQL result persistence ve çoklu OOS birleşik rapor modeli.
 - [x] Streaming tarihsel walk-forward orchestration, pencere başına taze dataset, OOS-flat state izolasyonu ve final manifest/report üretimi.
+- [x] OKX tarihsel candle'larını bounded 100'lü sayfalarla atomik canonical CSV dataset'e aktaran export pipeline'ı.
 - Tick/lot rounding, order-book queue replay ve benchmark raporu.
-- Küratörlü gerçek BTC-USDT tarihsel datasetleri üzerinde çoklu market-regime OOS kabul ve benchmark raporu.
+- Export CLI/composition, küratörlü gerçek BTC-USDT dataset üretimi, çoklu market-regime OOS kabul ve benchmark raporu.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

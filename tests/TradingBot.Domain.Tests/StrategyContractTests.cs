@@ -49,6 +49,49 @@ public sealed class StrategyContractTests
         Assert.Equal(30m, definition.SignalEmaHysteresisBasisPoints);
     }
 
+    [Fact]
+    public void V3CarriesLockedCooldownAndProfitProtection()
+    {
+        var definition = V3Definition();
+
+        Assert.Equal(3, definition.Version);
+        Assert.Equal(30m, definition.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(4, definition.ReentryCooldownCandles);
+        Assert.Equal(100m, definition.ProfitProtectionActivationBasisPoints);
+        Assert.Equal(50m, definition.ProfitProtectionTrailingBasisPoints);
+    }
+
+    [Theory]
+    [InlineData(2, 4, 100, 50)]
+    [InlineData(3, 0, 100, 50)]
+    [InlineData(3, 4, 0, 50)]
+    [InlineData(3, 4, 100, 0)]
+    [InlineData(3, 4, 100, 100)]
+    public void ProfitProtectionMustRespectVersionAndBounds(
+        int version,
+        int cooldown,
+        decimal activation,
+        decimal trailing)
+    {
+        var action = () => StrategyDefinition.Create(
+            "invalid-profit-protection",
+            version,
+            Instrument,
+            SignalTimeframe,
+            TrendTimeframe,
+            20,
+            200,
+            2m,
+            200,
+            200,
+            signalEmaHysteresisBasisPoints: 30m,
+            reentryCooldownCandles: cooldown,
+            profitProtectionActivationBasisPoints: activation,
+            profitProtectionTrailingBasisPoints: trailing);
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
     [Theory]
     [InlineData(1, 30)]
     [InlineData(2, -1)]
@@ -212,6 +255,22 @@ public sealed class StrategyContractTests
             2m,
             200,
             200);
+
+    private static StrategyDefinition V3Definition() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline",
+        3,
+        Instrument,
+        SignalTimeframe,
+        TrendTimeframe,
+        20,
+        200,
+        2m,
+        200,
+        200,
+        signalEmaHysteresisBasisPoints: 30m,
+        reentryCooldownCandles: 4,
+        profitProtectionActivationBasisPoints: 100m,
+        profitProtectionTrailingBasisPoints: 50m);
 
     private static Candle SignalCandle(
         DateTimeOffset? openTime = null,

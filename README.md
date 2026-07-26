@@ -86,6 +86,8 @@ v1 ile cost-derived `30 bps` hysteresis v2 adayını yalnız train/validation pe
 
 Reddedilmiş v2 adayındaki zararları işlem seviyesinde incelemek için aynı argümanlarla `diagnose-hysteresis-v2` kullanılır. Komut yalnız train/validation stream'inde entry/exit reason, MFE/MAE, holding süresi ve fee/spread/slippage attribution içeren `strategy-loss-diagnostics-v1` JSON üretir. Bu çıktı parametre optimizasyonu, OOS açma veya live işlem izni değildir.
 
+Ön kayıtlı cooldown ve trailing profit-protection v3 adayını ayrı development verisinde v2 ile karşılaştırmak için aynı argümanlarla `validate-profit-protection-v3` kullanılır. Komut diagnostics tabanlı yedi acceptance kapısının tamamını ister, OOS candle'larını strategy stream'ine vermez ve ret durumunda `exit 3` döndürür. v3'ün 2023 validation sonucu reddedilmiştir; kodun bulunması paper/testnet/live izni değildir.
+
 ## Güvenlik
 
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.

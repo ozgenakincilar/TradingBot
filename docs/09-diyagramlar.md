@@ -904,3 +904,34 @@ flowchart TD
 ```
 
 Çıkış next-open fill ile tamamlandıktan sonra aynı mumun high/low değeri excursion hesabına girmez. Diagnostics raporu mevcut execution report/hash sözleşmesinden ayrıdır ve canlı işlem izni vermez.
+
+## 38. v3 cooldown ve trailing profit-protection validation
+
+```mermaid
+flowchart TD
+    CLOSE[Kapalı 15m candle close] --> POS{Pozisyon}
+    POS -- Flat --> CROSS{30 bps upper-band cross?}
+    CROSS -- Hayır --> HOLD[Hold]
+    CROSS -- Evet --> COOL{Exit sonrası 4 candle tamam mı?}
+    COOL -- Hayır --> BLOCK[reentry-cooldown-blocked]
+    COOL -- Evet --> ENTER[EnterLong; entry close kilitle]
+    POS -- Long --> TREND{1H trend izinli mi?}
+    TREND -- Hayır --> EXIT1[trend-filter-exit]
+    TREND -- Evet --> PEAK[Peak close güncelle]
+    PEAK --> ACTIVE{Peak entry'den 100 bps yukarıda mı?}
+    ACTIVE -- Evet --> TRAIL{Close peak'ten 50 bps aşağıda mı?}
+    TRAIL -- Evet --> EXIT2[profit-protection-exit]
+    TRAIL -- Hayır --> LOWER{Lower-band cross?}
+    ACTIVE -- Hayır --> LOWER
+    LOWER -- Evet --> EXIT3[signal hysteresis exit]
+    LOWER -- Hayır --> HOLD
+    V2[v2 diagnostics] --> GATE[Ön kayıtlı 7 validation kapısı]
+    EXIT1 --> V3[v3 diagnostics]
+    EXIT2 --> V3
+    EXIT3 --> V3
+    V3 --> GATE
+    GATE -- Herhangi biri başarısız --> REJECT[Exit 3; v3 rejected]
+    OOS[Locked OOS] -. strategy stream'ine verilmez .-> REJECT
+```
+
+State yalnız entry reference, peak close ve bounded cooldown sayacıdır. High/low veya gelecek candle kullanılmaz. 2023 validation'da v3 trade/maliyeti artırdığı için reddedilmiş ve OOS açılmamıştır.

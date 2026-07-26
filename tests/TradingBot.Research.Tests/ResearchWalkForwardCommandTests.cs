@@ -78,6 +78,21 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void ProfitProtectionValidationCommandCreatesLockedV2V3Comparison()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "validate-profit-protection-v3";
+
+        var result = ResearchWalkForwardCommand.ParseProfitProtectionValidation(arguments);
+
+        Assert.Equal(2, result.Baseline.Version);
+        Assert.Equal(3, result.Candidate.Version);
+        Assert.Equal(4, result.Candidate.ReentryCooldownCandles);
+        Assert.Equal(100m, result.Candidate.ProfitProtectionActivationBasisPoints);
+        Assert.Equal(50m, result.Candidate.ProfitProtectionTrailingBasisPoints);
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

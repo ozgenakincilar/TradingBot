@@ -128,6 +128,90 @@ public sealed class LongFlatStrategyEvaluatorTests
         Assert.Equal("signal-ema-hysteresis-cross-down", exited.ReasonCode);
     }
 
+    [Fact]
+    public void V3ProfitProtectionExitsAfterActivatedPeakGivesBackFiftyBasisPoints()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 101.5m, latestClose: 101.4m),
+            BullishTrendCandles(),
+            StrategyPositionState.Long,
+            StrategyTradeContext.Open(100m).ObserveLongClose(102m));
+
+        Assert.Equal(StrategyAction.ExitToFlat, decision.Action);
+        Assert.Equal("profit-protection-exit", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V3ProfitProtectionDoesNotExitBeforeActivation()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 100.5m, latestClose: 100.4m),
+            BullishTrendCandles(),
+            StrategyPositionState.Long,
+            StrategyTradeContext.Open(100m).ObserveLongClose(100.9m));
+
+        Assert.Equal(StrategyAction.Hold, decision.Action);
+        Assert.Equal("long-position-held", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V3TrendLossExitsBeforeProfitProtectionRule()
+    {
+        var trend = Series(Trend, 200, _ => 100m);
+        trend[^1] = Create(Trend, 199, 90m, 90m, End - (Trend.Duration * 200));
+
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 101.5m, latestClose: 101.4m),
+            trend,
+            StrategyPositionState.Long,
+            StrategyTradeContext.Open(100m).ObserveLongClose(102m));
+
+        Assert.Equal(StrategyAction.ExitToFlat, decision.Action);
+        Assert.Equal("trend-filter-exit", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V3CooldownBlocksFourCompletedCandlesThenAllowsEntry()
+    {
+        var context = StrategyTradeContext.Closed();
+        var blocked = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            BullishTrendCandles(),
+            StrategyPositionState.Flat,
+            context);
+        for (var index = 0; index < 4; index++)
+        {
+            context = context.AdvanceFlatCandle(4);
+        }
+
+        var allowed = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            BullishTrendCandles(),
+            StrategyPositionState.Flat,
+            context);
+
+        Assert.Equal(StrategyAction.Hold, blocked.Action);
+        Assert.Equal("reentry-cooldown-blocked", blocked.ReasonCode);
+        Assert.Equal(StrategyAction.EnterLong, allowed.Action);
+    }
+
+    [Fact]
+    public void V3LongPositionRequiresMatchingTradeContext()
+    {
+        var action = () => LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            BullishTrendCandles(),
+            StrategyPositionState.Long);
+
+        Assert.Throws<TradingBot.Domain.Common.DomainRuleViolationException>(action);
+    }
+
     private static StrategyDefinition Definition(
         int version = 1,
         decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
@@ -142,6 +226,22 @@ public sealed class LongFlatStrategyEvaluatorTests
         minimumSignalWarmupCandles: 200,
         minimumTrendWarmupCandles: 200,
         signalEmaHysteresisBasisPoints: hysteresisBasisPoints);
+
+    private static StrategyDefinition V3Definition() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline",
+        3,
+        Instrument,
+        Signal,
+        Trend,
+        signalEmaPeriod: 20,
+        trendEmaPeriod: 200,
+        maximumSignalCandleMovePercent: 2m,
+        minimumSignalWarmupCandles: 200,
+        minimumTrendWarmupCandles: 200,
+        signalEmaHysteresisBasisPoints: 30m,
+        reentryCooldownCandles: 4,
+        profitProtectionActivationBasisPoints: 100m,
+        profitProtectionTrailingBasisPoints: 50m);
 
     private static IReadOnlyList<Candle> SignalCandles(decimal latestOpen, decimal latestClose)
     {

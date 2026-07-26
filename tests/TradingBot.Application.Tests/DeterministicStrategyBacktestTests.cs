@@ -90,6 +90,27 @@ public sealed class DeterministicStrategyBacktestTests
         Assert.Equal("signal-ema-hysteresis-cross-up", decision.ReasonCode);
     }
 
+    [Fact]
+    public async Task V3ReplayCarriesPeakCloseIntoProfitProtectionExit()
+    {
+        var signals = SignalSeries()
+            .Append(Create(Signal, End, 102.1m))
+            .Append(Create(Signal, End.AddMinutes(15), 101.5m));
+
+        var results = await RunAsync(
+            new DeterministicStrategyBacktest(),
+            signals,
+            TrendSeries(includeFuture: false),
+            DefinitionV3());
+
+        Assert.Equal(3, results.Count);
+        Assert.Equal(StrategyAction.EnterLong, results[0].Decision.Action);
+        Assert.Equal(StrategyAction.Hold, results[1].Decision.Action);
+        Assert.Equal(StrategyAction.ExitToFlat, results[2].Decision.Action);
+        Assert.Equal("profit-protection-exit", results[2].Decision.ReasonCode);
+        Assert.Equal(StrategyPositionState.Flat, results[2].PositionAfterDecision);
+    }
+
     private static async Task<List<StrategyBacktestDecision>> RunAsync(
         DeterministicStrategyBacktest backtest,
         IEnumerable<Candle> signals,
@@ -173,4 +194,20 @@ public sealed class DeterministicStrategyBacktestTests
         minimumSignalWarmupCandles: 200,
         minimumTrendWarmupCandles: 200,
         signalEmaHysteresisBasisPoints: hysteresisBasisPoints);
+
+    private static StrategyDefinition DefinitionV3() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline",
+        3,
+        Instrument,
+        Signal,
+        Trend,
+        signalEmaPeriod: 20,
+        trendEmaPeriod: 200,
+        maximumSignalCandleMovePercent: 2m,
+        minimumSignalWarmupCandles: 200,
+        minimumTrendWarmupCandles: 200,
+        signalEmaHysteresisBasisPoints: 30m,
+        reentryCooldownCandles: 4,
+        profitProtectionActivationBasisPoints: 100m,
+        profitProtectionTrailingBasisPoints: 50m);
 }

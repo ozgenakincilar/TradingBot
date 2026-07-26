@@ -113,6 +113,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Mevcut next-open execution proxy fee/spread/slippage/latency/PnL ve opsiyonel tick/lot/minimum emir kurallarını modellemektedir; order-book queue ve quantized out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.
 - Trade-loss attribution aynı girdide aynı report SHA-256 değerini üretmeli; entry/exit reason, fee/spread/slippage, MFE/MAE ve holding süresini tamamlanmış trade ile eşlemelidir.
 - Exit fill'inin gerçekleştiği candle'ın sonradan oluşan high/low değeri excursion'a katılmamalı; diagnostics trade limiti aşıldığında kısmi sonuç yerine hata üretmelidir.
+- v3 profit-protection aktivasyon öncesinde çıkmamalı, aktivasyon sonrası peak close'tan 50 bps geri çekilmede deterministik çıkmalı ve trend-filter çıkışının önüne geçmemelidir.
+- Re-entry cooldown ilk dört tamamlanmış signal candle'da giriş cross'unu engellemeli, beşinci değerlendirmede aynı koşulu kabul etmeli; replay state'i aynı girdide aynı kararları üretmelidir.
+- v2-v3 validation evaluator yedi ön kayıtlı kapının tümünü birlikte istemeli; tek başarısız kapı `IsAccepted=false` ve CLI `exit 3` üretmelidir.
 
 ## 5. Determinizm
 

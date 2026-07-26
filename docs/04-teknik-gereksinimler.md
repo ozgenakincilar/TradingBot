@@ -211,6 +211,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Trade-loss diagnostics mevcut execution raporunu değiştirmeyen ayrı, schema-versioned ve SHA-256 kimlikli bir artifact üretir.
 - Diagnostics yalnız tamamlanmış trade'leri tutar, en fazla 100.000 trade ile bounded'dır ve limit aşımında fail-closed davranır.
 - MFE/MAE yalnız pozisyon açıkken tamamlanmış candle high/low değerlerinden hesaplanır; next-open exit sonrasındaki candle aralığı geleceğe bakış yaratmamak için kullanılmaz.
+- v3 research state'i yalnız pozitif entry-signal close, monotonik peak close ve 0–4 arasında saturating re-entry cooldown sayacı taşır; unbounded trade/candle geçmişi tutmaz.
+- Profit-protection yalnız kapalı candle close ile değerlendirilir. Trend-filter exit önceliklidir; high/low ve execution fill sonucu sinyal kararına geri beslenmez.
+- `profit-protection-v1` configuration hash'i cooldown/activation/trailing alanlarını kapsar; v1/v2 legacy ve hysteresis hash zarfları değişmez.
 
 ## 8. Paket yönetimi
 

@@ -74,6 +74,7 @@ public sealed class DeterministicStrategyBacktest
             definition.TrendTimeframe,
             definition.MinimumTrendWarmupCandles);
         var position = StrategyPositionState.Flat;
+        var tradeContext = StrategyTradeContext.None;
 
         await using var trendEnumerator = trendCandles.GetAsyncEnumerator(cancellationToken);
         var hasTrend = await trendEnumerator.MoveNextAsync();
@@ -103,12 +104,23 @@ public sealed class DeterministicStrategyBacktest
                 definition,
                 signalWindow.Candles,
                 trendWindow.Candles,
-                position);
-            position = decision.Action switch
+                position,
+                tradeContext);
+            (position, tradeContext) = decision.Action switch
             {
-                StrategyAction.EnterLong => StrategyPositionState.Long,
-                StrategyAction.ExitToFlat => StrategyPositionState.Flat,
-                _ => position
+                StrategyAction.EnterLong => (
+                    StrategyPositionState.Long,
+                    StrategyTradeContext.Open(signal.Close)),
+                StrategyAction.ExitToFlat => (
+                    StrategyPositionState.Flat,
+                    StrategyTradeContext.Closed()),
+                _ when position == StrategyPositionState.Long => (
+                    position,
+                    tradeContext.ObserveLongClose(signal.Close)),
+                _ => (
+                    position,
+                    tradeContext.AdvanceFlatCandle(
+                        Math.Max(1, definition.ReentryCooldownCandles)))
             };
             yield return new StrategyBacktestDecision(decision, position, signal);
         }

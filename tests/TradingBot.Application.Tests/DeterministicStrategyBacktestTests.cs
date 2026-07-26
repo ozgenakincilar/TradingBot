@@ -66,14 +66,39 @@ public sealed class DeterministicStrategyBacktestTests
         Assert.Equal(StrategyPositionState.Flat, decision.PositionAfterDecision);
     }
 
+    [Fact]
+    public async Task V2HysteresisReplayIsDeterministicAndVersioned()
+    {
+        var definition = Definition(version: 2, hysteresisBasisPoints: 30m);
+        var backtest = new DeterministicStrategyBacktest();
+
+        var first = await RunAsync(
+            backtest,
+            SignalSeries(),
+            TrendSeries(includeFuture: false),
+            definition);
+        var second = await RunAsync(
+            backtest,
+            SignalSeries(),
+            TrendSeries(includeFuture: false),
+            definition);
+
+        Assert.Equal(first, second);
+        var decision = Assert.Single(first).Decision;
+        Assert.Equal(2, decision.StrategyVersion);
+        Assert.Equal(StrategyAction.EnterLong, decision.Action);
+        Assert.Equal("signal-ema-hysteresis-cross-up", decision.ReasonCode);
+    }
+
     private static async Task<List<StrategyBacktestDecision>> RunAsync(
         DeterministicStrategyBacktest backtest,
         IEnumerable<Candle> signals,
-        IEnumerable<Candle> trends)
+        IEnumerable<Candle> trends,
+        StrategyDefinition? definition = null)
     {
         var results = new List<StrategyBacktestDecision>();
         await foreach (var result in backtest.RunAsync(
-                           Definition(),
+                           definition ?? Definition(),
                            ToAsync(signals),
                            ToAsync(trends),
                            CancellationToken.None))
@@ -134,9 +159,11 @@ public sealed class DeterministicStrategyBacktestTests
             close,
             1m);
 
-    private static StrategyDefinition Definition() => StrategyDefinition.Create(
+    private static StrategyDefinition Definition(
+        int version = 1,
+        decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
         "btc-usdt-long-flat-baseline",
-        1,
+        version,
         Instrument,
         Signal,
         Trend,
@@ -144,5 +171,6 @@ public sealed class DeterministicStrategyBacktestTests
         trendEmaPeriod: 200,
         maximumSignalCandleMovePercent: 2m,
         minimumSignalWarmupCandles: 200,
-        minimumTrendWarmupCandles: 200);
+        minimumTrendWarmupCandles: 200,
+        signalEmaHysteresisBasisPoints: hysteresisBasisPoints);
 }

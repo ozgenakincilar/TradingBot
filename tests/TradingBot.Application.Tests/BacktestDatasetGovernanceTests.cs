@@ -104,6 +104,37 @@ public sealed class BacktestDatasetGovernanceTests
     }
 
     [Fact]
+    public void V1ConfigurationHashRemainsCompatibleWithLockedOosEvidence()
+    {
+        var manifest = BacktestRunManifestFactory.Create(
+            Definition(),
+            ExecutionPolicy(initialQuoteBalance: 1_000m),
+            Descriptor("signal-data", Signal, 'A'),
+            Summary(),
+            Descriptor("trend-data", Trend, 'B'),
+            Summary(),
+            Split,
+            BacktestExperimentPlan.Create(
+                BacktestRunPurpose.FinalOutOfSampleEvaluation,
+                BacktestDatasetPartition.OutOfSample),
+            randomSeed: 42);
+
+        Assert.Equal(
+            "D13E9C3EF0E0918ED9D0EE0F3986AC1DED23D8B39C2725A5F39F037E6C0AC788",
+            manifest.ConfigurationSha256);
+    }
+
+    [Fact]
+    public void HysteresisThresholdChangesV2ConfigurationIdentity()
+    {
+        var thirty = CreateManifest(DefinitionV2(30m));
+        var forty = CreateManifest(DefinitionV2(40m));
+
+        Assert.NotEqual(thirty.ConfigurationSha256, forty.ConfigurationSha256);
+        Assert.NotEqual(thirty.ManifestSha256, forty.ManifestSha256);
+    }
+
+    [Fact]
     public void IncompleteDatasetCannotProduceManifest()
     {
         var action = () => BacktestRunManifestFactory.Create(
@@ -187,6 +218,21 @@ public sealed class BacktestDatasetGovernanceTests
                 BacktestDatasetPartition.Validation),
             randomSeed);
 
+    private static BacktestRunManifest CreateManifest(StrategyDefinition definition) =>
+        BacktestRunManifestFactory.Create(
+            definition,
+            ExecutionPolicy(),
+            Descriptor("signal-data", Signal, 'A'),
+            Summary(),
+            Descriptor("trend-data", Trend, 'B'),
+            Summary(),
+            Split,
+            BacktestExperimentPlan.Create(
+                BacktestRunPurpose.ParameterSelection,
+                BacktestDatasetPartition.Train,
+                BacktestDatasetPartition.Validation),
+            randomSeed: 42);
+
     private static async Task<List<Candle>> ReadPartitionedAsync(BacktestExperimentPlan plan)
     {
         DateTimeOffset[] openTimes =
@@ -262,8 +308,23 @@ public sealed class BacktestDatasetGovernanceTests
         minimumSignalWarmupCandles: 200,
         minimumTrendWarmupCandles: 200);
 
-    private static BacktestExecutionPolicy ExecutionPolicy() => new(
-        InitialQuoteBalance: 10_000m,
+    private static StrategyDefinition DefinitionV2(decimal hysteresisBasisPoints) =>
+        StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline",
+            2,
+            Instrument,
+            Signal,
+            Trend,
+            signalEmaPeriod: 20,
+            trendEmaPeriod: 200,
+            maximumSignalCandleMovePercent: 2m,
+            minimumSignalWarmupCandles: 200,
+            minimumTrendWarmupCandles: 200,
+            signalEmaHysteresisBasisPoints: hysteresisBasisPoints);
+
+    private static BacktestExecutionPolicy ExecutionPolicy(
+        decimal initialQuoteBalance = 10_000m) => new(
+        InitialQuoteBalance: initialQuoteBalance,
         AssetCode.Create("BTC"),
         AssetCode.Create("USDT"),
         Percentage.FromPercent(10m),

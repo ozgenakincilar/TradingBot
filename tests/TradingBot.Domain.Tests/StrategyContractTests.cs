@@ -26,6 +26,49 @@ public sealed class StrategyContractTests
         Assert.Equal(2m, definition.MaximumSignalCandleMovePercent);
         Assert.Equal(200, definition.MinimumSignalWarmupCandles);
         Assert.Equal(200, definition.MinimumTrendWarmupCandles);
+        Assert.Equal(0m, definition.SignalEmaHysteresisBasisPoints);
+    }
+
+    [Fact]
+    public void CostAwareV2CarriesBoundedHysteresis()
+    {
+        var definition = StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline",
+            2,
+            Instrument,
+            SignalTimeframe,
+            TrendTimeframe,
+            20,
+            200,
+            2m,
+            200,
+            200,
+            signalEmaHysteresisBasisPoints: 30m);
+
+        Assert.Equal(2, definition.Version);
+        Assert.Equal(30m, definition.SignalEmaHysteresisBasisPoints);
+    }
+
+    [Theory]
+    [InlineData(1, 30)]
+    [InlineData(2, -1)]
+    [InlineData(2, 1001)]
+    public void HysteresisMustRespectVersionAndBounds(int version, decimal basisPoints)
+    {
+        var action = () => StrategyDefinition.Create(
+            "invalid-hysteresis",
+            version,
+            Instrument,
+            SignalTimeframe,
+            TrendTimeframe,
+            20,
+            200,
+            2m,
+            200,
+            200,
+            basisPoints);
+
+        Assert.Throws<DomainRuleViolationException>(action);
     }
 
     [Fact]

@@ -21,7 +21,8 @@ public sealed record StrategyDefinition
         int trendEmaPeriod,
         decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
-        int minimumTrendWarmupCandles)
+        int minimumTrendWarmupCandles,
+        decimal signalEmaHysteresisBasisPoints)
     {
         StrategyId = strategyId;
         Version = version;
@@ -33,6 +34,7 @@ public sealed record StrategyDefinition
         MaximumSignalCandleMovePercent = maximumSignalCandleMovePercent;
         MinimumSignalWarmupCandles = minimumSignalWarmupCandles;
         MinimumTrendWarmupCandles = minimumTrendWarmupCandles;
+        SignalEmaHysteresisBasisPoints = signalEmaHysteresisBasisPoints;
     }
 
     public string StrategyId { get; }
@@ -57,6 +59,8 @@ public sealed record StrategyDefinition
 
     public int MinimumTrendWarmupCandles { get; }
 
+    public decimal SignalEmaHysteresisBasisPoints { get; }
+
     public static StrategyDefinition Create(
         string strategyId,
         int version,
@@ -67,7 +71,8 @@ public sealed record StrategyDefinition
         int trendEmaPeriod,
         decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
-        int minimumTrendWarmupCandles)
+        int minimumTrendWarmupCandles,
+        decimal signalEmaHysteresisBasisPoints = 0m)
     {
         if (!IsValidStrategyId(strategyId))
         {
@@ -103,6 +108,13 @@ public sealed record StrategyDefinition
                 "Maximum signal candle move must be greater than zero and at most ten percent.");
         }
 
+        if (signalEmaHysteresisBasisPoints is < 0m or > 1_000m ||
+            (version == 1 && signalEmaHysteresisBasisPoints != 0m))
+        {
+            throw new DomainRuleViolationException(
+                "Signal EMA hysteresis must be zero for v1 and between zero and 1,000 basis points.");
+        }
+
         return new StrategyDefinition(
             strategyId,
             version,
@@ -113,7 +125,8 @@ public sealed record StrategyDefinition
             trendEmaPeriod,
             maximumSignalCandleMovePercent,
             minimumSignalWarmupCandles,
-            minimumTrendWarmupCandles);
+            minimumTrendWarmupCandles,
+            signalEmaHysteresisBasisPoints);
     }
 
     private static bool IsValidStrategyId(string? value) =>

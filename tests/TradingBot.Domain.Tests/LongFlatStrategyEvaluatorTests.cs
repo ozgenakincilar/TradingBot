@@ -72,9 +72,67 @@ public sealed class LongFlatStrategyEvaluatorTests
         Assert.Equal("signal-ema-cross-down", decision.ReasonCode);
     }
 
-    private static StrategyDefinition Definition() => StrategyDefinition.Create(
+    [Fact]
+    public void V2HysteresisBlocksCrossInsideCostBand()
+    {
+        var closes = Enumerable.Repeat(100m, 200).ToArray();
+        closes[^2] = 99m;
+        closes[^1] = 100.1m;
+
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            Definition(version: 2, hysteresisBasisPoints: 30m),
+            Series(Signal, 200, index => closes[index]),
+            BullishTrendCandles(),
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.Hold, decision.Action);
+        Assert.Equal("no-entry-signal", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V2HysteresisEntersOnlyAfterUpperBandCross()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            Definition(version: 2, hysteresisBasisPoints: 30m),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            BullishTrendCandles(),
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.EnterLong, decision.Action);
+        Assert.Equal("signal-ema-hysteresis-cross-up", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V2HysteresisHoldsInsideLowerBandAndExitsAfterCross()
+    {
+        var inside = Enumerable.Repeat(100m, 200).ToArray();
+        inside[^2] = 101m;
+        inside[^1] = 99.9m;
+        var below = inside.ToArray();
+        below[^1] = 99m;
+        var definition = Definition(version: 2, hysteresisBasisPoints: 30m);
+
+        var held = LongFlatStrategyEvaluator.Evaluate(
+            definition,
+            Series(Signal, 200, index => inside[index]),
+            BullishTrendCandles(),
+            StrategyPositionState.Long);
+        var exited = LongFlatStrategyEvaluator.Evaluate(
+            definition,
+            Series(Signal, 200, index => below[index]),
+            BullishTrendCandles(),
+            StrategyPositionState.Long);
+
+        Assert.Equal(StrategyAction.Hold, held.Action);
+        Assert.Equal(StrategyAction.ExitToFlat, exited.Action);
+        Assert.Equal("signal-ema-hysteresis-cross-down", exited.ReasonCode);
+    }
+
+    private static StrategyDefinition Definition(
+        int version = 1,
+        decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
         "btc-usdt-long-flat-baseline",
-        1,
+        version,
         Instrument,
         Signal,
         Trend,
@@ -82,7 +140,8 @@ public sealed class LongFlatStrategyEvaluatorTests
         trendEmaPeriod: 200,
         maximumSignalCandleMovePercent: 2m,
         minimumSignalWarmupCandles: 200,
-        minimumTrendWarmupCandles: 200);
+        minimumTrendWarmupCandles: 200,
+        signalEmaHysteresisBasisPoints: hysteresisBasisPoints);
 
     private static IReadOnlyList<Candle> SignalCandles(decimal latestOpen, decimal latestClose)
     {

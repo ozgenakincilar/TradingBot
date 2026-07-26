@@ -44,10 +44,21 @@ public static class LongFlatStrategyEvaluator
             signalCandles,
             definition.SignalEmaPeriod);
         var previousSignal = signalCandles[^2];
-        var crossedUp = previousSignal.Close <= previousSignalEma.Value &&
-                        signal.Close > currentSignalEma.Value;
-        var crossedDown = previousSignal.Close >= previousSignalEma.Value &&
-                          signal.Close < currentSignalEma.Value;
+        var hysteresisFraction = definition.SignalEmaHysteresisBasisPoints / 10_000m;
+        var previousUpperBand = Multiply(previousSignalEma.Value, 1m + hysteresisFraction);
+        var currentUpperBand = Multiply(currentSignalEma.Value, 1m + hysteresisFraction);
+        var previousLowerBand = Multiply(previousSignalEma.Value, 1m - hysteresisFraction);
+        var currentLowerBand = Multiply(currentSignalEma.Value, 1m - hysteresisFraction);
+        var crossedUp = previousSignal.Close <= previousUpperBand &&
+                        signal.Close > currentUpperBand;
+        var crossedDown = previousSignal.Close >= previousLowerBand &&
+                          signal.Close < currentLowerBand;
+        var crossUpReason = definition.SignalEmaHysteresisBasisPoints == 0m
+            ? "signal-ema-cross-up"
+            : "signal-ema-hysteresis-cross-up";
+        var crossDownReason = definition.SignalEmaHysteresisBasisPoints == 0m
+            ? "signal-ema-cross-down"
+            : "signal-ema-hysteresis-cross-down";
 
         StrategyAction action;
         string reason;
@@ -56,7 +67,7 @@ public static class LongFlatStrategyEvaluator
             (action, reason) = !trendFilter.IsLongAllowed
                 ? (StrategyAction.ExitToFlat, "trend-filter-exit")
                 : crossedDown
-                    ? (StrategyAction.ExitToFlat, "signal-ema-cross-down")
+                    ? (StrategyAction.ExitToFlat, crossDownReason)
                     : (StrategyAction.Hold, "long-position-held");
         }
         else if (!trendFilter.IsLongAllowed)
@@ -73,7 +84,7 @@ public static class LongFlatStrategyEvaluator
         }
         else
         {
-            (action, reason) = (StrategyAction.EnterLong, "signal-ema-cross-up");
+            (action, reason) = (StrategyAction.EnterLong, crossUpReason);
         }
 
         return StrategyDecision.Create(
@@ -99,6 +110,18 @@ public static class LongFlatStrategyEvaluator
         catch (OverflowException)
         {
             throw new DomainRuleViolationException("Signal candle move exceeded decimal bounds.");
+        }
+    }
+
+    private static decimal Multiply(decimal left, decimal right)
+    {
+        try
+        {
+            return checked(left * right);
+        }
+        catch (OverflowException)
+        {
+            throw new DomainRuleViolationException("Signal EMA hysteresis band exceeded decimal bounds.");
         }
     }
 }

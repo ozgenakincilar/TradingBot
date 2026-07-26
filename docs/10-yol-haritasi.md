@@ -78,7 +78,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Canonical gerçek CSV çifti üzerinde versioned baseline walk-forward raporu çalıştıran secretsiz research CLI.
 - Tick/lot rounding ve order-book queue replay.
 - [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
-- Yeni strateji sürümü için train/validation hipotezi, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
+- [x] v1 hash/karar uyumluluğunu koruyan, round-trip maliyetinden türetilmiş 30 bps EMA hysteresis v2 araştırma sözleşmesi.
+- v2 train/validation kabul çalışması, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

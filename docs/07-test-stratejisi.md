@@ -103,6 +103,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Closed candle semantiği live ile aynıdır.
 - Komisyon, spread, slippage, latency ve fill olasılığı modellenir.
 - Parametre optimizasyonu train/validation/out-of-sample ayrımı kullanır.
+- Gözlemlenmiş 2025 v1 OOS pencereleri yeni strateji seçimine kapalıdır. Cost-derived hysteresis v2 ancak trade ve toplam maliyeti v1'e göre en az `%30` azaltır, pozitif net ve negatif olmayan benchmark excess üretir, her pencerede drawdown `%5` altında kalır ve pencerelerin en az `%60`ını kârlı kapatırsa yeni OOS'a açılır.
 - Walk-forward ve farklı market regime testleri uygulanır.
 - Sonuçlar strategy version, data version, seed ve config hash ile tekrar üretilebilir olmalıdır.
 - Mevcut next-open execution proxy fee/spread/slippage/latency/PnL modellemektedir; order-book queue, tick/lot rounding ve out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.

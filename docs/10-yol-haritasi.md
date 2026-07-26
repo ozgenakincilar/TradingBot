@@ -88,7 +88,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Ayrı 2023 development train/validation verisinde v2-v3 karşılaştırması; v3 trade ve maliyeti artırıp beş pencerenin tamamını negatif kapattığı için reddedildi, OOS açılmadı.
 - [x] v4 için yalnız entry'de `1H ADX(14) >= 25` kullanan trend-kalite filtresi, exact Wilder matematiği ve sekiz acceptance kapısının veri çalıştırmadan önce tasarımı/ön kaydı.
 - [x] v4 ADX domain implementasyonu, legacy hash regression testleri ve fail-closed v2-v4 validation CLI.
-- [ ] Ayrı 2022 historical development train/validation değerlendirmesi; holdout açılmayacak ve sonuç forward OOS sayılmayacak.
+- [x] Ayrı 2022 historical development train/validation değerlendirmesi; v4 turnover/maliyet kapılarını geçmesine rağmen profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemediği için reddedildi; holdout açılmadı ve sonuç forward OOS sayılmadı.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

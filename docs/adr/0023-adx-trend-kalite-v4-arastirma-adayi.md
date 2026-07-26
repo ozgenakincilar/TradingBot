@@ -28,6 +28,8 @@ v2 ve v3 validation/attribution kanıtları, EMA entry sonrasında sürdürülem
 - Daha az işlem beklenir; ancak başarı yalnız ön kayıtlı validation kapılarıyla kabul edilebilir.
 - v4 kodu ileride eklense bile paper/testnet/live izni oluşturmaz.
 
+2022 historical development validation daha sonra tamamlandı. v4 trade sayısını `%42,8571`, execution maliyetini `%42,6345` azalttı; ancak profit factor `0,2355`, compounded net return `-%5,6275`, benchmark excess `-%3,8436` ve kârlı pencere oranı `%0` olduğu için sekiz kapının yalnız dördünü geçti ve reddedildi. Ayrıntılı artifact kimlikleri [ret kanıtında](../20-2022-v4-validation-kaniti.md) yer alır. Holdout açılmadı; paper/testnet/live izni verilmedi.
+
 ## Alternatifler
 
 - EMA200 slope filtresi, slope periyodu/eşiği için repository dışı güçlü bir standart sağlamadığı ve aynı lagging EMA bilgisini tekrar kullandığı için reddedildi.

@@ -104,6 +104,14 @@ public static class LongFlatStrategyEvaluator
         {
             (action, reason) = (StrategyAction.Hold, "fomo-guard-blocked");
         }
+        else if (definition.Version == 4 &&
+                 AverageDirectionalIndex.Calculate(
+                     trendCandles,
+                     definition.TrendStrengthPeriod).MeetsMinimum(
+                         definition.MinimumTrendStrength) is false)
+        {
+            (action, reason) = (StrategyAction.Hold, "trend-strength-blocked");
+        }
         else
         {
             (action, reason) = (StrategyAction.EnterLong, crossUpReason);
@@ -123,7 +131,7 @@ public static class LongFlatStrategyEvaluator
         decimal currentClose,
         StrategyTradeContext context)
     {
-        if (definition.Version < 3)
+        if (definition.Version != 3)
         {
             return false;
         }
@@ -144,7 +152,7 @@ public static class LongFlatStrategyEvaluator
         StrategyPositionState position,
         StrategyTradeContext context)
     {
-        if (definition.Version < 3)
+        if (definition.Version != 3)
         {
             return;
         }

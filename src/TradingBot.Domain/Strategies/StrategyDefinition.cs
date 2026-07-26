@@ -25,7 +25,9 @@ public sealed record StrategyDefinition
         decimal signalEmaHysteresisBasisPoints,
         int reentryCooldownCandles,
         decimal profitProtectionActivationBasisPoints,
-        decimal profitProtectionTrailingBasisPoints)
+        decimal profitProtectionTrailingBasisPoints,
+        int trendStrengthPeriod,
+        decimal minimumTrendStrength)
     {
         StrategyId = strategyId;
         Version = version;
@@ -41,6 +43,8 @@ public sealed record StrategyDefinition
         ReentryCooldownCandles = reentryCooldownCandles;
         ProfitProtectionActivationBasisPoints = profitProtectionActivationBasisPoints;
         ProfitProtectionTrailingBasisPoints = profitProtectionTrailingBasisPoints;
+        TrendStrengthPeriod = trendStrengthPeriod;
+        MinimumTrendStrength = minimumTrendStrength;
     }
 
     public string StrategyId { get; }
@@ -73,6 +77,10 @@ public sealed record StrategyDefinition
 
     public decimal ProfitProtectionTrailingBasisPoints { get; }
 
+    public int TrendStrengthPeriod { get; }
+
+    public decimal MinimumTrendStrength { get; }
+
     public static StrategyDefinition Create(
         string strategyId,
         int version,
@@ -87,7 +95,9 @@ public sealed record StrategyDefinition
         decimal signalEmaHysteresisBasisPoints = 0m,
         int reentryCooldownCandles = 0,
         decimal profitProtectionActivationBasisPoints = 0m,
-        decimal profitProtectionTrailingBasisPoints = 0m)
+        decimal profitProtectionTrailingBasisPoints = 0m,
+        int trendStrengthPeriod = 0,
+        decimal minimumTrendStrength = 0m)
     {
         if (!IsValidStrategyId(strategyId))
         {
@@ -133,8 +143,8 @@ public sealed record StrategyDefinition
         var hasProfitProtection = reentryCooldownCandles != 0 ||
             profitProtectionActivationBasisPoints != 0m ||
             profitProtectionTrailingBasisPoints != 0m;
-        if ((version < 3 && hasProfitProtection) ||
-            (version >= 3 &&
+        if ((version != 3 && hasProfitProtection) ||
+            (version == 3 &&
              (reentryCooldownCandles is < 1 or > 96 ||
               profitProtectionActivationBasisPoints is <= 0m or > 1_000m ||
               profitProtectionTrailingBasisPoints <= 0m ||
@@ -142,6 +152,17 @@ public sealed record StrategyDefinition
         {
             throw new DomainRuleViolationException(
                 "Profit protection must be disabled before v3; v3 requires a bounded cooldown and a trailing distance below its activation threshold.");
+        }
+
+        var hasTrendStrength = trendStrengthPeriod != 0 || minimumTrendStrength != 0m;
+        if ((version != 4 && hasTrendStrength) ||
+            (version == 4 &&
+             (trendStrengthPeriod is < 2 or > 100 ||
+              minimumTrendStrength is <= 0m or > 100m ||
+              minimumTrendWarmupCandles < trendStrengthPeriod * 2)))
+        {
+            throw new DomainRuleViolationException(
+                "Trend strength must be disabled outside v4; v4 requires a bounded period, threshold, and complete ADX warm-up.");
         }
 
         return new StrategyDefinition(
@@ -158,7 +179,9 @@ public sealed record StrategyDefinition
             signalEmaHysteresisBasisPoints,
             reentryCooldownCandles,
             profitProtectionActivationBasisPoints,
-            profitProtectionTrailingBasisPoints);
+            profitProtectionTrailingBasisPoints,
+            trendStrengthPeriod,
+            minimumTrendStrength);
     }
 
     private static bool IsValidStrategyId(string? value) =>

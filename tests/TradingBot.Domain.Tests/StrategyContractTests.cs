@@ -61,6 +61,37 @@ public sealed class StrategyContractTests
         Assert.Equal(50m, definition.ProfitProtectionTrailingBasisPoints);
     }
 
+    [Fact]
+    public void V4CarriesLockedAdxFilterWithoutV3ProfitProtection()
+    {
+        var definition = StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline", 4, Instrument, SignalTimeframe, TrendTimeframe,
+            20, 200, 2m, 200, 200, signalEmaHysteresisBasisPoints: 30m,
+            trendStrengthPeriod: 14, minimumTrendStrength: 25m);
+
+        Assert.Equal(14, definition.TrendStrengthPeriod);
+        Assert.Equal(25m, definition.MinimumTrendStrength);
+        Assert.Equal(0, definition.ReentryCooldownCandles);
+        Assert.Equal(0m, definition.ProfitProtectionActivationBasisPoints);
+    }
+
+    [Theory]
+    [InlineData(3, 14, 25)]
+    [InlineData(4, 0, 25)]
+    [InlineData(4, 14, 0)]
+    [InlineData(4, 101, 25)]
+    [InlineData(4, 14, 101)]
+    public void TrendStrengthMustRespectVersionAndBounds(
+        int version, int period, decimal threshold)
+    {
+        var action = () => StrategyDefinition.Create(
+            "invalid-trend-strength", version, Instrument, SignalTimeframe, TrendTimeframe,
+            20, 200, 2m, 200, 200, signalEmaHysteresisBasisPoints: 30m,
+            trendStrengthPeriod: period, minimumTrendStrength: threshold);
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
     [Theory]
     [InlineData(2, 4, 100, 50)]
     [InlineData(3, 0, 100, 50)]

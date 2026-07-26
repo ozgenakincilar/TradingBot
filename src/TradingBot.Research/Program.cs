@@ -40,12 +40,18 @@ static async Task<int> RunAsync(string[] arguments)
             return await ValidateProfitProtectionAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "validate-adx-regime-v4")
+        {
+            return await ValidateAdxRegimeAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.ValidationUsage + Environment.NewLine +
             ResearchWalkForwardCommand.DiagnosticsUsage + Environment.NewLine +
-            ResearchWalkForwardCommand.ProfitProtectionUsage);
+            ResearchWalkForwardCommand.ProfitProtectionUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.AdxRegimeUsage);
     }
     catch (OperationCanceledException)
     {
@@ -169,6 +175,28 @@ static async Task<int> ValidateProfitProtectionAsync(
 {
     var request = ResearchWalkForwardCommand.ParseProfitProtectionValidation(arguments);
     var orchestrator = new ProfitProtectionValidationOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator(),
+        new BuyAndHoldBenchmark());
+    var report = await orchestrator.RunAsync(
+        request.Baseline,
+        request.Candidate,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.RandomSeed,
+        new BacktestDiagnosticsPolicy(),
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return report.Acceptance.IsAccepted ? 0 : 3;
+}
+
+static async Task<int> ValidateAdxRegimeAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseAdxRegimeValidation(arguments);
+    var orchestrator = new AdxRegimeValidationOrchestrator(
         request.DatasetFactory,
         new DeterministicStrategyBacktest(),
         new BacktestExecutionSimulator(),

@@ -116,8 +116,9 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - v3 profit-protection aktivasyon öncesinde çıkmamalı, aktivasyon sonrası peak close'tan 50 bps geri çekilmede deterministik çıkmalı ve trend-filter çıkışının önüne geçmemelidir.
 - Re-entry cooldown ilk dört tamamlanmış signal candle'da giriş cross'unu engellemeli, beşinci değerlendirmede aynı koşulu kabul etmeli; replay state'i aynı girdide aynı kararları üretmelidir.
 - v2-v3 validation evaluator yedi ön kayıtlı kapının tümünü birlikte istemeli; tek başarısız kapı `IsAccepted=false` ve CLI `exit 3` üretmelidir.
-- Planlanan v4 için canonical ADX fixture, zero-range, güçlü trend, choppy range, exact `25` sınırı, minimum 28 candle, gap/identity/overflow ve determinism testleri zorunludur.
-- ADX yalnız entry'yi engellemeli; long pozisyonda ADX düşüşünün v2 exit kararını değiştirmediği ve v1-v3 hash'lerinin aynı kaldığı regression testleri olmadan v4 validation çalıştırılamaz.
+- v4 için canonical ADX fixture, zero-range, güçlü trend, choppy range, exact `25` sınırı, minimum 28 candle, gap/identity/overflow ve determinism testleri uygulanmıştır.
+- ADX'nin yalnız entry'yi engellediği, long pozisyonda ADX düşüşünün v2 exit kararını değiştirmediği ve v1-v3 test/hash yollarının aynı kaldığı regression testleri validation ön koşuludur.
+- v4 acceptance evaluator sekiz kapıyı bağımsız değerlendirir; sıfır işlem profit-factor başarısı sayılamaz ve herhangi bir başarısız kapı tüm adayı reddeder.
 
 ## 5. Determinizm
 

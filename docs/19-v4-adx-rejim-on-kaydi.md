@@ -1,6 +1,6 @@
 # v4 ADX trend-kalite filtresi tasarımı ve ön kaydı
 
-**Durum:** Tasarım kilitli; henüz uygulanmadı ve veri üzerinde çalıştırılmadı
+**Durum:** Tasarım kilitli ve uygulanmış; henüz veri üzerinde çalıştırılmadı
 
 **Tarih:** 2026-07-27
 
@@ -135,3 +135,14 @@ Bir kapı başarısızsa v4 reddedilir. ADX periyodu/eşiği veya acceptance de�
 - `ADX >= 25` kâr garantisi veya piyasanın kesin trendde olduğunun kanıtı değildir.
 - Historical validation sonucu live readiness değildir.
 - Lokal indikatör filtresi server-side protective stop ve reconciliation gereksinimlerinin yerine geçmez.
+
+## 9. Uygulama kanıtı
+
+- Domain'de checked `decimal` Wilder hesabı yapan saf `AverageDirectionalIndex` bulunur.
+- v4 tanımı `TrendStrengthPeriod=14` ve `MinimumTrendStrength=25` olmadan oluşturulamaz; v1-v3 bu alanları taşıyamaz.
+- v4, v3 trade context/trailing davranışına girmez ve v2 çıkış sırasını korur.
+- Manifest configuration schema'sı `adx-regime-v1` olarak ayrılmıştır; mevcut v1-v3 regression testleri değişmeden geçmektedir.
+- `validate-adx-regime-v4` komutu v2-v4 karşılaştırmasını train/validation ile sınırlar ve tek acceptance kapısı başarısızsa exit code `3` üretir.
+- Sabit, güçlü tek yönlü, eksik warm-up, gap, entry block/allow ve açık pozisyonda ADX düşüşü testleri otomatik test kapsamındadır.
+
+Bu uygulama kanıtı validation sonucu değildir. 2022 verisi indirilmeden veya komut çalıştırılmadan önceki ön kayıt aynen korunmuştur.

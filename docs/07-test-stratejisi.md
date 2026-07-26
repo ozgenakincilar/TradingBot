@@ -49,6 +49,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Canlı 200-candle startup warm-up'ın ortak paged history decorator üzerinden iki exact 100-candle çağrıyla tamamlanması ve kısa ikinci sayfada fail-closed olması.
 - Export pacing sırasında cancellation'ın sonraki sayfayı ve artifact completion'ı durdurması; eksik sayfanın final artifact üretmemesi.
 - Atomik CSV writer çıktısının mevcut streaming reader ile raw SHA/count/range doğrulanması; stream hatasında target/partial bırakmaması ve var olan hedefi overwrite etmemesi.
+- Research CLI'nın yalnız `export-candles`, `15m|1H`, BASE-QUOTE instrument, exact UTC timestamp, source ve output allowlist'ini kabul etmesi; bilinmeyen/duplicate/offset'li argümanı reddetmesi.
 - Warm-up'ın açık mevcut candle'ı dışlaması, exact boundary davranışı, cancellation aktarımı ve eksik/kaymış/gap içeren lookback'i bütünüyle reddetmesi.
 - OKX startup kapısının aynı `knownAt` ile sıralı `15m/200` signal ve `1H/200` trend aralıklarını istemesi; signal eksikse trend çağrısı yapmaması, trend eksikse birleşik readiness'i kapalı tutması ve Paper readiness'in candle geçmişine bağlı olmaması.
 - Strategy definition'ın sürüm, `15m/1H` tam-kat ilişkisi, EMA200 warm-up alt sınırı ve long/flat action allowlist'i; açık signal veya gelecekteki trend candle ile karar üretilememesi.

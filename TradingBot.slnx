@@ -4,11 +4,13 @@
     <Project Path="src/TradingBot.Domain/TradingBot.Domain.csproj" />
     <Project Path="src/TradingBot.Host/TradingBot.Host.csproj" />
     <Project Path="src/TradingBot.Infrastructure/TradingBot.Infrastructure.csproj" />
+    <Project Path="src/TradingBot.Research/TradingBot.Research.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TradingBot.Application.Tests/TradingBot.Application.Tests.csproj" />
     <Project Path="tests/TradingBot.Domain.Tests/TradingBot.Domain.Tests.csproj" />
     <Project Path="tests/TradingBot.Infrastructure.Tests/TradingBot.Infrastructure.Tests.csproj" />
+    <Project Path="tests/TradingBot.Research.Tests/TradingBot.Research.Tests.csproj" />
     <Project Path="tests/TradingBot.Host.Tests/TradingBot.Host.Tests.csproj" />
   </Folder>
 </Solution>

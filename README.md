@@ -28,6 +28,7 @@ src/
   TradingBot.Application/
   TradingBot.Infrastructure/
   TradingBot.Host/
+  TradingBot.Research/
 docs/
 ```
 
@@ -41,6 +42,24 @@ dotnet run --project src/TradingBot.Host
 ```
 
 Sağlık kontrolü: `GET /health`
+
+## Tarihsel araştırma datası
+
+Public OKX candle geçmişini API anahtarı olmadan canonical CSV olarak dışa aktarmak için:
+
+```powershell
+New-Item -ItemType Directory -Force data
+dotnet run --project src/TradingBot.Research --configuration Release -- `
+  export-candles `
+  --instrument BTC-USDT `
+  --timeframe 15m `
+  --from 2025-01-01T00:00:00.0000000+00:00 `
+  --to 2025-02-01T00:00:00.0000000+00:00 `
+  --source okx-btc-usdt-15m-2025-01 `
+  --output data/btc-usdt-15m-2025-01.csv
+```
+
+Yalnız `15m` ve `1H`, exact UTC round-trip zamanları ve mevcut olmayan `.csv` hedefi kabul edilir. `data/` Git tarafından izlenmez. Komut overwrite yapmaz; başarıda artifact SHA-256 ve range özetini JSON olarak döndürür.
 
 ## Güvenlik
 

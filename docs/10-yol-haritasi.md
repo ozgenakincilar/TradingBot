@@ -75,6 +75,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] OKX tarihsel candle'larını bounded 100'lü sayfalarla atomik canonical CSV dataset'e aktaran export pipeline'ı.
 - [x] Secretsiz public OKX research export CLI ve sıkı UTC/timeframe/path komut sözleşmesi.
 - [x] Maliyetli buy-and-hold OOS benchmark, excess getiri, report identity ve SQL persistence.
+- [x] Canonical gerçek CSV çifti üzerinde versioned baseline walk-forward raporu çalıştıran secretsiz research CLI.
 - Tick/lot rounding ve order-book queue replay.
 - Küratörlü gerçek BTC-USDT dataset üretimi, çoklu market-regime OOS kabul ve aylık segmentasyon.
 

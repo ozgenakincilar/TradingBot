@@ -774,3 +774,22 @@ flowchart TD
 ```
 
 Benchmark ve strateji aynı başlangıç sermayesi, allocation ve execution maliyet politikasını kullanır. Benchmark strateji kararı üretmez ve risk limitlerini değiştirmez.
+
+## 32. Gerçek CSV walk-forward research CLI
+
+```mermaid
+flowchart LR
+    CLI[run-walk-forward<br/>strict args] --> CFG[Versioned BTC-USDT v1 strategy<br/>explicit fixed execution policy]
+    S[(Canonical 15m CSV)] --> F[Fresh streaming dataset factory]
+    T[(Canonical 1H CSV)] --> F
+    CFG --> O[Walk-forward orchestrator]
+    F --> O
+    O --> W[Independent OOS windows]
+    W --> E[Strategy execution]
+    W --> B[Cost-aware buy-and-hold]
+    E --> R[walk-forward-report-v2 JSON]
+    B --> R
+    R --> H[Schedule / run / report SHA-256]
+```
+
+CLI dosyaları belleğe toplamaz ve sonuçları değiştirecek gizli varsayım almaz. Dataset path/source, UTC range, pencere süreleri, training modu ve random seed komut satırında açıkça verilir.

@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | 🟡 Kısmi | Chronological/OOS kilidi, rolling/expanding schedule, gerçek 2025 v1 ret kanıtı ve gözlemlenmiş OOS'u yeni seçime kapatan cost-derived v2 protokolü testli/belgeli; v2 train/validation ve yeni çoklu-rejim OOS kabul kanıtı kaldı. [2025 OOS kanıtı](14-2025-oos-baseline-kaniti.md), [ADR-0018](adr/0018-cost-derived-ema-hysteresis-v2.md) |
+| 89 | Overfitting | 🟡 Kısmi | Chronological/OOS kilidi, rolling/expanding schedule ve gerçek 2025 v1 ret kanıtı mevcut. v2 ayrı 2024 validation'da reddedildi; eşikler gevşetilmedi ve yeni OOS açılmadı. Yeni hipotez için ayrı development ve çoklu-rejim OOS kanıtı kaldı. [2025 OOS kanıtı](14-2025-oos-baseline-kaniti.md), [2024 v2 validation kanıtı](15-2024-v2-validation-kaniti.md), [ADR-0018](adr/0018-cost-derived-ema-hysteresis-v2.md) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç

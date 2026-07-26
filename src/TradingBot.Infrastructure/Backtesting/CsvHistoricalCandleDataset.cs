@@ -220,7 +220,8 @@ public sealed class CsvHistoricalCandleDataset : IHistoricalCandleDataset
     private static bool TryDecimal(ReadOnlySpan<char> value, out decimal parsed) =>
         decimal.TryParse(
             value,
-            NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
+            NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint |
+            NumberStyles.AllowExponent,
             CultureInfo.InvariantCulture,
             out parsed);
 

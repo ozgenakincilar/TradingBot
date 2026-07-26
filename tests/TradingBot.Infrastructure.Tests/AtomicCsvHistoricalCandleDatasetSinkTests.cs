@@ -41,6 +41,7 @@ public sealed class AtomicCsvHistoricalCandleDatasetSinkTests
             }
 
             Assert.Equal(3, read.Count);
+            Assert.Equal(0.00001m, read[1].BaseVolume);
             Assert.Equal(artifact.Descriptor.Sha256, dataset.Descriptor.Sha256);
             Assert.Equal(artifact.Summary, dataset.CompletedSummary);
             var rawBytes = await File.ReadAllBytesAsync(path);
@@ -135,7 +136,7 @@ public sealed class AtomicCsvHistoricalCandleDatasetSinkTests
         101m,
         99m,
         100m,
-        10m);
+        index == 1 ? 0.00001m : 10m);
 
     private static string NewPath() => Path.Combine(
         Path.GetTempPath(),

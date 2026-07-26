@@ -25,6 +25,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0019](0019-backtest-instrument-quantization.md) | Backtest tick/lot rounding ve minimum emir kuralları | Kabul edildi |
 | [ADR-0020](0020-bounded-cumulative-order-book-depth.md) | Beş seviyeli cumulative depth ve paper market-impact fill modeli | Kabul edildi |
 | [ADR-0021](0021-deterministik-islem-kayip-attribution.md) | Legacy hash'leri koruyan bounded ve deterministik trade-loss attribution | Kabul edildi |
+| [ADR-0022](0022-profit-protection-v3-arastirma-adayi.md) | Cooldown ve trailing profit-protection v3 araştırma adayı | Kabul edildi |
 
 Yeni ADR biçimi:
 

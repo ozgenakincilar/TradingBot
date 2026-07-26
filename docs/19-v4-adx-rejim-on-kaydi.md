@@ -1,6 +1,6 @@
 # v4 ADX trend-kalite filtresi tasarımı ve ön kaydı
 
-**Durum:** Tasarım kilitli ve uygulanmış; henüz veri üzerinde çalıştırılmadı
+**Durum:** Tasarım kilitli ve uygulanmış; 2022 historical validation sonucunda reddedildi
 
 **Tarih:** 2026-07-27
 
@@ -146,3 +146,5 @@ Bir kapı başarısızsa v4 reddedilir. ADX periyodu/eşiği veya acceptance de�
 - Sabit, güçlü tek yönlü, eksik warm-up, gap, entry block/allow ve açık pozisyonda ADX düşüşü testleri otomatik test kapsamındadır.
 
 Bu uygulama kanıtı validation sonucu değildir. 2022 verisi indirilmeden veya komut çalıştırılmadan önceki ön kayıt aynen korunmuştur.
+
+2022 historical development validation sonucu daha sonra [ayrı kanıt belgesinde](20-2022-v4-validation-kaniti.md) kaydedilmiş ve v4 reddedilmiştir. Bu bölümdeki eşikler sonuçtan sonra değiştirilmemiştir.

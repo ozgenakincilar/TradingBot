@@ -816,3 +816,23 @@ flowchart TD
 ```
 
 v2 bandı piyasa sonucundan değil kabul edilmiş execution maliyetinden türetilir. Kodun varlığı validation veya canlılık onayı değildir.
+
+## 34. v1-v2 validation-only karşılaştırma
+
+```mermaid
+flowchart TD
+    CSV[Development 15m/1H canonical CSV] --> W[Rolling train/validation schedule]
+    W --> V1[v1: train warm-up<br/>validation execution]
+    W --> V2[v2: train warm-up<br/>validation execution]
+    W --> B[Validation buy-and-hold benchmark]
+    LOCK[OOS partition] -. strategy stream'ine verilmez .-> DENY[Fail closed]
+    V1 --> COMP[Trade + fee/spread/slippage karşılaştırması]
+    V2 --> COMP
+    B --> COMP
+    COMP --> GATE{Trade/cost ≥ %30 azaldı mı?<br/>Net > 0, excess ≥ 0,<br/>DD ≤ %5, kârlı pencere ≥ %60 mı?}
+    GATE -- Hayır --> REJECT[Exit 3 / candidate rejected]
+    GATE -- Evet --> ACCEPT[Exit 0 / yeni OOS açma izni]
+    ACCEPT -. canlılık izni değildir .-> PAPER[Paper/testnet ayrı kapı]
+```
+
+Her sürüm taze streaming dataset instance'ları ve aynı execution policy ile çalışır. Run/report SHA-256, iki manifest setini ve sonuçları bağlar.

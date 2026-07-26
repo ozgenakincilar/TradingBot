@@ -49,6 +49,20 @@ public sealed class ResearchWalkForwardCommandTests
         Assert.Throws<DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public void ValidationCommandCreatesLockedV1V2Comparison()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "validate-hysteresis-v2";
+
+        var result = ResearchWalkForwardCommand.ParseValidation(arguments);
+
+        Assert.Equal(1, result.Baseline.Version);
+        Assert.Equal(0m, result.Baseline.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(2, result.Candidate.Version);
+        Assert.Equal(30m, result.Candidate.SignalEmaHysteresisBasisPoints);
+    }
+
     private static string[] ValidArguments() =>
     [
         "run-walk-forward",

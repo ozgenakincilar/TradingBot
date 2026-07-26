@@ -18,6 +18,14 @@ public sealed record ResearchWalkForwardRequest(
     CsvHistoricalCandleDatasetFactory DatasetFactory,
     int RandomSeed);
 
+public sealed record ResearchStrategyValidationRequest(
+    StrategyDefinition Baseline,
+    StrategyDefinition Candidate,
+    BacktestExecutionPolicy ExecutionPolicy,
+    WalkForwardSchedule Schedule,
+    CsvHistoricalCandleDatasetFactory DatasetFactory,
+    int RandomSeed);
+
 public static class ResearchWalkForwardCommand
 {
     private static readonly Timeframe SignalTimeframe =
@@ -131,11 +139,57 @@ public static class ResearchWalkForwardCommand
         }
     }
 
+    public static ResearchStrategyValidationRequest ParseValidation(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count != 25 ||
+            !string.Equals(arguments[0], "validate-hysteresis-v2", StringComparison.Ordinal))
+        {
+            throw InvalidValidationCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "run-walk-forward";
+        try
+        {
+            var baseline = Parse(normalized);
+            var candidate = StrategyDefinition.Create(
+                baseline.Definition.StrategyId,
+                2,
+                baseline.Definition.InstrumentId,
+                baseline.Definition.SignalTimeframe,
+                baseline.Definition.TrendTimeframe,
+                baseline.Definition.SignalEmaPeriod,
+                baseline.Definition.TrendEmaPeriod,
+                baseline.Definition.MaximumSignalCandleMovePercent,
+                baseline.Definition.MinimumSignalWarmupCandles,
+                baseline.Definition.MinimumTrendWarmupCandles,
+                signalEmaHysteresisBasisPoints: 30m);
+            return new ResearchStrategyValidationRequest(
+                baseline.Definition,
+                candidate,
+                baseline.ExecutionPolicy,
+                baseline.Schedule,
+                baseline.DatasetFactory,
+                baseline.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidValidationCommand();
+        }
+    }
+
     public static string Usage =>
         "Usage: run-walk-forward --instrument BTC-USDT --signal <15m.csv> " +
         "--signal-source <id> --trend <1H.csv> --trend-source <id> " +
         "--from <UTC-O> --to <UTC-O> --training-days <n> --validation-days <n> " +
         "--oos-days <n> --mode rolling|expanding --seed <int>";
+
+    public static string ValidationUsage => Usage.Replace(
+        "run-walk-forward",
+        "validate-hysteresis-v2",
+        StringComparison.Ordinal);
 
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
@@ -163,4 +217,7 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidCommand() => new(
         "Research walk-forward command is invalid. " + Usage);
+
+    private static DomainRuleViolationException InvalidValidationCommand() => new(
+        "Research strategy validation command is invalid. " + ValidationUsage);
 }

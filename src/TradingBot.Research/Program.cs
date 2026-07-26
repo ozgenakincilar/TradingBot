@@ -25,8 +25,15 @@ static async Task<int> RunAsync(string[] arguments)
             return await RunWalkForwardAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "validate-hysteresis-v2")
+        {
+            return await ValidateStrategyAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
-            ResearchExportCommand.Usage + Environment.NewLine + ResearchWalkForwardCommand.Usage);
+            ResearchExportCommand.Usage + Environment.NewLine +
+            ResearchWalkForwardCommand.Usage + Environment.NewLine +
+            ResearchWalkForwardCommand.ValidationUsage);
     }
     catch (OperationCanceledException)
     {
@@ -101,4 +108,25 @@ static async Task<int> RunWalkForwardAsync(
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
     return 0;
+}
+
+static async Task<int> ValidateStrategyAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseValidation(arguments);
+    var orchestrator = new StrategyCandidateValidationOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator(),
+        new BuyAndHoldBenchmark());
+    var report = await orchestrator.RunAsync(
+        request.Baseline,
+        request.Candidate,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.RandomSeed,
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return report.Acceptance.IsAccepted ? 0 : 3;
 }

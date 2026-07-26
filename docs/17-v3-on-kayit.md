@@ -1,6 +1,6 @@
 # v3 düşük-turnover ve kâr-koruma hipotezi ön kaydı
 
-**Durum:** Değerlendirme öncesi kilitli
+**Durum:** Kilitli kurallarla değerlendirildi; aday reddedildi
 
 **Tarih:** 2026-07-26
 
@@ -46,3 +46,7 @@ Kapılardan biri geçmezse v3 reddedilir. Eşikler sonuç görüldükten sonra g
 - Strategy configuration schema: `profit-protection-v1`
 - Random seed, canonical dataset SHA-256, split, execution policy ve v2/v3 manifest hash'leri raporda yer alır.
 - v1/v2 configuration ve report hash'leri geriye dönük olarak değiştirilemez.
+
+## Değerlendirme sonucu
+
+Ön kayıt değiştirilmeden 2023 ayrı development train/validation verisinde çalıştırıldı. Yedi kapının yalnız drawdown kapısı geçti; v3 reddedildi ve ayrılmış OOS açılmadı. Hash'ler ve ayrıntılı sonuçlar [2023 v3 validation kanıtında](18-2023-v3-validation-kaniti.md) kayıtlıdır.

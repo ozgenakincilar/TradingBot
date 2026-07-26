@@ -85,6 +85,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Ayrı 2024 development datasetinde v2 train/validation kabul çalışması; v2 pozitif net, benchmark excess ve kârlı pencere eşiklerini geçemediği için reddedildi ve yeni final OOS açılmadı.
 - [x] Reddedilmiş v2 için bounded işlem bazlı MFE/MAE, exit-reason ve execution-cost attribution; 2024 validation kanıtı küçük brüt edge'in turnover/maliyet ve geç çıkışla tüketildiğini gösterdi.
 - [x] v3 için dört-candle re-entry cooldown, 100/50 bps trailing profit-protection ve ayrı development validation kapılarının sonuç öncesi ön kaydı.
+- [x] Ayrı 2023 development train/validation verisinde v2-v3 karşılaştırması; v3 trade ve maliyeti artırıp beş pencerenin tamamını negatif kapattığı için reddedildi, OOS açılmadı.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

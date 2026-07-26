@@ -21,6 +21,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [15-2024-v2-validation-kaniti.md](15-2024-v2-validation-kaniti.md) | Ayrı 2024 geliştirme verisindeki reddedilmiş v2 validation sonucu ve acceptance kanıtı |
 | [16-2024-v2-kayip-attribution-kaniti.md](16-2024-v2-kayip-attribution-kaniti.md) | Reddedilmiş v2 adayının işlem bazlı MFE/MAE, exit reason ve execution maliyeti kanıtı |
 | [17-v3-on-kayit.md](17-v3-on-kayit.md) | Düşük-turnover ve trailing profit-protection v3 hipotezi ile sonuç öncesi acceptance kapıları |
+| [18-2023-v3-validation-kaniti.md](18-2023-v3-validation-kaniti.md) | Ayrı 2023 development verisinde reddedilen v3 validation sonucu ve exit attribution |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

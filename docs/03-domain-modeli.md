@@ -153,6 +153,8 @@ stateDiagram-v2
 - Komisyon net maliyet/PnL hesabına katılmadan fill settle edilemez.
 - Futures, margin, leverage, liquidation ve funding domain kavramları ürün kapsamının dışındadır.
 - Günlük kayıp limiti veya kill switch aktifken yeni exposure yasaktır.
+- Planlanan v4 `AverageDirectionalIndex`, yalnız contiguous kapalı `1H` candle'lardan Wilder ADX(14) hesaplayan saf domain servisidir; emir veya portfolio state'i bilmez.
+- v4 trend-kalite filtresi yalnız flat → long girişini engelleyebilir. Açık pozisyonu ADX nedeniyle kapatmak domain sözleşmesine aykırıdır.
 
 ## 6. Domain event’ler
 

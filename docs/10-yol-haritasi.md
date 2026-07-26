@@ -86,6 +86,9 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Reddedilmiş v2 için bounded işlem bazlı MFE/MAE, exit-reason ve execution-cost attribution; 2024 validation kanıtı küçük brüt edge'in turnover/maliyet ve geç çıkışla tüketildiğini gösterdi.
 - [x] v3 için dört-candle re-entry cooldown, 100/50 bps trailing profit-protection ve ayrı development validation kapılarının sonuç öncesi ön kaydı.
 - [x] Ayrı 2023 development train/validation verisinde v2-v3 karşılaştırması; v3 trade ve maliyeti artırıp beş pencerenin tamamını negatif kapattığı için reddedildi, OOS açılmadı.
+- [x] v4 için yalnız entry'de `1H ADX(14) >= 25` kullanan trend-kalite filtresi, exact Wilder matematiği ve sekiz acceptance kapısının veri çalıştırmadan önce tasarımı/ön kaydı.
+- [ ] v4 ADX domain implementasyonu, legacy hash regression testleri ve fail-closed v2-v4 validation CLI.
+- [ ] Ayrı 2022 historical development train/validation değerlendirmesi; holdout açılmayacak ve sonuç forward OOS sayılmayacak.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

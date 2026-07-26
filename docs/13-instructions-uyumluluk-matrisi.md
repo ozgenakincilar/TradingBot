@@ -133,7 +133,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 77 | FOMO koruması | 🟡 Kısmi | Pozitif `15m` candle gövdesi `%2`yi aşınca cross-up girişi bloklanıyor; eşik için out-of-sample/volatilite kanıtı kaldı. [Strategy evaluator testleri](../tests/TradingBot.Domain.Tests/LongFlatStrategyEvaluatorTests.cs) |
 | 78 | Trailing-stop flaw | ⬜ Planlandı | Volatilite tabanlı mesafe ve monotonic stop testleri gerekli. |
 | 79 | İndikatör çelişkisi | ⬜ Planlandı | Ağırlıklı scoring sözleşmesi gerekli. |
-| 80 | Regime switching | 🟡 Kısmi | Deterministik `1H close > EMA200` makro trend filtresi mevcut; range/ADX benzeri rejim ayrımı ve out-of-sample kanıtı kaldı. [EMA trend testleri](../tests/TradingBot.Domain.Tests/EmaTrendFilterTests.cs) |
+| 80 | Regime switching | 🟡 Kısmi | Deterministik `1H close > EMA200` yön filtresi mevcut. Yalnız entry'de exact Wilder `ADX(14) >= 25` isteyen v4 trend-kalite filtresi tasarlandı ve veri öncesi kilitlendi; implementasyon, validation ve forward OOS kanıtı kaldı. [v4 ön kayıt](19-v4-adx-rejim-on-kaydi.md), [ADR-0023](adr/0023-adx-trend-kalite-v4-arastirma-adayi.md) |
 | 81 | News/event blackout | ⬜ Planlandı | Güvenilir ekonomik takvim adapter'i ve safe mode gerekli. |
 | 82 | Risk/reward dengesizliği | ⬜ Planlandı | Minimum reward/risk ve exit-policy testleri gerekli. |
 | 83 | Grid trap | ⬜ Planlandı | Grid ilk sürümde yok; eklenirse sermaye tüketimi ve maksimum kademe koruması zorunlu. |
@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | 🟡 Kısmi | Chronological/OOS kilidi, rolling/expanding schedule ve gerçek ret kanıtları mevcut. v3 kural/eşikleri sonuçtan önce kilitlendi, hipotezi doğuran 2024 yerine ayrı 2023 development validation'da reddedildi; eşikler gevşetilmedi ve OOS açılmadı. Yeni hipotez için ayrı development ve çoklu-rejim OOS kanıtı kaldı. [2025 OOS kanıtı](14-2025-oos-baseline-kaniti.md), [2024 v2 validation](15-2024-v2-validation-kaniti.md), [v3 ön kayıt](17-v3-on-kayit.md), [2023 v3 validation](18-2023-v3-validation-kaniti.md), [ADR-0022](adr/0022-profit-protection-v3-arastirma-adayi.md) |
+| 89 | Overfitting | 🟡 Kısmi | Chronological/OOS kilidi ve gerçek ret kanıtları mevcut. v4, gözlenmiş 2023/2024/2025 verileri yeniden seçime açılmadan klasik ADX(14)/25 ile ön kaydedildi; ilk 2022 çalışma yalnız historical development validation sayılacak, holdout açılmayacak ve gerçek forward OOS için 2026-07-27 sonrası veri beklenecek. [v4 ön kayıt](19-v4-adx-rejim-on-kaydi.md), [2023 v3 validation](18-2023-v3-validation-kaniti.md), [ADR-0023](adr/0023-adx-trend-kalite-v4-arastirma-adayi.md) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç

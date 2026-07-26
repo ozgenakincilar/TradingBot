@@ -214,6 +214,8 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - v3 research state'i yalnız pozitif entry-signal close, monotonik peak close ve 0–4 arasında saturating re-entry cooldown sayacı taşır; unbounded trade/candle geçmişi tutmaz.
 - Profit-protection yalnız kapalı candle close ile değerlendirilir. Trend-filter exit önceliklidir; high/low ve execution fill sonucu sinyal kararına geri beslenmez.
 - `profit-protection-v1` configuration hash'i cooldown/activation/trailing alanlarını kapsar; v1/v2 legacy ve hysteresis hash zarfları değişmez.
+- Planlanan v4 ADX hesabı kapalı `1H` OHLC, exact Wilder smoothing, `decimal` ve checked arithmetic kullanır; zero-range seri `ADX=0`, overflow/gap/kimlik hatası fail-closed üretir.
+- ADX calculator mevcut bounded 200-candle trend window dışında geçmiş koleksiyonu ayırmaz. v4 alanları yalnız `adx-regime-v1` hash zarfına girer; v1-v3 kimlikleri değişmez.
 
 ## 8. Paket yönetimi
 

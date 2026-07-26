@@ -935,3 +935,28 @@ flowchart TD
 ```
 
 State yalnız entry reference, peak close ve bounded cooldown sayacıdır. High/low veya gelecek candle kullanılmaz. 2023 validation'da v3 trade/maliyeti artırdığı için reddedilmiş ve OOS açılmamıştır.
+
+## 39. v4 ADX trend-kalite tasarımı
+
+```mermaid
+flowchart TD
+    H[(Bounded closed 1H OHLC)] --> ADX[Wilder ADX 14<br/>checked decimal]
+    H --> EMA[1H close > EMA200]
+    S[Closed 15m candle] --> CROSS[EMA20 30 bps upper cross]
+    CROSS --> FOMO[Body move <= %2]
+    EMA --> ENTRY{Flat entry gate}
+    ADX --> ENTRY
+    FOMO --> ENTRY
+    ENTRY -- ADX < 25 --> BLOCK[trend-strength-blocked]
+    ENTRY -- Tümü geçer --> LONG[EnterLong]
+    LONG --> EXIT[Mevcut v2 exit:<br/>trend loss veya lower cross]
+    ADX -. long exit'i etkilemez .-> EXIT
+    V2[v2 diagnostics] --> GATE[Ön kayıtlı 8 validation kapısı]
+    LONG --> V4[v4 diagnostics]
+    V4 --> GATE
+    DEV[(2022 train/validation)] --> GATE
+    HOLDOUT[2022 holdout] -. açılmaz .-> DENY[Fail closed]
+    FUTURE[2026-07-27 sonrası forward OOS] -. validation geçmeden bekler .-> DENY
+```
+
+ADX yön değil trend gücü ölçer; yön EMA200 filtresinden gelir. v4, v3 state/cooldown/trailing davranışını taşımaz ve henüz uygulanmış ya da veri üzerinde denenmiş değildir.

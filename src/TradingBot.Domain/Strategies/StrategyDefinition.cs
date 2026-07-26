@@ -22,7 +22,10 @@ public sealed record StrategyDefinition
         decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
         int minimumTrendWarmupCandles,
-        decimal signalEmaHysteresisBasisPoints)
+        decimal signalEmaHysteresisBasisPoints,
+        int reentryCooldownCandles,
+        decimal profitProtectionActivationBasisPoints,
+        decimal profitProtectionTrailingBasisPoints)
     {
         StrategyId = strategyId;
         Version = version;
@@ -35,6 +38,9 @@ public sealed record StrategyDefinition
         MinimumSignalWarmupCandles = minimumSignalWarmupCandles;
         MinimumTrendWarmupCandles = minimumTrendWarmupCandles;
         SignalEmaHysteresisBasisPoints = signalEmaHysteresisBasisPoints;
+        ReentryCooldownCandles = reentryCooldownCandles;
+        ProfitProtectionActivationBasisPoints = profitProtectionActivationBasisPoints;
+        ProfitProtectionTrailingBasisPoints = profitProtectionTrailingBasisPoints;
     }
 
     public string StrategyId { get; }
@@ -61,6 +67,12 @@ public sealed record StrategyDefinition
 
     public decimal SignalEmaHysteresisBasisPoints { get; }
 
+    public int ReentryCooldownCandles { get; }
+
+    public decimal ProfitProtectionActivationBasisPoints { get; }
+
+    public decimal ProfitProtectionTrailingBasisPoints { get; }
+
     public static StrategyDefinition Create(
         string strategyId,
         int version,
@@ -72,7 +84,10 @@ public sealed record StrategyDefinition
         decimal maximumSignalCandleMovePercent,
         int minimumSignalWarmupCandles,
         int minimumTrendWarmupCandles,
-        decimal signalEmaHysteresisBasisPoints = 0m)
+        decimal signalEmaHysteresisBasisPoints = 0m,
+        int reentryCooldownCandles = 0,
+        decimal profitProtectionActivationBasisPoints = 0m,
+        decimal profitProtectionTrailingBasisPoints = 0m)
     {
         if (!IsValidStrategyId(strategyId))
         {
@@ -115,6 +130,20 @@ public sealed record StrategyDefinition
                 "Signal EMA hysteresis must be zero for v1 and between zero and 1,000 basis points.");
         }
 
+        var hasProfitProtection = reentryCooldownCandles != 0 ||
+            profitProtectionActivationBasisPoints != 0m ||
+            profitProtectionTrailingBasisPoints != 0m;
+        if ((version < 3 && hasProfitProtection) ||
+            (version >= 3 &&
+             (reentryCooldownCandles is < 1 or > 96 ||
+              profitProtectionActivationBasisPoints is <= 0m or > 1_000m ||
+              profitProtectionTrailingBasisPoints <= 0m ||
+              profitProtectionTrailingBasisPoints >= profitProtectionActivationBasisPoints)))
+        {
+            throw new DomainRuleViolationException(
+                "Profit protection must be disabled before v3; v3 requires a bounded cooldown and a trailing distance below its activation threshold.");
+        }
+
         return new StrategyDefinition(
             strategyId,
             version,
@@ -126,7 +155,10 @@ public sealed record StrategyDefinition
             maximumSignalCandleMovePercent,
             minimumSignalWarmupCandles,
             minimumTrendWarmupCandles,
-            signalEmaHysteresisBasisPoints);
+            signalEmaHysteresisBasisPoints,
+            reentryCooldownCandles,
+            profitProtectionActivationBasisPoints,
+            profitProtectionTrailingBasisPoints);
     }
 
     private static bool IsValidStrategyId(string? value) =>

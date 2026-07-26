@@ -15,11 +15,24 @@ public static class LongFlatStrategyEvaluator
         StrategyDefinition definition,
         IReadOnlyList<Candle> signalCandles,
         IReadOnlyList<Candle> trendCandles,
-        StrategyPositionState position)
+        StrategyPositionState position) => Evaluate(
+            definition,
+            signalCandles,
+            trendCandles,
+            position,
+            StrategyTradeContext.None);
+
+    public static StrategyDecision Evaluate(
+        StrategyDefinition definition,
+        IReadOnlyList<Candle> signalCandles,
+        IReadOnlyList<Candle> trendCandles,
+        StrategyPositionState position,
+        StrategyTradeContext tradeContext)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(signalCandles);
         ArgumentNullException.ThrowIfNull(trendCandles);
+        ArgumentNullException.ThrowIfNull(tradeContext);
         if (!Enum.IsDefined(position) ||
             signalCandles.Count < definition.MinimumSignalWarmupCandles ||
             trendCandles.Count < definition.MinimumTrendWarmupCandles)
@@ -27,6 +40,8 @@ public static class LongFlatStrategyEvaluator
             throw new DomainRuleViolationException(
                 "Strategy evaluation requires a valid position and complete warm-up series.");
         }
+
+        ValidateTradeContext(definition, position, tradeContext);
 
         var signal = signalCandles[^1];
         var trend = trendCandles[^1];
@@ -66,6 +81,8 @@ public static class LongFlatStrategyEvaluator
         {
             (action, reason) = !trendFilter.IsLongAllowed
                 ? (StrategyAction.ExitToFlat, "trend-filter-exit")
+                : IsProfitProtectionTriggered(definition, signal.Close, tradeContext)
+                    ? (StrategyAction.ExitToFlat, "profit-protection-exit")
                 : crossedDown
                     ? (StrategyAction.ExitToFlat, crossDownReason)
                     : (StrategyAction.Hold, "long-position-held");
@@ -77,6 +94,11 @@ public static class LongFlatStrategyEvaluator
         else if (!crossedUp)
         {
             (action, reason) = (StrategyAction.Hold, "no-entry-signal");
+        }
+        else if (tradeContext.CompletedCandlesSinceExit is { } completed &&
+                 completed < definition.ReentryCooldownCandles)
+        {
+            (action, reason) = (StrategyAction.Hold, "reentry-cooldown-blocked");
         }
         else if (GetPositiveBodyMovePercent(signal) > definition.MaximumSignalCandleMovePercent)
         {
@@ -94,6 +116,56 @@ public static class LongFlatStrategyEvaluator
             trend,
             signal.CloseTime,
             reason);
+    }
+
+    private static bool IsProfitProtectionTriggered(
+        StrategyDefinition definition,
+        decimal currentClose,
+        StrategyTradeContext context)
+    {
+        if (definition.Version < 3)
+        {
+            return false;
+        }
+
+        var entry = context.EntrySignalClose!.Value;
+        var peak = Math.Max(context.PeakClose!.Value, currentClose);
+        var activation = Multiply(
+            entry,
+            1m + definition.ProfitProtectionActivationBasisPoints / 10_000m);
+        var trailingFloor = Multiply(
+            peak,
+            1m - definition.ProfitProtectionTrailingBasisPoints / 10_000m);
+        return peak >= activation && currentClose <= trailingFloor;
+    }
+
+    private static void ValidateTradeContext(
+        StrategyDefinition definition,
+        StrategyPositionState position,
+        StrategyTradeContext context)
+    {
+        if (definition.Version < 3)
+        {
+            return;
+        }
+
+        var valid = position switch
+        {
+            StrategyPositionState.Long =>
+                context.EntrySignalClose is > 0m &&
+                context.PeakClose >= context.EntrySignalClose &&
+                context.CompletedCandlesSinceExit is null,
+            StrategyPositionState.Flat =>
+                context.EntrySignalClose is null &&
+                context.PeakClose is null &&
+                context.CompletedCandlesSinceExit is null or >= 0,
+            _ => false
+        };
+        if (!valid)
+        {
+            throw new DomainRuleViolationException(
+                "Strategy v3 trade context must match the current position.");
+        }
     }
 
     private static decimal GetPositiveBodyMovePercent(Candle candle)

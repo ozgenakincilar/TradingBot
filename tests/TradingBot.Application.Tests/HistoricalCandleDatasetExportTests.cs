@@ -74,12 +74,12 @@ public sealed class HistoricalCandleDatasetExportTests
     public async Task CancellationDuringPagePacingPreventsArtifactCompletion()
     {
         var history = new RecordingHistoryClient();
-        var sink = new RecordingSink();
+        using var cancellation = new CancellationTokenSource();
+        var sink = new RecordingSink(cancellation, cancelAfterCandleCount: 100);
         var useCase = new ExportHistoricalCandleDataset(
             history,
             sink,
             TimeProvider.System);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(20));
 
         var action = () => useCase.ExecuteAsync(Request(candleCount: 101), cancellation.Token)
             .AsTask();
@@ -129,7 +129,9 @@ public sealed class HistoricalCandleDatasetExportTests
         }
     }
 
-    private sealed class RecordingSink : IHistoricalCandleDatasetSink
+    private sealed class RecordingSink(
+        CancellationTokenSource? cancellation = null,
+        int? cancelAfterCandleCount = null) : IHistoricalCandleDatasetSink
     {
         public List<Candle> Candles { get; } = [];
 
@@ -144,6 +146,10 @@ public sealed class HistoricalCandleDatasetExportTests
             await foreach (var candle in candles.WithCancellation(cancellationToken))
             {
                 Candles.Add(candle);
+                if (Candles.Count == cancelAfterCandleCount)
+                {
+                    cancellation!.Cancel();
+                }
             }
 
             Completed = true;

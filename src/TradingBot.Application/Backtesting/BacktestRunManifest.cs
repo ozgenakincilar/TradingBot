@@ -72,14 +72,20 @@ public static class BacktestRunManifestFactory
             TrendLast = completedTrend.LastCloseTime
         });
         var configurationHash = execution.InstrumentRules is not null
-            ? definition.Version >= 3
-                ? HashProfitProtectionInstrumentConfiguration(definition, execution)
-                : HashInstrumentQuantizedConfiguration(definition, execution)
-            : definition.Version >= 3
-                ? HashProfitProtectionConfiguration(definition, execution)
-                : definition.SignalEmaHysteresisBasisPoints == 0m
-                ? HashLegacyConfiguration(definition, execution)
-                : HashHysteresisConfiguration(definition, execution);
+            ? definition.Version switch
+            {
+                3 => HashProfitProtectionInstrumentConfiguration(definition, execution),
+                4 => HashAdxInstrumentConfiguration(definition, execution),
+                _ => HashInstrumentQuantizedConfiguration(definition, execution)
+            }
+            : definition.Version switch
+            {
+                3 => HashProfitProtectionConfiguration(definition, execution),
+                4 => HashAdxConfiguration(definition, execution),
+                _ when definition.SignalEmaHysteresisBasisPoints == 0m =>
+                    HashLegacyConfiguration(definition, execution),
+                _ => HashHysteresisConfiguration(definition, execution)
+            };
         var manifestHash = Hash(new
         {
             SchemaVersion,
@@ -193,6 +199,35 @@ public static class BacktestRunManifestFactory
             Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
         });
 
+    private static string HashAdxConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution) => Hash(new
+        {
+            StrategyConfigurationSchema = "adx-regime-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            definition.TrendStrengthPeriod,
+            definition.MinimumTrendStrength,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
+        });
+
     private static string HashInstrumentQuantizedConfiguration(
         StrategyDefinition definition,
         BacktestExecutionPolicy execution)
@@ -255,6 +290,45 @@ public static class BacktestRunManifestFactory
             definition.ReentryCooldownCandles,
             definition.ProfitProtectionActivationBasisPoints,
             definition.ProfitProtectionTrailingBasisPoints,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction,
+            RulesInstrument = instrument.Id.ToString(),
+            instrument.PriceTickSize,
+            instrument.QuantityStepSize,
+            instrument.MinimumQuantity,
+            instrument.MinimumNotional
+        });
+    }
+
+    private static string HashAdxInstrumentConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution)
+    {
+        var instrument = execution.InstrumentRules!;
+        return Hash(new
+        {
+            ConfigurationSchema = "instrument-quantized-backtest-v1",
+            StrategyConfigurationSchema = "adx-regime-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            definition.TrendStrengthPeriod,
+            definition.MinimumTrendStrength,
             execution.InitialQuoteBalance,
             BaseAsset = execution.BaseAsset.Value,
             QuoteAsset = execution.QuoteAsset.Value,

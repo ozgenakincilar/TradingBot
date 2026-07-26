@@ -212,6 +212,45 @@ public sealed class LongFlatStrategyEvaluatorTests
         Assert.Throws<TradingBot.Domain.Common.DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public void V4WeakTrendStrengthBlocksOtherwiseValidEntry()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V4Definition(),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            BullishTrendCandles(),
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.Hold, decision.Action);
+        Assert.Equal("trend-strength-blocked", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V4StrongTrendStrengthAllowsEntry()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V4Definition(),
+            SignalCandles(latestOpen: 100m, latestClose: 101m),
+            StrongBullishTrendCandles(),
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.EnterLong, decision.Action);
+        Assert.Equal("signal-ema-hysteresis-cross-up", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V4FallingTrendStrengthDoesNotExitAnOpenPosition()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V4Definition(),
+            Series(Signal, 200, _ => 100m),
+            BullishTrendCandles(),
+            StrategyPositionState.Long);
+
+        Assert.Equal(StrategyAction.Hold, decision.Action);
+        Assert.Equal("long-position-held", decision.ReasonCode);
+    }
+
     private static StrategyDefinition Definition(
         int version = 1,
         decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
@@ -243,6 +282,21 @@ public sealed class LongFlatStrategyEvaluatorTests
         profitProtectionActivationBasisPoints: 100m,
         profitProtectionTrailingBasisPoints: 50m);
 
+    private static StrategyDefinition V4Definition() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline",
+        4,
+        Instrument,
+        Signal,
+        Trend,
+        signalEmaPeriod: 20,
+        trendEmaPeriod: 200,
+        maximumSignalCandleMovePercent: 2m,
+        minimumSignalWarmupCandles: 200,
+        minimumTrendWarmupCandles: 200,
+        signalEmaHysteresisBasisPoints: 30m,
+        trendStrengthPeriod: 14,
+        minimumTrendStrength: 25m);
+
     private static IReadOnlyList<Candle> SignalCandles(decimal latestOpen, decimal latestClose)
     {
         var candles = Series(Signal, 200, index => index == 198 ? 99m : index == 199 ? latestClose : 100m);
@@ -256,6 +310,9 @@ public sealed class LongFlatStrategyEvaluatorTests
         candles[^1] = Create(Trend, 199, 100m, 110m, End - (Trend.Duration * 200));
         return candles;
     }
+
+    private static IReadOnlyList<Candle> StrongBullishTrendCandles() =>
+        Series(Trend, 200, index => 100m + index);
 
     private static Candle[] Series(Timeframe timeframe, int count, Func<int, decimal> closeSelector)
     {

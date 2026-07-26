@@ -93,6 +93,22 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void AdxRegimeValidationCommandCreatesLockedV2V4Comparison()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "validate-adx-regime-v4";
+
+        var result = ResearchWalkForwardCommand.ParseAdxRegimeValidation(arguments);
+
+        Assert.Equal(2, result.Baseline.Version);
+        Assert.Equal(4, result.Candidate.Version);
+        Assert.Equal(30m, result.Candidate.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(14, result.Candidate.TrendStrengthPeriod);
+        Assert.Equal(25m, result.Candidate.MinimumTrendStrength);
+        Assert.Equal(0, result.Candidate.ReentryCooldownCandles);
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

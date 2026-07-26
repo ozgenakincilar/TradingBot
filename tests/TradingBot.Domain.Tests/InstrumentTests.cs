@@ -21,6 +21,14 @@ public sealed class InstrumentTests
     }
 
     [Fact]
+    public void NormalizePriceUp_CeilsToTickSize()
+    {
+        var result = BtcUsdt.NormalizePriceUp(Price.From(10_000.11m));
+
+        Assert.Equal(10_000.20m, result.Value);
+    }
+
+    [Fact]
     public void NormalizeQuantity_FloorsToStepSize()
     {
         var result = BtcUsdt.NormalizeQuantity(Quantity.From(0.0019m));

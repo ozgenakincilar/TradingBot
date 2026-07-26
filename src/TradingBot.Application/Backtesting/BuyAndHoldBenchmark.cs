@@ -2,6 +2,7 @@ using TradingBot.Application.Strategies;
 using TradingBot.Domain.Common;
 using TradingBot.Domain.Instruments;
 using TradingBot.Domain.MarketData;
+using TradingBot.Domain.Orders;
 
 namespace TradingBot.Application.Backtesting;
 
@@ -63,7 +64,7 @@ public sealed class BuyAndHoldBenchmark
             throw new DomainRuleViolationException("Benchmark identity and evaluation range are invalid.");
         }
 
-        policy.Validate(signalTimeframe);
+        policy.Validate(signalTimeframe, instrumentId);
 
         Candle? first = null;
         Candle? previous = null;
@@ -146,15 +147,32 @@ public sealed class BuyAndHoldBenchmark
 
         public void Enter(Candle candle)
         {
-            Allocated = Checked(_initial * _policy.QuoteAllocation.Fraction);
-            Cash = Checked(_initial - Allocated);
-            var ask = ApplyHalfSpread(candle.Open, isBuy: true);
-            EntryPrice = ApplySlippage(ask, isBuy: true);
+            var allocationBudget = Checked(_initial * _policy.QuoteAllocation.Fraction);
+            var ask = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Buy,
+                ApplyHalfSpread(candle.Open, isBuy: true));
+            EntryPrice = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Buy,
+                ApplySlippage(ask, isBuy: true));
             var unitCost = Checked(EntryPrice *
                 (1m + _policy.PaperExecution.CommissionRate.Fraction));
-            Quantity = Allocated / unitCost;
+            Quantity = BacktestInstrumentQuantization.NormalizeQuantity(
+                _policy,
+                allocationBudget / unitCost);
+            if (!BacktestInstrumentQuantization.IsTradable(_policy, EntryPrice, Quantity))
+            {
+                throw new DomainRuleViolationException(
+                    "Benchmark allocation is not tradable under the instrument rules.");
+            }
+
             _buyFee = Checked(EntryPrice * Quantity *
                 _policy.PaperExecution.CommissionRate.Fraction);
+            Allocated = _policy.InstrumentRules is null
+                ? allocationBudget
+                : Checked((EntryPrice * Quantity) + _buyFee);
+            Cash = Checked(_initial - Allocated);
             _buySpreadCost = Checked((ask - candle.Open) * Quantity);
             _buySlippageCost = Checked((EntryPrice - ask) * Quantity);
         }
@@ -162,7 +180,7 @@ public sealed class BuyAndHoldBenchmark
         public void Observe(Candle candle)
         {
             _candleCount = Increment(_candleCount);
-            var liquidation = Liquidate(candle.Close);
+            var liquidation = Liquidate(candle.Close, requireTradable: false);
             _peakEquity = Math.Max(_peakEquity, liquidation.Value);
             var drawdown = Checked(((_peakEquity - liquidation.Value) / _peakEquity) * 100m);
             _maximumDrawdownPercent = Math.Max(_maximumDrawdownPercent, drawdown);
@@ -170,7 +188,7 @@ public sealed class BuyAndHoldBenchmark
 
         public BuyAndHoldBenchmarkReport CreateReport(Candle first, Candle last)
         {
-            var liquidation = Liquidate(last.Close);
+            var liquidation = Liquidate(last.Close, requireTradable: true);
             var totalFees = Checked(_buyFee + liquidation.Fee);
             var spreadCost = Checked(_buySpreadCost + liquidation.SpreadCost);
             var slippageCost = Checked(_buySlippageCost + liquidation.SlippageCost);
@@ -196,10 +214,23 @@ public sealed class BuyAndHoldBenchmark
                 last.CloseTime);
         }
 
-        private Liquidation Liquidate(decimal midPrice)
+        private Liquidation Liquidate(decimal midPrice, bool requireTradable)
         {
-            var bid = ApplyHalfSpread(midPrice, isBuy: false);
-            var price = ApplySlippage(bid, isBuy: false);
+            var bid = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Sell,
+                ApplyHalfSpread(midPrice, isBuy: false));
+            var price = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Sell,
+                ApplySlippage(bid, isBuy: false));
+            if (requireTradable &&
+                !BacktestInstrumentQuantization.IsTradable(_policy, price, Quantity))
+            {
+                throw new DomainRuleViolationException(
+                    "Benchmark liquidation is not tradable under the instrument rules.");
+            }
+
             var gross = Checked(price * Quantity);
             var fee = Checked(gross * _policy.PaperExecution.CommissionRate.Fraction);
             return new Liquidation(

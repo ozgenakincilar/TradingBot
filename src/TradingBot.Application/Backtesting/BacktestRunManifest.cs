@@ -50,7 +50,7 @@ public static class BacktestRunManifestFactory
         ValidateDataset(definition, signalDataset, completedSignal, isSignal: true);
         ValidateDataset(definition, trendDataset, completedTrend, isSignal: false);
         ValidateSplitCoverage(definition, completedSignal, completedTrend, split);
-        execution.Validate(definition.SignalTimeframe);
+        execution.Validate(definition.SignalTimeframe, definition.InstrumentId);
 
         var dataHash = Hash(new
         {
@@ -71,9 +71,11 @@ public static class BacktestRunManifestFactory
             TrendFirst = completedTrend.FirstOpenTime,
             TrendLast = completedTrend.LastCloseTime
         });
-        var configurationHash = definition.SignalEmaHysteresisBasisPoints == 0m
-            ? HashLegacyConfiguration(definition, execution)
-            : HashHysteresisConfiguration(definition, execution);
+        var configurationHash = execution.InstrumentRules is not null
+            ? HashInstrumentQuantizedConfiguration(definition, execution)
+            : definition.SignalEmaHysteresisBasisPoints == 0m
+                ? HashLegacyConfiguration(definition, execution)
+                : HashHysteresisConfiguration(definition, execution);
         var manifestHash = Hash(new
         {
             SchemaVersion,
@@ -156,6 +158,45 @@ public static class BacktestRunManifestFactory
             execution.PaperExecution.SlippageBasisPoints,
             Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
         });
+
+    private static string HashInstrumentQuantizedConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution)
+    {
+        var instrument = execution.InstrumentRules!;
+        return Hash(new
+        {
+            ConfigurationSchema = "instrument-quantized-backtest-v1",
+            StrategyConfigurationSchema = definition.SignalEmaHysteresisBasisPoints == 0m
+                ? "legacy-v1"
+                : "cost-aware-hysteresis-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction,
+            RulesInstrument = instrument.Id.ToString(),
+            instrument.PriceTickSize,
+            instrument.QuantityStepSize,
+            instrument.MinimumQuantity,
+            instrument.MinimumNotional
+        });
+    }
 
     private static void ValidateDataset(
         StrategyDefinition definition,

@@ -138,6 +138,92 @@ public sealed class BacktestExecutionSimulatorTests
         await Assert.ThrowsAsync<DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public async Task InstrumentRulesQuantizePriceAndQuantityConservatively()
+    {
+        StrategyBacktestDecision[] decisions =
+        [
+            Item(CandleAt(0, 100m, 100m), StrategyAction.EnterLong,
+                StrategyPositionState.Long, "signal-ema-cross-up"),
+            Item(CandleAt(1, 100m, 100m), StrategyAction.Hold,
+                StrategyPositionState.Long, "long-position-held")
+        ];
+        var policy = Policy() with
+        {
+            InstrumentRules = InstrumentRules(
+                priceTickSize: 1m,
+                quantityStepSize: 0.1m,
+                minimumQuantity: 0.1m,
+                minimumNotional: 10m)
+        };
+
+        var report = await RunAsync(decisions, policy);
+
+        Assert.Equal(1, report.FillCount);
+        Assert.Equal(4.8m, report.OpenQuantity);
+        Assert.Equal(0m, report.OpenQuantity % 0.1m);
+        Assert.Equal(0.4896m, report.TotalFees);
+        Assert.False(report.HasPendingExecution);
+    }
+
+    [Fact]
+    public async Task AllocationBelowInstrumentMinimumIsRejectedWithoutFill()
+    {
+        var policy = Policy() with
+        {
+            QuoteAllocation = Percentage.FromPercent(1m),
+            InstrumentRules = InstrumentRules(
+                priceTickSize: 0.1m,
+                quantityStepSize: 0.01m,
+                minimumQuantity: 0.01m,
+                minimumNotional: 20m)
+        };
+
+        var report = await RunAsync(Decisions(110m), policy);
+
+        Assert.Equal(0, report.FillCount);
+        Assert.Equal(1_000m, report.NetLiquidationValue);
+        Assert.False(report.HasPendingExecution);
+    }
+
+    [Fact]
+    public async Task MismatchedInstrumentRulesAreRejected()
+    {
+        var policy = Policy() with
+        {
+            InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                InstrumentId.Create("OKX", "ETH-USDT"),
+                0.01m,
+                0.001m,
+                0.001m,
+                1m)
+        };
+
+        var action = () => RunAsync(Decisions(110m), policy);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+    }
+
+    [Fact]
+    public async Task UntradableSellRemainderStaysOpenAndPending()
+    {
+        var policy = Policy() with
+        {
+            InstrumentRules = InstrumentRules(
+                priceTickSize: 0.1m,
+                quantityStepSize: 0.1m,
+                minimumQuantity: 0.1m,
+                minimumNotional: 10m)
+        };
+
+        var report = await RunAsync(Decisions(exitOpen: 1m), policy);
+
+        Assert.Equal(1, report.FillCount);
+        Assert.True(report.OpenQuantity > 0m);
+        Assert.True(report.HasPendingExecution);
+        Assert.Equal(0, report.CompletedTradeCount);
+    }
+
     private static Task<BacktestExecutionReport> RunAsync(
         IEnumerable<StrategyBacktestDecision> decisions,
         BacktestExecutionPolicy policy) =>
@@ -222,6 +308,18 @@ public sealed class BacktestExecutionSimulatorTests
             Percentage.FromPercent(0.1m),
             SlippageBasisPoints: 10m,
             Percentage.FromPercent(100m)));
+
+    private static TradingBot.Domain.Instruments.Instrument InstrumentRules(
+        decimal priceTickSize,
+        decimal quantityStepSize,
+        decimal minimumQuantity,
+        decimal minimumNotional) =>
+        TradingBot.Domain.Instruments.Instrument.Create(
+            Instrument,
+            priceTickSize,
+            quantityStepSize,
+            minimumQuantity,
+            minimumNotional);
 
     private static StrategyDefinition Definition() => StrategyDefinition.Create(
         "btc-usdt-long-flat-baseline",

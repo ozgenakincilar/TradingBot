@@ -50,6 +50,9 @@ public sealed class Instrument
 
     public Price NormalizePrice(Price price) => Price.From(FloorToStep(price.Value, PriceTickSize));
 
+    public Price NormalizePriceUp(Price price) =>
+        Price.From(CeilingToStep(price.Value, PriceTickSize));
+
     public Quantity NormalizeQuantity(Quantity quantity) =>
         Quantity.From(FloorToStep(quantity.Value, QuantityStepSize));
 
@@ -74,6 +77,9 @@ public sealed class Instrument
 
     private static decimal FloorToStep(decimal value, decimal step) =>
         Math.Floor(value / step) * step;
+
+    private static decimal CeilingToStep(decimal value, decimal step) =>
+        Math.Ceiling(value / step) * step;
 
     private static void EnsurePositive(decimal value, string parameterName)
     {

@@ -836,3 +836,26 @@ flowchart TD
 ```
 
 Her sürüm taze streaming dataset instance'ları ve aynı execution policy ile çalışır. Run/report SHA-256, iki manifest setini ve sonuçları bağlar.
+
+## 35. Instrument-quantized backtest execution
+
+```mermaid
+flowchart TD
+    P[Execution policy] --> R{InstrumentRules var mı?}
+    R -- Hayır --> L[Legacy execution ve legacy config hash]
+    R -- Evet --> ID{Strategy instrument ile eşleşiyor mu?}
+    ID -- Hayır --> F[Fail closed]
+    ID -- Evet --> SIDE{Order side}
+    SIDE -- Buy --> UP[Ask/slipped price: tick'e yukarı]
+    SIDE -- Sell --> DOWN[Bid/slipped price: tick'e aşağı]
+    UP --> Q[Quantity: lot step'e aşağı]
+    DOWN --> Q
+    Q --> MIN{Min quantity ve notional geçiyor mu?}
+    MIN -- Entry hayır --> REJECT[Fill yok; entry target kapanır]
+    MIN -- Exit hayır --> PENDING[Pozisyon açık; exit pending]
+    MIN -- Evet --> E[Paper execution + quantized partial fill]
+    E --> B[Strategy ve buy-and-hold aynı kurallar]
+    B --> H[instrument-quantized-backtest-v1 config SHA-256]
+```
+
+Dört instrument değeri manifest kimliğine birlikte girer. Kuralsız akış yalnız kilitli legacy kanıtların tekrar üretimi içindir; yeni quantized çalışma order-book queue simülasyonu sayılmaz.

@@ -65,6 +65,85 @@ public sealed class BuyAndHoldBenchmarkTests
         await Assert.ThrowsAsync<DomainRuleViolationException>(action);
     }
 
+    [Fact]
+    public async Task InstrumentRulesQuantizeBenchmarkEntryAndExit()
+    {
+        var policy = Policy() with
+        {
+            InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                Instrument,
+                priceTickSize: 1m,
+                quantityStepSize: 0.1m,
+                minimumQuantity: 0.1m,
+                minimumNotional: 10m)
+        };
+
+        var report = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(Candles([100m, 110m, 120m])),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+
+        Assert.Equal(0.9m, report.BaseQuantity);
+        Assert.Equal(102m, report.EntryPrice);
+        Assert.Equal(118m, report.ExitPrice);
+        Assert.True(report.EndingCashBalance > 900m);
+        Assert.Equal(0m, report.BaseQuantity % 0.1m);
+        Assert.Equal(0m, report.EntryPrice % 1m);
+        Assert.Equal(0m, report.ExitPrice % 1m);
+    }
+
+    [Fact]
+    public async Task UntradableBenchmarkLiquidationIsRejected()
+    {
+        var policy = Policy() with
+        {
+            InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                Instrument,
+                priceTickSize: 0.1m,
+                quantityStepSize: 0.1m,
+                minimumQuantity: 0.1m,
+                minimumNotional: 10m)
+        };
+
+        var action = () => new BuyAndHoldBenchmark().RunAsync(
+            Stream(Candles([100m, 1m, 1m])),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+    }
+
+    [Fact]
+    public async Task TemporaryBelowMinimumMarkDoesNotRejectTradableFinalLiquidation()
+    {
+        var policy = Policy() with
+        {
+            InstrumentRules = TradingBot.Domain.Instruments.Instrument.Create(
+                Instrument,
+                priceTickSize: 0.1m,
+                quantityStepSize: 0.1m,
+                minimumQuantity: 0.1m,
+                minimumNotional: 10m)
+        };
+
+        var report = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(Candles([100m, 1m, 120m])),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+
+        Assert.True(report.NetLiquidationValue > 0m);
+        Assert.True(report.MaximumDrawdownPercent > 0m);
+    }
+
     private static Task<BuyAndHoldBenchmarkReport> RunAsync(decimal[] closes) =>
         new BuyAndHoldBenchmark().RunAsync(
             Stream(Candles(closes)),

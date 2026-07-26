@@ -45,11 +45,15 @@ public sealed class WalkForwardResultRepository(TradingBotDbContext context)
             BestNetReturnPercent = report.BestNetReturnPercent,
             CompoundedNetReturnPercent = report.CompoundedNetReturnPercent,
             MeanMaximumDrawdownPercent = report.MeanMaximumDrawdownPercent,
+            BenchmarkOutperformedWindowCount = report.BenchmarkOutperformedWindowCount,
+            MeanExcessNetReturnPercent = report.MeanExcessNetReturnPercent,
+            CompoundedBenchmarkNetReturnPercent = report.CompoundedBenchmarkNetReturnPercent,
             CreatedAt = createdAt
         };
         foreach (var result in report.Windows)
         {
             var execution = result.Execution;
+            var benchmark = result.Benchmark;
             var split = result.Manifest.Split;
             entity.Windows.Add(new WalkForwardWindowResultEntity
             {
@@ -82,7 +86,22 @@ public sealed class WalkForwardResultRepository(TradingBotDbContext context)
                 AverageHoldingTimeTicks = execution.AverageHoldingTime?.Ticks,
                 HasPendingExecution = execution.HasPendingExecution,
                 FirstFillAt = execution.FirstFillAt,
-                LastFillAt = execution.LastFillAt
+                LastFillAt = execution.LastFillAt,
+                BenchmarkAllocatedQuoteBalance = benchmark.AllocatedQuoteBalance,
+                BenchmarkEndingCashBalance = benchmark.EndingCashBalance,
+                BenchmarkBaseQuantity = benchmark.BaseQuantity,
+                BenchmarkEntryPrice = benchmark.EntryPrice,
+                BenchmarkExitPrice = benchmark.ExitPrice,
+                BenchmarkNetLiquidationValue = benchmark.NetLiquidationValue,
+                BenchmarkGrossReturnPercent = benchmark.GrossReturnPercent,
+                BenchmarkNetReturnPercent = benchmark.NetReturnPercent,
+                BenchmarkTotalFees = benchmark.TotalFees,
+                BenchmarkEstimatedSpreadCost = benchmark.EstimatedSpreadCost,
+                BenchmarkEstimatedSlippageCost = benchmark.EstimatedSlippageCost,
+                BenchmarkMaximumDrawdownPercent = benchmark.MaximumDrawdownPercent,
+                BenchmarkCandleCount = benchmark.CandleCount,
+                BenchmarkEntryAt = benchmark.EntryAt,
+                BenchmarkExitAt = benchmark.ExitAt
             });
         }
 

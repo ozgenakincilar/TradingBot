@@ -33,13 +33,14 @@ public sealed class WalkForwardBacktestOrchestratorTests
             CancellationToken.None);
 
         Assert.Equal(2, report.Windows.Count);
-        Assert.Equal(4, datasets.OpenCount);
+        Assert.Equal(6, datasets.OpenCount);
         Assert.All(report.Windows, static result =>
         {
             Assert.Equal(BacktestRunPurpose.FinalOutOfSampleEvaluation, result.Manifest.Purpose);
             Assert.Equal([BacktestDatasetPartition.OutOfSample], result.Manifest.Partitions);
             Assert.Equal(0, result.Execution.FillCount);
             Assert.Equal(0m, result.Execution.NetReturnPercent);
+            Assert.True(result.Benchmark.NetReturnPercent < 0m);
             Assert.NotNull(result.Manifest.SignalSummary);
             Assert.NotNull(result.Manifest.TrendSummary);
         });
@@ -90,7 +91,11 @@ public sealed class WalkForwardBacktestOrchestratorTests
 
     private static WalkForwardBacktestOrchestrator CreateOrchestrator(
         IHistoricalCandleDatasetFactory datasets) =>
-        new(datasets, new DeterministicStrategyBacktest(), new BacktestExecutionSimulator());
+        new(
+            datasets,
+            new DeterministicStrategyBacktest(),
+            new BacktestExecutionSimulator(),
+            new BuyAndHoldBenchmark());
 
     private static WalkForwardSchedule Schedule() => WalkForwardSchedule.Create(
         Start,

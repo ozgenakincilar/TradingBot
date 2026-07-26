@@ -8,7 +8,8 @@ namespace TradingBot.Application.Backtesting;
 public sealed record WalkForwardWindowResult(
     int Index,
     BacktestRunManifest Manifest,
-    BacktestExecutionReport Execution);
+    BacktestExecutionReport Execution,
+    BuyAndHoldBenchmarkReport Benchmark);
 
 public sealed record WalkForwardReport
 {
@@ -32,7 +33,10 @@ public sealed record WalkForwardReport
         decimal worstNetReturnPercent,
         decimal bestNetReturnPercent,
         decimal compoundedNetReturnPercent,
-        decimal meanMaximumDrawdownPercent)
+        decimal meanMaximumDrawdownPercent,
+        int benchmarkOutperformedWindowCount,
+        decimal meanExcessNetReturnPercent,
+        decimal compoundedBenchmarkNetReturnPercent)
     {
         SchemaVersion = schemaVersion;
         ScheduleSha256 = scheduleSha256;
@@ -54,6 +58,9 @@ public sealed record WalkForwardReport
         BestNetReturnPercent = bestNetReturnPercent;
         CompoundedNetReturnPercent = compoundedNetReturnPercent;
         MeanMaximumDrawdownPercent = meanMaximumDrawdownPercent;
+        BenchmarkOutperformedWindowCount = benchmarkOutperformedWindowCount;
+        MeanExcessNetReturnPercent = meanExcessNetReturnPercent;
+        CompoundedBenchmarkNetReturnPercent = compoundedBenchmarkNetReturnPercent;
     }
 
     public string SchemaVersion { get; }
@@ -95,11 +102,17 @@ public sealed record WalkForwardReport
     public decimal CompoundedNetReturnPercent { get; }
 
     public decimal MeanMaximumDrawdownPercent { get; }
+
+    public int BenchmarkOutperformedWindowCount { get; }
+
+    public decimal MeanExcessNetReturnPercent { get; }
+
+    public decimal CompoundedBenchmarkNetReturnPercent { get; }
 }
 
 public static class WalkForwardReportFactory
 {
-    public const string SchemaVersion = "walk-forward-report-v1";
+    public const string SchemaVersion = "walk-forward-report-v2";
 
     public static WalkForwardReport Create(
         WalkForwardSchedule schedule,
@@ -179,7 +192,8 @@ public static class WalkForwardReportFactory
                 AverageHoldingTicks = result.Execution.AverageHoldingTime?.Ticks,
                 result.Execution.HasPendingExecution,
                 result.Execution.FirstFillAt,
-                result.Execution.LastFillAt
+                result.Execution.LastFillAt,
+                result.Benchmark
             }).ToArray()
         });
 
@@ -199,6 +213,16 @@ public static class WalkForwardReportFactory
             static (factor, result) => Multiply(
                 factor,
                 Add(1m, result.Execution.NetReturnPercent / 100m)));
+        var benchmarkCompoundedFactor = materialized.Aggregate(
+            1m,
+            static (factor, result) => Multiply(
+                factor,
+                Add(1m, result.Benchmark.NetReturnPercent / 100m)));
+        var totalExcessReturn = materialized.Aggregate(
+            0m,
+            static (sum, result) => Add(
+                sum,
+                result.Execution.NetReturnPercent - result.Benchmark.NetReturnPercent));
         var totalCompletedTrades = materialized.Aggregate(
             0,
             static (sum, result) => Add(sum, result.Execution.CompletedTradeCount));
@@ -223,7 +247,11 @@ public static class WalkForwardReportFactory
             returns[0],
             returns[^1],
             Multiply(Add(compoundedFactor, -1m), 100m),
-            totalDrawdown / materialized.Length);
+            totalDrawdown / materialized.Length,
+            materialized.Count(static result =>
+                result.Execution.NetReturnPercent > result.Benchmark.NetReturnPercent),
+            totalExcessReturn / materialized.Length,
+            Multiply(Add(benchmarkCompoundedFactor, -1m), 100m));
     }
 
     private static void ValidateWindow(
@@ -233,6 +261,7 @@ public static class WalkForwardReportFactory
         ArgumentNullException.ThrowIfNull(actual);
         ArgumentNullException.ThrowIfNull(actual.Manifest);
         ArgumentNullException.ThrowIfNull(actual.Execution);
+        ArgumentNullException.ThrowIfNull(actual.Benchmark);
         if (actual.Index != expected.Index || actual.Manifest.Split != expected.Split ||
             actual.Manifest.Purpose != BacktestRunPurpose.FinalOutOfSampleEvaluation ||
             actual.Manifest.Partitions.Count != 1 ||
@@ -244,6 +273,44 @@ public static class WalkForwardReportFactory
         }
 
         ValidateExecution(actual.Execution);
+        ValidateBenchmark(expected.Split, actual.Benchmark, actual.Execution.InitialQuoteBalance);
+    }
+
+    private static void ValidateBenchmark(
+        ChronologicalDatasetSplit split,
+        BuyAndHoldBenchmarkReport report,
+        decimal expectedInitialBalance)
+    {
+        decimal expectedNetReturn;
+        decimal expectedGrossReturn;
+        try
+        {
+            expectedNetReturn = ((report.NetLiquidationValue - report.InitialQuoteBalance) /
+                report.InitialQuoteBalance) * 100m;
+            expectedGrossReturn = ((report.NetLiquidationValue + report.TotalFees +
+                report.EstimatedSpreadCost + report.EstimatedSlippageCost -
+                report.InitialQuoteBalance) / report.InitialQuoteBalance) * 100m;
+        }
+        catch (OverflowException)
+        {
+            throw new DomainRuleViolationException("Walk-forward benchmark return overflowed.");
+        }
+
+        if (report.InitialQuoteBalance != expectedInitialBalance ||
+            report.InitialQuoteBalance <= 0m || report.AllocatedQuoteBalance <= 0m ||
+            report.AllocatedQuoteBalance > report.InitialQuoteBalance ||
+            report.EndingCashBalance != report.InitialQuoteBalance - report.AllocatedQuoteBalance ||
+            report.BaseQuantity <= 0m ||
+            report.EntryPrice <= 0m || report.ExitPrice <= 0m ||
+            report.NetLiquidationValue < 0m || report.NetReturnPercent != expectedNetReturn ||
+            report.GrossReturnPercent != expectedGrossReturn || report.TotalFees < 0m ||
+            report.EstimatedSpreadCost < 0m || report.EstimatedSlippageCost < 0m ||
+            report.MaximumDrawdownPercent is < 0m or > 100m || report.CandleCount <= 0 ||
+            report.EntryAt != split.ValidationEndExclusive ||
+            report.ExitAt != split.OutOfSampleEndExclusive)
+        {
+            throw new DomainRuleViolationException("Walk-forward benchmark report is invalid.");
+        }
     }
 
     private static void ValidateExecution(BacktestExecutionReport report)

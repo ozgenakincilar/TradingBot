@@ -72,4 +72,4 @@ Aylık rapor en az şu metrikleri içerir:
 - Risk rejection ve trading-halt olayları.
 - Benchmark karşılaştırması (örneğin buy-and-hold; bilgi amaçlı).
 
-İlk backtest execution raporu gross/net return, realized PnL, fee/spread/slippage, net-liquidation value, drawdown, win rate, profit factor, expectancy ve ortalama holding time üretir. Aylık segmentasyon, benchmark, out-of-sample ve walk-forward raporları tamamlanana kadar `%10` stretch hedefi açısından başarı kanıtı sayılmaz.
+İlk backtest execution raporu gross/net return, realized PnL, fee/spread/slippage, net-liquidation value, drawdown, win rate, profit factor, expectancy ve ortalama holding time üretir. Walk-forward OOS raporu aynı sermaye, allocation ve maliyet politikasını kullanan buy-and-hold benchmark; benchmark'ı geçen pencere sayısı; ortalama excess getiri ve bileşik benchmark getirisi üretir. Aylık segmentasyon ve gerçek çoklu market-regime OOS kanıtı tamamlanana kadar `%10` stretch hedefi açısından başarı kanıtı sayılmaz.

@@ -127,7 +127,27 @@ public sealed class WalkForwardResultPersistenceIntegrationTests
             LastFillAt: null);
         return WalkForwardReportFactory.Create(
             schedule,
-            [new WalkForwardWindowResult(window.Index, manifest, execution)]);
+            [new WalkForwardWindowResult(
+                window.Index,
+                manifest,
+                execution,
+                new BuyAndHoldBenchmarkReport(
+                    InitialQuoteBalance: 1_000m,
+                    AllocatedQuoteBalance: 100m,
+                    EndingCashBalance: 900m,
+                    BaseQuantity: 1m,
+                    EntryPrice: 100m,
+                    ExitPrice: 110m,
+                    NetLiquidationValue: 1_010m,
+                    GrossReturnPercent: 1m,
+                    NetReturnPercent: 1m,
+                    TotalFees: 0m,
+                    EstimatedSpreadCost: 0m,
+                    EstimatedSlippageCost: 0m,
+                    MaximumDrawdownPercent: 0m,
+                    CandleCount: 2_880,
+                    EntryAt: window.Split.ValidationEndExclusive,
+                    ExitAt: window.Split.OutOfSampleEndExclusive))]);
     }
 
     private static HistoricalCandleDatasetDescriptor Descriptor(

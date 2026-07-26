@@ -24,6 +24,8 @@ public sealed class WalkForwardRunConfiguration : IEntityTypeConfiguration<WalkF
         builder.Property(static run => run.BestNetReturnPercent).HasPrecision(38, 18);
         builder.Property(static run => run.CompoundedNetReturnPercent).HasPrecision(38, 18);
         builder.Property(static run => run.MeanMaximumDrawdownPercent).HasPrecision(38, 18);
+        builder.Property(static run => run.MeanExcessNetReturnPercent).HasPrecision(38, 18);
+        builder.Property(static run => run.CompoundedBenchmarkNetReturnPercent).HasPrecision(38, 18);
         builder.Property(static run => run.CreatedAt).HasPrecision(7);
         builder.ToTable(table =>
         {
@@ -34,7 +36,7 @@ public sealed class WalkForwardRunConfiguration : IEntityTypeConfiguration<WalkF
                 "[TrainingDurationTicks] > 0 AND [ValidationDurationTicks] > 0 AND [OutOfSampleDurationTicks] > 0");
             table.HasCheckConstraint(
                 "CK_WalkForwardRuns_WindowCounts",
-                "[WindowCount] > 0 AND [ProfitableWindowCount] >= 0 AND [ProfitableWindowCount] <= [WindowCount]");
+                "[WindowCount] > 0 AND [ProfitableWindowCount] >= 0 AND [ProfitableWindowCount] <= [WindowCount] AND (([BenchmarkOutperformedWindowCount] IS NULL AND [MeanExcessNetReturnPercent] IS NULL AND [CompoundedBenchmarkNetReturnPercent] IS NULL) OR ([BenchmarkOutperformedWindowCount] IS NOT NULL AND [MeanExcessNetReturnPercent] IS NOT NULL AND [CompoundedBenchmarkNetReturnPercent] IS NOT NULL AND [BenchmarkOutperformedWindowCount] >= 0 AND [BenchmarkOutperformedWindowCount] <= [WindowCount]))");
             table.HasCheckConstraint(
                 "CK_WalkForwardRuns_TradeCount",
                 "[TotalCompletedTradeCount] >= 0");

@@ -38,6 +38,9 @@ public sealed class WalkForwardReportTests
         Assert.Equal(10m, first.BestNetReturnPercent);
         Assert.Equal(4.5m, first.CompoundedNetReturnPercent);
         Assert.Equal(4m, first.MeanMaximumDrawdownPercent);
+        Assert.Equal(1, first.BenchmarkOutperformedWindowCount);
+        Assert.Equal(0.5m, first.MeanExcessNetReturnPercent);
+        Assert.Equal(4.04m, first.CompoundedBenchmarkNetReturnPercent);
     }
 
     [Fact]
@@ -50,6 +53,46 @@ public sealed class WalkForwardReportTests
         Assert.Equal(baseline.ScheduleSha256, changed.ScheduleSha256);
         Assert.Equal(baseline.RunSha256, changed.RunSha256);
         Assert.NotEqual(baseline.ReportSha256, changed.ReportSha256);
+    }
+
+    [Fact]
+    public void ChangedBenchmarkChangesOnlyReportIdentity()
+    {
+        var schedule = Schedule();
+        var baselineResults = Results(schedule, -5m);
+        var changedResults = Results(schedule, -5m);
+        changedResults[0] = changedResults[0] with
+        {
+            Benchmark = changedResults[0].Benchmark with
+            {
+                ExitPrice = 121m,
+                NetLiquidationValue = 1_021m,
+                GrossReturnPercent = 2.1m,
+                NetReturnPercent = 2.1m
+            }
+        };
+
+        var baseline = WalkForwardReportFactory.Create(schedule, baselineResults);
+        var changed = WalkForwardReportFactory.Create(schedule, changedResults);
+
+        Assert.Equal(baseline.ScheduleSha256, changed.ScheduleSha256);
+        Assert.Equal(baseline.RunSha256, changed.RunSha256);
+        Assert.NotEqual(baseline.ReportSha256, changed.ReportSha256);
+    }
+
+    [Fact]
+    public void InconsistentBenchmarkCashIsRejected()
+    {
+        var schedule = Schedule();
+        var results = Results(schedule, -5m);
+        results[0] = results[0] with
+        {
+            Benchmark = results[0].Benchmark with { EndingCashBalance = 901m }
+        };
+
+        var action = () => WalkForwardReportFactory.Create(schedule, results);
+
+        Assert.Throws<DomainRuleViolationException>(action);
     }
 
     [Fact]
@@ -173,8 +216,27 @@ public sealed class WalkForwardReportTests
                 AverageHoldingTime: null,
                 HasPendingExecution: false,
                 FirstFillAt: null,
-                LastFillAt: null));
+                LastFillAt: null),
+            Benchmark(window));
     }
+
+    private static BuyAndHoldBenchmarkReport Benchmark(WalkForwardWindow window) => new(
+        InitialQuoteBalance: 1_000m,
+        AllocatedQuoteBalance: 100m,
+        EndingCashBalance: 900m,
+        BaseQuantity: 1m,
+        EntryPrice: 100m,
+        ExitPrice: 120m,
+        NetLiquidationValue: 1_020m,
+        GrossReturnPercent: 2m,
+        NetReturnPercent: 2m,
+        TotalFees: 0m,
+        EstimatedSpreadCost: 0m,
+        EstimatedSlippageCost: 0m,
+        MaximumDrawdownPercent: 0m,
+        CandleCount: 2_880,
+        EntryAt: window.Split.ValidationEndExclusive,
+        ExitAt: window.Split.OutOfSampleEndExclusive);
 
     private static BacktestRunManifest Manifest(
         ChronologicalDatasetSplit split,

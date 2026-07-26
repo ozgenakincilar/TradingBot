@@ -42,6 +42,12 @@ public sealed class WalkForwardRunEntity
 
     public decimal MeanMaximumDrawdownPercent { get; set; }
 
+    public int? BenchmarkOutperformedWindowCount { get; set; }
+
+    public decimal? MeanExcessNetReturnPercent { get; set; }
+
+    public decimal? CompoundedBenchmarkNetReturnPercent { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public List<WalkForwardWindowResultEntity> Windows { get; } = [];

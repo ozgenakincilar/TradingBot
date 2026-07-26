@@ -793,3 +793,26 @@ flowchart LR
 ```
 
 CLI dosyaları belleğe toplamaz ve sonuçları değiştirecek gizli varsayım almaz. Dataset path/source, UTC range, pencere süreleri, training modu ve random seed komut satırında açıkça verilir.
+
+## 33. Cost-derived EMA hysteresis v2 kapısı
+
+```mermaid
+flowchart TD
+    COST[20 bps fee + 20 bps spread + 20 bps slippage] --> HALF[Simetrik yarı bant: 30 bps]
+    EMA[15m EMA20] --> UP[Upper = EMA × 1.003]
+    EMA --> DOWN[Lower = EMA × 0.997]
+    HALF --> UP
+    HALF --> DOWN
+    FLAT[Flat] --> CROSSUP{Close upper bandı<br/>yukarı kesti mi?}
+    CROSSUP -- Evet + trend/FOMO geçer --> LONG[EnterLong]
+    LONG --> CROSSDOWN{Close lower bandı<br/>aşağı kesti mi?}
+    CROSSDOWN -- Evet --> EXIT[ExitToFlat]
+    LONG --> TREND{1H trend filtresi kayıp mı?}
+    TREND -- Evet --> EXIT
+    V1[2025 kilitli v1 OOS] -. parameter selection yasak .-> FAIL[Fail closed]
+    VALID[Önceden tanımlı train/validation kabul kapısı] --> NEWOOS{Tüm ölçütler geçti mi?}
+    NEWOOS -- Hayır --> FAIL
+    NEWOOS -- Evet --> LOCK[Yeni, görülmemiş OOS açılır]
+```
+
+v2 bandı piyasa sonucundan değil kabul edilmiş execution maliyetinden türetilir. Kodun varlığı validation veya canlılık onayı değildir.

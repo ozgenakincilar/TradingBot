@@ -94,6 +94,7 @@
 - EMA hesabı `decimal` kullanır, son tam 200 candle penceresinin ilk kapanışından seed edilir ve checked arithmetic taşmasında karar üretmeden hata verir.
 - Long trend izni yalnız son kapalı `1H` candle kapanışı EMA(200)'ün kesin olarak üzerindeyken verilir; bu çıktı strategy engine/backtest kabulünden önce execution'a bağlanmaz.
 - v1 signal EMA periyodu 20, maksimum pozitif signal candle gövdesi `%2`dir. Flat girişte EMA20 yukarı kesişimi; long çıkışta EMA20 aşağı kesişimi veya trend filtresi kaybı kullanılır.
+- v2 araştırma adayı execution round-trip maliyetinden türetilmiş simetrik `30 bps` EMA hysteresis kullanır. Hysteresis configuration hash'e dahildir; v1'in sıfır-band hash zarfı ve kararları geriye uyumlu kalır.
 - Historical replay input'u belleğe topluca yüklemez; iki `IAsyncEnumerable<Candle>` akışını bounded 200-candle pencerelerde işler. Gap, sırasız veri ve identity mismatch fail-closed hatadır.
 - Decision replay sonucu doğrudan execution değildir. Ayrı backtest simulator kararı aynı candle'da değil bir sonraki `15m` open proxy'sinde `minimumLatency` sonrası değerlendirir.
 - Sentetik top-of-book, next-open midpoint ± half-spread olarak kurulur; `PaperExecutionEngine` yönsel slippage, iki taraflı quote fee ve maximum liquidity participation uygular.

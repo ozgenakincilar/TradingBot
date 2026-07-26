@@ -36,11 +36,12 @@
 
 ### Strategy Context
 
-- `StrategyDefinition`, strategy ID/version, instrument, signal/trend timeframe, EMA periyodu ve iki seri için minimum warm-up sınırını immutable tutar.
+- `StrategyDefinition`, strategy ID/version, instrument, signal/trend timeframe, EMA periyodu, sürümlü signal EMA hysteresis bandı ve iki seri için minimum warm-up sınırını immutable tutar.
 - İlk kabul edilen zarf `btc-usdt-long-flat-baseline/v1`: `OKX:BTC-USDT`, `15m` sinyal, `1H EMA(200)` trend ve her iki seride en az 200 kapalı candle.
 - `ExponentialMovingAverage`, yalnız aynı instrument/timeframe'e ait ardışık kapalı candle'lardan `decimal` ile hesaplanır. Son tam periyot penceresinin ilk kapanışı seed, `2 / (period + 1)` ise alpha'dır; böylece aynı son 200 candle restart sonrasında aynı sonucu üretir.
 - `EmaTrendFilter`, son `1H` kapanışı EMA(200)'ün kesin olarak üzerindeyse long yönüne izin verir; eşitlik veya altı fail-closed biçimde izin vermez. Bu filtre henüz ekonomik intent ya da emre bağlı değildir.
 - `LongFlatStrategyEvaluator`, flat durumda `15m` EMA20 yukarı kesişimi + bullish `1H` EMA200 filtresiyle `EnterLong`; long durumda trend kaybı veya EMA20 aşağı kesişimiyle `ExitToFlat` üretir. Pozitif candle gövdesi `%2`yi aşan giriş FOMO guard ile `Hold` olur.
+- v2 araştırma adayı aynı kuralları korur; yalnız flat girişte EMA20 `+30 bps`, long signal çıkışında EMA20 `-30 bps` bandının kesilmesini ister. Trend-filter exit bandı beklemez. v1 bandı zorunlu sıfırdır.
 - `DeterministicStrategyBacktest`, iki timeframe'i async/streaming işler, eşit kapanışta trendi önce alır ve yalnız karar + sanal position state replay eder; fill/PnL veya ekonomik intent üretmez.
 - `BacktestExecutionSimulator`, decision replay'i bir sonraki signal candle açılışında sentetik spread, yönsel slippage, minimum latency, iki taraflı quote fee ve önceki kapalı candle hacmine dayalı katılım sınırıyla yürütür.
 - Backtest nakdi başlangıç bakiyesini aşamaz; `SpotPosition` fee-adjusted cost/PnL üretir. Rapor gross/net return, maliyetler, net liquidation, drawdown, win rate, profit factor, expectancy, holding time, açık pozisyon ve pending target taşır.

@@ -71,28 +71,9 @@ public static class BacktestRunManifestFactory
             TrendFirst = completedTrend.FirstOpenTime,
             TrendLast = completedTrend.LastCloseTime
         });
-        var configurationHash = Hash(new
-        {
-            definition.StrategyId,
-            definition.Version,
-            Instrument = definition.InstrumentId.ToString(),
-            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
-            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
-            definition.SignalEmaPeriod,
-            definition.TrendEmaPeriod,
-            definition.MaximumSignalCandleMovePercent,
-            definition.MinimumSignalWarmupCandles,
-            definition.MinimumTrendWarmupCandles,
-            execution.InitialQuoteBalance,
-            BaseAsset = execution.BaseAsset.Value,
-            QuoteAsset = execution.QuoteAsset.Value,
-            Allocation = execution.QuoteAllocation.Fraction,
-            execution.SyntheticSpreadBasisPoints,
-            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
-            Commission = execution.PaperExecution.CommissionRate.Fraction,
-            execution.PaperExecution.SlippageBasisPoints,
-            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
-        });
+        var configurationHash = definition.SignalEmaHysteresisBasisPoints == 0m
+            ? HashLegacyConfiguration(definition, execution)
+            : HashHysteresisConfiguration(definition, execution);
         var manifestHash = Hash(new
         {
             SchemaVersion,
@@ -123,6 +104,58 @@ public static class BacktestRunManifestFactory
             completedTrend,
             split);
     }
+
+    private static string HashLegacyConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution) => Hash(new
+        {
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
+        });
+
+    private static string HashHysteresisConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution) => Hash(new
+        {
+            StrategyConfigurationSchema = "cost-aware-hysteresis-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
+        });
 
     private static void ValidateDataset(
         StrategyDefinition definition,

@@ -84,6 +84,8 @@ Komut yalnızca `BTC-USDT`, canonical `15m/1H` CSV çifti ve v1 strateji zarfın
 
 v1 ile cost-derived `30 bps` hysteresis v2 adayını yalnız train/validation pencerelerinde karşılaştırmak için aynı argümanlarla `run-walk-forward` yerine `validate-hysteresis-v2` kullanılır. Komut OOS candle'larını strategy stream'ine vermez; `strategy-validation-report-v1` JSON üretir. Tüm önceden kayıtlı kapılar geçerse exit code `0`, aday reddedilirse exit code `3` döner. Ret kodu bir uygulama arızası değil, fail-closed araştırma sonucudur.
 
+Reddedilmiş v2 adayındaki zararları işlem seviyesinde incelemek için aynı argümanlarla `diagnose-hysteresis-v2` kullanılır. Komut yalnız train/validation stream'inde entry/exit reason, MFE/MAE, holding süresi ve fee/spread/slippage attribution içeren `strategy-loss-diagnostics-v1` JSON üretir. Bu çıktı parametre optimizasyonu, OOS açma veya live işlem izni değildir.
+
 ## Güvenlik
 
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.

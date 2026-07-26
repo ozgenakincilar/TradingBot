@@ -30,10 +30,16 @@ static async Task<int> RunAsync(string[] arguments)
             return await ValidateStrategyAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "diagnose-hysteresis-v2")
+        {
+            return await DiagnoseStrategyLossesAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
-            ResearchWalkForwardCommand.ValidationUsage);
+            ResearchWalkForwardCommand.ValidationUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.DiagnosticsUsage);
     }
     catch (OperationCanceledException)
     {
@@ -129,4 +135,24 @@ static async Task<int> ValidateStrategyAsync(
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
     return report.Acceptance.IsAccepted ? 0 : 3;
+}
+
+static async Task<int> DiagnoseStrategyLossesAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseLossDiagnostics(arguments);
+    var orchestrator = new StrategyLossDiagnosticsOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator());
+    var report = await orchestrator.RunAsync(
+        request.Definition,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.RandomSeed,
+        new BacktestDiagnosticsPolicy(),
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return 0;
 }

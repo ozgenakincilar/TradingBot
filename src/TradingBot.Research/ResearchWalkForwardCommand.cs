@@ -26,6 +26,13 @@ public sealed record ResearchStrategyValidationRequest(
     CsvHistoricalCandleDatasetFactory DatasetFactory,
     int RandomSeed);
 
+public sealed record ResearchStrategyLossDiagnosticsRequest(
+    StrategyDefinition Definition,
+    BacktestExecutionPolicy ExecutionPolicy,
+    WalkForwardSchedule Schedule,
+    CsvHistoricalCandleDatasetFactory DatasetFactory,
+    int RandomSeed);
+
 public static class ResearchWalkForwardCommand
 {
     private static readonly Timeframe SignalTimeframe =
@@ -210,6 +217,39 @@ public static class ResearchWalkForwardCommand
         "validate-hysteresis-v2",
         StringComparison.Ordinal);
 
+    public static ResearchStrategyLossDiagnosticsRequest ParseLossDiagnostics(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count is not (25 or 33) ||
+            !string.Equals(arguments[0], "diagnose-hysteresis-v2", StringComparison.Ordinal))
+        {
+            throw InvalidDiagnosticsCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "validate-hysteresis-v2";
+        try
+        {
+            var validation = ParseValidation(normalized);
+            return new ResearchStrategyLossDiagnosticsRequest(
+                validation.Candidate,
+                validation.ExecutionPolicy,
+                validation.Schedule,
+                validation.DatasetFactory,
+                validation.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidDiagnosticsCommand();
+        }
+    }
+
+    public static string DiagnosticsUsage => Usage.Replace(
+        "run-walk-forward",
+        "diagnose-hysteresis-v2",
+        StringComparison.Ordinal);
+
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
             value,
@@ -253,4 +293,7 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidValidationCommand() => new(
         "Research strategy validation command is invalid. " + ValidationUsage);
+
+    private static DomainRuleViolationException InvalidDiagnosticsCommand() => new(
+        "Research strategy loss diagnostics command is invalid. " + DiagnosticsUsage);
 }

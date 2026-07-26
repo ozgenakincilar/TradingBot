@@ -65,6 +65,19 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void LossDiagnosticsCommandSelectsLockedV2Candidate()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "diagnose-hysteresis-v2";
+
+        var result = ResearchWalkForwardCommand.ParseLossDiagnostics(arguments);
+
+        Assert.Equal(2, result.Definition.Version);
+        Assert.Equal(30m, result.Definition.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(2, result.Schedule.Windows.Count);
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

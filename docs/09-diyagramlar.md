@@ -881,3 +881,26 @@ flowchart TD
 ```
 
 Depth bulunmayan snapshot eski top-of-book yolunu kullanır. Bu akış aggregated görünür depth market impact modelidir; exchange queue sırası veya hidden liquidity replay'i değildir.
+
+## 37. Deterministik işlem kaybı attribution
+
+```mermaid
+flowchart TD
+    CSV[Development train/validation CSV] --> D[Deterministik strategy decisions]
+    D --> X[Next-open execution simulator]
+    X --> OPEN{Pozisyon açık mı?}
+    OPEN -- Evet --> E[Kapalı mum high/low ile MFE/MAE]
+    OPEN -- Hayır --> SKIP[Excursion yok]
+    X --> F[Fill fee + spread + slippage]
+    X --> R[Entry/exit reason code]
+    E --> T[Completed trade attribution]
+    F --> T
+    R --> T
+    T --> LIMIT{Trade sayısı bounded mı?}
+    LIMIT -- Hayır --> FAIL[Fail closed; rapor yok]
+    LIMIT -- Evet --> H[Diagnostics SHA-256]
+    H --> A[Exit-reason aggregate report]
+    OOS[Locked OOS] -. stream'e verilmez .-> FAIL
+```
+
+Çıkış next-open fill ile tamamlandıktan sonra aynı mumun high/low değeri excursion hesabına girmez. Diagnostics raporu mevcut execution report/hash sözleşmesinden ayrıdır ve canlı işlem izni vermez.

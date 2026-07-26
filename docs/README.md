@@ -19,6 +19,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [13-instructions-uyumluluk-matrisi.md](13-instructions-uyumluluk-matrisi.md) | `instructions.md` içindeki 100 zorunlu kuralın statüsü ve kanıtı |
 | [14-2025-oos-baseline-kaniti.md](14-2025-oos-baseline-kaniti.md) | Gerçek 2025 BTC-USDT verisindeki reddedilmiş v1 OOS sonucu ve artifact hash'leri |
 | [15-2024-v2-validation-kaniti.md](15-2024-v2-validation-kaniti.md) | Ayrı 2024 geliştirme verisindeki reddedilmiş v2 validation sonucu ve acceptance kanıtı |
+| [16-2024-v2-kayip-attribution-kaniti.md](16-2024-v2-kayip-attribution-kaniti.md) | Reddedilmiş v2 adayının işlem bazlı MFE/MAE, exit reason ve execution maliyeti kanıtı |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

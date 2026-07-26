@@ -24,6 +24,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0018](0018-cost-derived-ema-hysteresis-v2.md) | Round-trip maliyetinden türetilen 30 bps EMA hysteresis v2 araştırma adayı | Kabul edildi |
 | [ADR-0019](0019-backtest-instrument-quantization.md) | Backtest tick/lot rounding ve minimum emir kuralları | Kabul edildi |
 | [ADR-0020](0020-bounded-cumulative-order-book-depth.md) | Beş seviyeli cumulative depth ve paper market-impact fill modeli | Kabul edildi |
+| [ADR-0021](0021-deterministik-islem-kayip-attribution.md) | Legacy hash'leri koruyan bounded ve deterministik trade-loss attribution | Kabul edildi |
 
 Yeni ADR biçimi:
 

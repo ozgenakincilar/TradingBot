@@ -46,6 +46,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Bounded candle REST recovery aralığının eksik, fazla, sırasız, yanlış instrument/timeframe veya açık candle yanıtının tamamını reddetmesi.
 - OKX history-candles ters sıra mapping'i, `confirm=0` reddi, exact range, UTC bar allowlist'i ve upstream hata mesajı sanitization contract testleri; opt-in gerçek ağda gecikmeli iki tamamlanmış `1m` candle kontrolü.
 - Resmî 100-candle history sayfa sınırının adapter'da ağ çağrısından önce reddi; 205 candle export'un 100/100/5 exact ve contiguous sayfalara ayrılması.
+- Canlı 200-candle startup warm-up'ın ortak paged history decorator üzerinden iki exact 100-candle çağrıyla tamamlanması ve kısa ikinci sayfada fail-closed olması.
 - Export pacing sırasında cancellation'ın sonraki sayfayı ve artifact completion'ı durdurması; eksik sayfanın final artifact üretmemesi.
 - Atomik CSV writer çıktısının mevcut streaming reader ile raw SHA/count/range doğrulanması; stream hatasında target/partial bırakmaması ve var olan hedefi overwrite etmemesi.
 - Warm-up'ın açık mevcut candle'ı dışlaması, exact boundary davranışı, cancellation aktarımı ve eksik/kaymış/gap içeren lookback'i bütünüyle reddetmesi.

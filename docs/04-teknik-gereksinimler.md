@@ -72,6 +72,7 @@
 - Gap recovery, beklenen ilk candle ile gözlenen kapalı candle arasını `IClosedCandleHistoryClient` üzerinden `[fromInclusive, toExclusive)` aralığında ister.
 - Recovery çağrısı maksimum candle sayısıyla bounded'dır. Eksik, fazla, sırasız, farklı instrument/timeframe veya henüz açık candle içeren yanıtın hiçbir bölümü yayınlanmaz.
 - OKX V5 `GET /api/v5/market/history-candles` adaptörü resmî sınıra göre tek sayfada en fazla 100 kayıt ister; ters kronolojik cevabı sıralar ve yalnız `confirm=1` satırlarını kapalı candle olarak kabul eder.
+- `PagedClosedCandleHistoryClient`, 100 candle'ı aşan bounded warm-up/recovery aralıklarını exact ve contiguous alt sayfalara böler; böylece 200 candle EMA warm-up adapter limitini aşmaz.
 - OKX timeframe mapping'i explicit allowlist'tir: `1s`, `1m`, `3m`, `5m`, `15m`, `30m`, `1H`, `2H`, `4H`, `6Hutc`, `12Hutc`, `1Dutc`. Calendar-month ve belirsiz UTC+8 bar'ları bu sabit-duration sözleşmesine alınmaz.
 - Warm-up use case'i `knownAt` değerini UTC timeframe sınırına aşağı yuvarlar; açık mevcut candle'ı dışarıda bırakıp `[boundary - N * timeframe, boundary)` aralığını ister.
 - Warm-up sayısı bounded policy'yi aşamaz. Eksik, kaymış, gap içeren veya yanlış instrument/timeframe serisi readiness üretmez; istemciden gelen liste immutable kopyaya alınır.

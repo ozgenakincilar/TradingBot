@@ -109,7 +109,9 @@ if (marketDataSource == MarketDataSource.OkxPublic)
         client.Timeout = TimeSpan.FromSeconds(10);
     });
     builder.Services.AddTransient<IClosedCandleHistoryClient>(serviceProvider =>
-        serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>());
+        new PagedClosedCandleHistoryClient(
+            serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>(),
+            maximumPageSize: 100));
     builder.Services.AddTransient(serviceProvider => new WarmUpClosedCandles(
         serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
         maximumCandlesPerRequest: 300));

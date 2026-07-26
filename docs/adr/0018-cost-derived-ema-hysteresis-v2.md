@@ -1,6 +1,6 @@
 # ADR-0018: Cost-derived EMA hysteresis v2 araştırma adayı
 
-**Durum:** Kabul edildi — yalnız araştırma adayı  
+**Durum:** Araştırma kararı tamamlandı — aday validation'da reddedildi
 **Tarih:** 2026-07-26
 
 ## Bağlam
@@ -39,6 +39,8 @@ Koşullardan biri sağlanmazsa v2 reddedilir. Eşik gevşetilmez ve OOS açılma
 
 ## Sonuçlar
 
+- 2024 development validation çalışmasında trade `%77,19`, execution maliyeti `%76,39` azaldı; ancak bileşik net getiri `-%5,38`, benchmark excess `-%10,20` ve kârlı pencere oranı `%0` olduğu için aday reddedildi.
+- Yeni final OOS açılmadı; v2 paper/testnet/live profile'a terfi ettirilmedi. Ayrıntılı hash ve pencere kanıtı [2024 v2 validation belgesindedir](../15-2024-v2-validation-kaniti.md).
 - Hysteresis doğal EMA çevresi gürültüsünde gereksiz cross sayısını azaltmayı hedefler.
 - Daha az işlem nedeniyle fırsat kaçırma ve trend girişinin gecikmesi beklenen trade-off'tur.
 - Kodun ve testlerin tamamlanması stratejiyi paper/testnet/live adayı yapmaz; ayrı validation ve kilitli yeni OOS kanıtı gerekir.

@@ -77,7 +77,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Maliyetli buy-and-hold OOS benchmark, excess getiri, report identity ve SQL persistence.
 - [x] Canonical gerçek CSV çifti üzerinde versioned baseline walk-forward raporu çalıştıran secretsiz research CLI.
 - Tick/lot rounding ve order-book queue replay.
-- Küratörlü gerçek BTC-USDT dataset üretimi, çoklu market-regime OOS kabul ve aylık segmentasyon.
+- [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
+- Yeni strateji sürümü için train/validation hipotezi, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.
 

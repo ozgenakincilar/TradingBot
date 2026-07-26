@@ -859,3 +859,25 @@ flowchart TD
 ```
 
 Dört instrument değeri manifest kimliğine birlikte girer. Kuralsız akış yalnız kilitli legacy kanıtların tekrar üretimi içindir; yeni quantized çalışma order-book queue simülasyonu sayılmaz.
+
+## 36. Bounded cumulative depth paper execution
+
+```mermaid
+flowchart TD
+    WS[OKX books5 WebSocket] --> PARSE[1–5 bid + 1–5 ask parse]
+    REST[OKX REST books sz=5] --> PARSE
+    PARSE --> VALID{Pozitif, strict sıralı,<br/>top-level eş ve uncrossed mı?}
+    VALID -- Hayır --> FAIL[Fail closed]
+    VALID -- Evet --> SNAP[Immutable bounded depth snapshot]
+    SNAP --> SIDE{Buy / Sell}
+    SIDE --> LEVELS[En iyi fiyattan dış seviyelere ilerle]
+    LEVELS --> PART[Her seviyede visible qty × participation]
+    PART --> SLIP[Yönsel aleyhte slippage]
+    SLIP --> LIMIT{Limit koşulu geçiyor mu?}
+    LIMIT -- Hayır --> STOP[Sonraki seviyeleri tüketme]
+    LIMIT -- Evet --> ACC[Quantity + notional biriktir]
+    ACC --> VWAP[Fill price = cumulative VWAP]
+    VWAP --> FEE[Fee = cumulative notional × rate]
+```
+
+Depth bulunmayan snapshot eski top-of-book yolunu kullanır. Bu akış aggregated görünür depth market impact modelidir; exchange queue sırası veya hidden liquidity replay'i değildir.

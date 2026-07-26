@@ -22,6 +22,11 @@ public sealed class OkxBooks5MessageParserTests
         Assert.Equal(0.30178218m, result.Snapshot.BestBidQuantity);
         Assert.Equal(41006.8m, result.Snapshot.BestAsk.Value);
         Assert.Equal(0.60038921m, result.Snapshot.BestAskQuantity);
+        Assert.True(result.Snapshot.HasDepth);
+        Assert.Equal(2, result.Snapshot.BidDepth.Length);
+        Assert.Equal(2, result.Snapshot.AskDepth.Length);
+        Assert.Equal(41005.9m, result.Snapshot.BidDepth[1].Price.Value);
+        Assert.Equal(41007.2m, result.Snapshot.AskDepth[1].Price.Value);
         Assert.Equal(ReceivedAt, result.ReceivedAt);
     }
 
@@ -64,8 +69,14 @@ public sealed class OkxBooks5MessageParserTests
           "arg":{"channel":"books5","instId":"BTC-USDT"},
           "action":"snapshot",
           "data":[{
-            "asks":[["41006.8","0.60038921","0","1"]],
-            "bids":[["41006.3","0.30178218","0","2"]],
+            "asks":[
+              ["41006.8","0.60038921","0","1"],
+              ["41007.2","0.70000000","0","2"]
+            ],
+            "bids":[
+              ["41006.3","0.30178218","0","2"],
+              ["41005.9","0.40000000","0","1"]
+            ],
             "ts":"1629966436396",
             "prevSeqId":3235851700,
             "seqId":3235851742

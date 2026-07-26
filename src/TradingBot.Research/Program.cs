@@ -45,13 +45,19 @@ static async Task<int> RunAsync(string[] arguments)
             return await ValidateAdxRegimeAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "diagnose-adx-regime-v4")
+        {
+            return await DiagnoseAdxLossesAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.ValidationUsage + Environment.NewLine +
             ResearchWalkForwardCommand.DiagnosticsUsage + Environment.NewLine +
             ResearchWalkForwardCommand.ProfitProtectionUsage + Environment.NewLine +
-            ResearchWalkForwardCommand.AdxRegimeUsage);
+            ResearchWalkForwardCommand.AdxRegimeUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.AdxDiagnosticsUsage);
     }
     catch (OperationCanceledException)
     {
@@ -211,4 +217,24 @@ static async Task<int> ValidateAdxRegimeAsync(
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
     return report.Acceptance.IsAccepted ? 0 : 3;
+}
+
+static async Task<int> DiagnoseAdxLossesAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseAdxLossDiagnostics(arguments);
+    var orchestrator = new StrategyLossDiagnosticsOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator());
+    var report = await orchestrator.RunAsync(
+        request.Definition,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.RandomSeed,
+        new BacktestDiagnosticsPolicy(),
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return 0;
 }

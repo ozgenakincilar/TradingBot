@@ -360,6 +360,34 @@ public static class ResearchWalkForwardCommand
     public static string AdxRegimeUsage => Usage.Replace(
         "run-walk-forward", "validate-adx-regime-v4", StringComparison.Ordinal);
 
+    public static ResearchStrategyLossDiagnosticsRequest ParseAdxLossDiagnostics(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count is not (25 or 33) ||
+            !string.Equals(arguments[0], "diagnose-adx-regime-v4", StringComparison.Ordinal))
+        {
+            throw InvalidAdxDiagnosticsCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "validate-adx-regime-v4";
+        try
+        {
+            var validation = ParseAdxRegimeValidation(normalized);
+            return new ResearchStrategyLossDiagnosticsRequest(
+                validation.Candidate, validation.ExecutionPolicy, validation.Schedule,
+                validation.DatasetFactory, validation.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidAdxDiagnosticsCommand();
+        }
+    }
+
+    public static string AdxDiagnosticsUsage => Usage.Replace(
+        "run-walk-forward", "diagnose-adx-regime-v4", StringComparison.Ordinal);
+
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
             value,
@@ -413,4 +441,7 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidAdxRegimeCommand() => new(
         "Research ADX regime validation command is invalid. " + AdxRegimeUsage);
+
+    private static DomainRuleViolationException InvalidAdxDiagnosticsCommand() => new(
+        "Research ADX loss diagnostics command is invalid. " + AdxDiagnosticsUsage);
 }

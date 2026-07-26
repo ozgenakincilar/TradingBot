@@ -73,3 +73,5 @@ Aylık rapor en az şu metrikleri içerir:
 - Benchmark karşılaştırması (örneğin buy-and-hold; bilgi amaçlı).
 
 İlk backtest execution raporu gross/net return, realized PnL, fee/spread/slippage, net-liquidation value, drawdown, win rate, profit factor, expectancy ve ortalama holding time üretir. Walk-forward OOS raporu aynı sermaye, allocation ve maliyet politikasını kullanan buy-and-hold benchmark; benchmark'ı geçen pencere sayısı; ortalama excess getiri ve bileşik benchmark getirisi üretir. Aylık segmentasyon ve gerçek çoklu market-regime OOS kanıtı tamamlanana kadar `%10` stretch hedefi açısından başarı kanıtı sayılmaz.
+
+2025 gerçek BTC-USDT verisindeki ilk beş pencereli v1 OOS değerlendirmesi tüm pencerelerde negatif sonuçlanmış, bileşik `-%22,60` net getiri ve `-%4,37` ortalama benchmark excess getiri üretmiştir. Ayrıntılı ve hash'li kanıt [14-2025-oos-baseline-kaniti.md](14-2025-oos-baseline-kaniti.md) içindedir. Bu sonuç v1 baseline'ı reddeder; risk veya canlılık seviyesi artırılamaz.

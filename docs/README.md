@@ -17,6 +17,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [11-git-stratejisi.md](11-git-stratejisi.md) | Branch, commit, PR, merge ve release çalışma modeli |
 | [12-performans-ve-risk-hedefleri.md](12-performans-ve-risk-hedefleri.md) | Getiri hedefleri, drawdown sınırları ve hedef yönetişimi |
 | [13-instructions-uyumluluk-matrisi.md](13-instructions-uyumluluk-matrisi.md) | `instructions.md` içindeki 100 zorunlu kuralın statüsü ve kanıtı |
+| [14-2025-oos-baseline-kaniti.md](14-2025-oos-baseline-kaniti.md) | Gerçek 2025 BTC-USDT verisindeki reddedilmiş v1 OOS sonucu ve artifact hash'leri |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

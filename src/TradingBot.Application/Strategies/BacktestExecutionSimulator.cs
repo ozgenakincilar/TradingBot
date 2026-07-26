@@ -85,6 +85,37 @@ public sealed class BacktestExecutionSimulator
         StrategyDefinition definition,
         IAsyncEnumerable<StrategyBacktestDecision> decisions,
         BacktestExecutionPolicy policy,
+        CancellationToken cancellationToken) =>
+        (await RunCoreAsync(
+            definition,
+            decisions,
+            policy,
+            diagnosticsPolicy: null,
+            cancellationToken)).Execution;
+
+    public async Task<BacktestExecutionDiagnosticsReport> RunWithDiagnosticsAsync(
+        StrategyDefinition definition,
+        IAsyncEnumerable<StrategyBacktestDecision> decisions,
+        BacktestExecutionPolicy policy,
+        BacktestDiagnosticsPolicy diagnosticsPolicy,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(diagnosticsPolicy);
+        diagnosticsPolicy.Validate();
+        var result = await RunCoreAsync(
+            definition,
+            decisions,
+            policy,
+            diagnosticsPolicy,
+            cancellationToken);
+        return BacktestExecutionDiagnosticsReport.Create(result.Execution, result.Trades!);
+    }
+
+    private async Task<SimulationResult> RunCoreAsync(
+        StrategyDefinition definition,
+        IAsyncEnumerable<StrategyBacktestDecision> decisions,
+        BacktestExecutionPolicy policy,
+        BacktestDiagnosticsPolicy? diagnosticsPolicy,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -97,7 +128,9 @@ public sealed class BacktestExecutionSimulator
             policy.BaseAsset,
             policy.QuoteAsset,
             DateTimeOffset.UnixEpoch);
-        var state = new SimulationState(policy.InitialQuoteBalance);
+        var state = new SimulationState(
+            policy.InitialQuoteBalance,
+            diagnosticsPolicy?.MaximumCompletedTrades);
         Candle? lastCandle = null;
 
         await foreach (var item in decisions.WithCancellation(cancellationToken))
@@ -112,13 +145,16 @@ public sealed class BacktestExecutionSimulator
                 state.KnownLiquidityQuantity = item.SignalCandle.BaseVolume;
             }
 
+            state.ObserveTradeExcursion(item.SignalCandle, position);
             state.ObserveEquity(CalculateNetLiquidation(policy, item.SignalCandle, position, state.Cash));
         }
 
         var netLiquidation = lastCandle is null
             ? state.Cash
             : CalculateNetLiquidation(policy, lastCandle, position, state.Cash);
-        return state.CreateReport(position, netLiquidation);
+        return new SimulationResult(
+            state.CreateReport(position, netLiquidation),
+            state.Trades);
     }
 
     private void ExecutePendingTarget(
@@ -305,6 +341,7 @@ public sealed class BacktestExecutionSimulator
             state.TargetSubmittedAt = decision.EvaluatedAt;
             state.RemainingEntryBudget = Checked(state.Cash * policy.QuoteAllocation.Fraction);
             state.RealizedPnlAtTradeOpen = position.RealizedPnl;
+            state.EntryReasonCode = decision.ReasonCode;
         }
         else if (decision.Action == StrategyAction.ExitToFlat)
         {
@@ -317,6 +354,7 @@ public sealed class BacktestExecutionSimulator
             state.Target = ExecutionTarget.Flat;
             state.TargetSubmittedAt = decision.EvaluatedAt;
             state.RemainingEntryBudget = 0m;
+            state.ExitReasonCode = decision.ReasonCode;
         }
     }
 
@@ -420,18 +458,35 @@ public sealed class BacktestExecutionSimulator
         Flat = 2
     }
 
+    private sealed record SimulationResult(
+        BacktestExecutionReport Execution,
+        IReadOnlyList<BacktestTradeAttribution>? Trades);
+
     private sealed class SimulationState
     {
         private readonly decimal _initialBalance;
+        private readonly int? _maximumCompletedTrades;
+        private readonly List<BacktestTradeAttribution>? _trades;
         private decimal _peakEquity;
         private decimal _maximumDrawdownPercent;
         private decimal _grossProfit;
         private decimal _grossLoss;
         private TimeSpan _totalHoldingTime;
+        private decimal _tradeFees;
+        private decimal _tradeSpreadCost;
+        private decimal _tradeSlippageCost;
+        private decimal _entryNotional;
+        private decimal _entryQuantity;
+        private decimal _exitNotional;
+        private decimal _exitQuantity;
+        private decimal _maximumFavorableExcursionPercent;
+        private decimal _maximumAdverseExcursionPercent;
 
-        public SimulationState(decimal initialBalance)
+        public SimulationState(decimal initialBalance, int? maximumCompletedTrades)
         {
             _initialBalance = initialBalance;
+            _maximumCompletedTrades = maximumCompletedTrades;
+            _trades = maximumCompletedTrades is null ? null : [];
             _peakEquity = initialBalance;
             Cash = initialBalance;
         }
@@ -466,6 +521,12 @@ public sealed class BacktestExecutionSimulator
 
         public DateTimeOffset? TradeOpenedAt { get; private set; }
 
+        public string? EntryReasonCode { get; set; }
+
+        public string? ExitReasonCode { get; set; }
+
+        public IReadOnlyList<BacktestTradeAttribution>? Trades => _trades;
+
         public void ClearTarget()
         {
             Target = ExecutionTarget.None;
@@ -476,16 +537,51 @@ public sealed class BacktestExecutionSimulator
         {
             var reference = side == OrderSide.Buy ? market.BestAsk.Value : market.BestBid.Value;
             var mid = (market.BestAsk.Value + market.BestBid.Value) / 2m;
+            var spreadCost = Math.Abs(reference - mid) * fill.Quantity.Value;
+            var slippageCost = Math.Abs(fill.Price.Value - reference) * fill.Quantity.Value;
             TotalFees = Checked(TotalFees + fill.QuoteFee.Amount);
-            SpreadCost = Checked(SpreadCost + Math.Abs(reference - mid) * fill.Quantity.Value);
-            SlippageCost = Checked(SlippageCost + Math.Abs(fill.Price.Value - reference) * fill.Quantity.Value);
+            SpreadCost = Checked(SpreadCost + spreadCost);
+            SlippageCost = Checked(SlippageCost + slippageCost);
             FillCount++;
             FirstFillAt ??= fill.OccurredAt;
             LastFillAt = fill.OccurredAt;
             if (side == OrderSide.Buy)
             {
                 TradeOpenedAt ??= fill.OccurredAt;
+                _entryNotional = Checked(_entryNotional + fill.Price.Value * fill.Quantity.Value);
+                _entryQuantity = Checked(_entryQuantity + fill.Quantity.Value);
             }
+            else
+            {
+                _exitNotional = Checked(_exitNotional + fill.Price.Value * fill.Quantity.Value);
+                _exitQuantity = Checked(_exitQuantity + fill.Quantity.Value);
+            }
+
+            if (_trades is not null)
+            {
+                _tradeFees = Checked(_tradeFees + fill.QuoteFee.Amount);
+                _tradeSpreadCost = Checked(_tradeSpreadCost + spreadCost);
+                _tradeSlippageCost = Checked(_tradeSlippageCost + slippageCost);
+            }
+        }
+
+        public void ObserveTradeExcursion(Candle candle, SpotPosition position)
+        {
+            if (_trades is null || position.OpenQuantity <= 0m || position.AverageEntryPrice <= 0m)
+            {
+                return;
+            }
+
+            var favorable = ((candle.High - position.AverageEntryPrice) /
+                position.AverageEntryPrice) * 100m;
+            var adverse = ((position.AverageEntryPrice - candle.Low) /
+                position.AverageEntryPrice) * 100m;
+            _maximumFavorableExcursionPercent = Math.Max(
+                _maximumFavorableExcursionPercent,
+                Math.Max(0m, favorable));
+            _maximumAdverseExcursionPercent = Math.Max(
+                _maximumAdverseExcursionPercent,
+                Math.Max(0m, adverse));
         }
 
         public void RecordCompletedTrade(decimal netPnl, DateTimeOffset closedAt)
@@ -497,7 +593,44 @@ public sealed class BacktestExecutionSimulator
 
             CompletedTrades++;
             _totalHoldingTime += closedAt - openedAt;
+            if (_trades is not null)
+            {
+                if (_trades.Count >= _maximumCompletedTrades)
+                {
+                    throw new DomainRuleViolationException(
+                        "Backtest diagnostics completed-trade limit was exceeded.");
+                }
+
+                if (EntryReasonCode is null || ExitReasonCode is null ||
+                    _entryQuantity <= 0m || _exitQuantity <= 0m)
+                {
+                    throw new DomainRuleViolationException(
+                        "Backtest trade attribution is incomplete.");
+                }
+
+                var executionCosts = Checked(
+                    _tradeFees + _tradeSpreadCost + _tradeSlippageCost);
+                _trades.Add(new BacktestTradeAttribution(
+                    CompletedTrades,
+                    openedAt,
+                    closedAt,
+                    EntryReasonCode,
+                    ExitReasonCode,
+                    _entryNotional / _entryQuantity,
+                    _exitNotional / _exitQuantity,
+                    _exitQuantity,
+                    netPnl,
+                    _tradeFees,
+                    _tradeSpreadCost,
+                    _tradeSlippageCost,
+                    Checked(netPnl + executionCosts),
+                    _maximumFavorableExcursionPercent,
+                    _maximumAdverseExcursionPercent,
+                    closedAt - openedAt));
+            }
+
             TradeOpenedAt = null;
+            ResetTradeAttribution();
             if (netPnl > 0m)
             {
                 WinningTrades++;
@@ -507,6 +640,21 @@ public sealed class BacktestExecutionSimulator
             {
                 _grossLoss = Checked(_grossLoss + netPnl);
             }
+        }
+
+        private void ResetTradeAttribution()
+        {
+            EntryReasonCode = null;
+            ExitReasonCode = null;
+            _tradeFees = 0m;
+            _tradeSpreadCost = 0m;
+            _tradeSlippageCost = 0m;
+            _entryNotional = 0m;
+            _entryQuantity = 0m;
+            _exitNotional = 0m;
+            _exitQuantity = 0m;
+            _maximumFavorableExcursionPercent = 0m;
+            _maximumAdverseExcursionPercent = 0m;
         }
 
         public void ObserveEquity(decimal equity)

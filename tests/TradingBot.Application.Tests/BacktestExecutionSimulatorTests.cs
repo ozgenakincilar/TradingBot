@@ -224,6 +224,94 @@ public sealed class BacktestExecutionSimulatorTests
         Assert.Equal(0, report.CompletedTradeCount);
     }
 
+    [Fact]
+    public async Task DiagnosticsAttributeReasonsCostsAndCompletedCandleExcursions()
+    {
+        StrategyBacktestDecision[] decisions =
+        [
+            Item(CandleWithRange(0, 100m, 100m, 100m), StrategyAction.EnterLong,
+                StrategyPositionState.Long, "signal-ema-cross-up"),
+            Item(CandleWithRange(1, 100m, 110m, 90m), StrategyAction.ExitToFlat,
+                StrategyPositionState.Flat, "trend-filter-exit"),
+            Item(CandleWithRange(2, 105m, 500m, 1m), StrategyAction.Hold,
+                StrategyPositionState.Flat, "no-entry-signal")
+        ];
+        var simulator = new BacktestExecutionSimulator();
+
+        var report = await simulator.RunWithDiagnosticsAsync(
+            Definition(),
+            ToAsync(decisions),
+            Policy(),
+            new BacktestDiagnosticsPolicy(),
+            CancellationToken.None);
+
+        var trade = Assert.Single(report.Trades);
+        Assert.Equal("signal-ema-cross-up", trade.EntryReasonCode);
+        Assert.Equal("trend-filter-exit", trade.ExitReasonCode);
+        Assert.Equal(report.Execution.RealizedPnl, trade.NetPnl);
+        var reconstructedGross = trade.NetPnl + trade.EstimatedFees +
+            trade.EstimatedSpreadCost + trade.EstimatedSlippageCost;
+        Assert.InRange(
+            Math.Abs(reconstructedGross - trade.GrossPnlBeforeEstimatedCosts),
+            0m,
+            0.00000000000000000000000001m);
+        Assert.True(trade.MaximumFavorableExcursionPercent > 8m);
+        Assert.True(trade.MaximumAdverseExcursionPercent > 10m);
+        Assert.True(trade.MaximumFavorableExcursionPercent < 11m);
+        Assert.True(trade.MaximumAdverseExcursionPercent < 12m);
+        Assert.Equal(TimeSpan.FromMinutes(15), trade.HoldingTime);
+        Assert.Equal(trade.MaximumFavorableExcursionPercent,
+            report.AverageMaximumFavorableExcursionPercent);
+        Assert.Equal(trade.MaximumAdverseExcursionPercent,
+            report.AverageMaximumAdverseExcursionPercent);
+        Assert.Equal(0, report.FavorableExcursionGivenBackTradeCount);
+        Assert.Matches("^[0-9A-F]{64}$", report.ReportSha256);
+    }
+
+    [Fact]
+    public async Task SameInputsProduceSameDiagnosticsHash()
+    {
+        var simulator = new BacktestExecutionSimulator();
+
+        var first = await simulator.RunWithDiagnosticsAsync(
+            Definition(), ToAsync(Decisions(100m)), Policy(),
+            new BacktestDiagnosticsPolicy(), CancellationToken.None);
+        var second = await simulator.RunWithDiagnosticsAsync(
+            Definition(), ToAsync(Decisions(100m)), Policy(),
+            new BacktestDiagnosticsPolicy(), CancellationToken.None);
+
+        Assert.Equal(first.Execution, second.Execution);
+        Assert.Equal(first.Trades, second.Trades);
+        Assert.Equal(first.ReportSha256, second.ReportSha256);
+        Assert.Equal(0, first.FavorableExcursionGivenBackTradeCount);
+    }
+
+    [Fact]
+    public async Task DiagnosticsTradeLimitFailsClosed()
+    {
+        StrategyBacktestDecision[] decisions =
+        [
+            Item(CandleAt(0, 100m, 100m), StrategyAction.EnterLong,
+                StrategyPositionState.Long, "signal-ema-cross-up"),
+            Item(CandleAt(1, 100m, 100m), StrategyAction.ExitToFlat,
+                StrategyPositionState.Flat, "trend-filter-exit"),
+            Item(CandleAt(2, 100m, 100m), StrategyAction.EnterLong,
+                StrategyPositionState.Long, "signal-ema-cross-up"),
+            Item(CandleAt(3, 100m, 100m), StrategyAction.ExitToFlat,
+                StrategyPositionState.Flat, "trend-filter-exit"),
+            Item(CandleAt(4, 100m, 100m), StrategyAction.Hold,
+                StrategyPositionState.Flat, "no-entry-signal")
+        ];
+        var simulator = new BacktestExecutionSimulator();
+
+        var action = () => simulator.RunWithDiagnosticsAsync(
+            Definition(), ToAsync(decisions), Policy(),
+            new BacktestDiagnosticsPolicy(MaximumCompletedTrades: 1),
+            CancellationToken.None);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+    }
+
     private static Task<BacktestExecutionReport> RunAsync(
         IEnumerable<StrategyBacktestDecision> decisions,
         BacktestExecutionPolicy policy) =>
@@ -285,6 +373,22 @@ public sealed class BacktestExecutionSimulatorTests
             open,
             open,
             volume);
+
+    private static Candle CandleWithRange(
+        int index,
+        decimal open,
+        decimal high,
+        decimal low) =>
+        Candle.CreateClosed(
+            Instrument,
+            Signal,
+            Start + (Signal.Duration * index),
+            Start.AddHours(2),
+            open,
+            high,
+            low,
+            open,
+            100m);
 
     private static async IAsyncEnumerable<StrategyBacktestDecision> ToAsync(
         IEnumerable<StrategyBacktestDecision> decisions)

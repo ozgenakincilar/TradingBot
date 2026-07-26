@@ -111,6 +111,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Walk-forward ve farklı market regime testleri uygulanır.
 - Sonuçlar strategy version, data version, seed ve config hash ile tekrar üretilebilir olmalıdır.
 - Mevcut next-open execution proxy fee/spread/slippage/latency/PnL ve opsiyonel tick/lot/minimum emir kurallarını modellemektedir; order-book queue ve quantized out-of-sample kanıtı olmadan production performans iddiasında kullanılamaz.
+- Trade-loss attribution aynı girdide aynı report SHA-256 değerini üretmeli; entry/exit reason, fee/spread/slippage, MFE/MAE ve holding süresini tamamlanmış trade ile eşlemelidir.
+- Exit fill'inin gerçekleştiği candle'ın sonradan oluşan high/low değeri excursion'a katılmamalı; diagnostics trade limiti aşıldığında kısmi sonuç yerine hata üretmelidir.
 
 ## 5. Determinizm
 

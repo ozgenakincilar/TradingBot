@@ -208,6 +208,9 @@ Ana ilişkisel veritabanı **Microsoft SQL Server**'dır. Veri erişimi Infrastr
 - Bir top-of-book olayı yalnız aynı instrument'a ait aktif ve kalıcı rezervasyonu bulunan order'lara fan-out edilir; aynı olay/order çifti deterministik execution ID ile idempotenttir.
 - Paper market fill, depth varsa seviyeleri en iyi fiyattan başlayarak participation sınırıyla tüketir; yönsel slippage sonrası tek fill fiyatı cumulative notional/quantity VWAP değeridir. Limit emir yalnız uygun seviyelerde kısmi fill alır.
 - Depth olmayan sentetik/legacy snapshot top-of-book matematiğini korur. Beş seviyeli cumulative depth gerçek queue position, hidden liquidity veya cancel latency modeli değildir.
+- Trade-loss diagnostics mevcut execution raporunu değiştirmeyen ayrı, schema-versioned ve SHA-256 kimlikli bir artifact üretir.
+- Diagnostics yalnız tamamlanmış trade'leri tutar, en fazla 100.000 trade ile bounded'dır ve limit aşımında fail-closed davranır.
+- MFE/MAE yalnız pozisyon açıkken tamamlanmış candle high/low değerlerinden hesaplanır; next-open exit sonrasındaki candle aralığı geleceğe bakış yaratmamak için kullanılmaz.
 
 ## 8. Paket yönetimi
 

@@ -157,6 +157,23 @@ public sealed class LongFlatStrategyEvaluatorTests
     }
 
     [Fact]
+    public void V3TrendLossExitsBeforeProfitProtectionRule()
+    {
+        var trend = Series(Trend, 200, _ => 100m);
+        trend[^1] = Create(Trend, 199, 90m, 90m, End - (Trend.Duration * 200));
+
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V3Definition(),
+            SignalCandles(latestOpen: 101.5m, latestClose: 101.4m),
+            trend,
+            StrategyPositionState.Long,
+            StrategyTradeContext.Open(100m).ObserveLongClose(102m));
+
+        Assert.Equal(StrategyAction.ExitToFlat, decision.Action);
+        Assert.Equal("trend-filter-exit", decision.ReasonCode);
+    }
+
+    [Fact]
     public void V3CooldownBlocksFourCompletedCandlesThenAllowsEntry()
     {
         var context = StrategyTradeContext.Closed();

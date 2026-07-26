@@ -35,11 +35,17 @@ static async Task<int> RunAsync(string[] arguments)
             return await DiagnoseStrategyLossesAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "validate-profit-protection-v3")
+        {
+            return await ValidateProfitProtectionAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.ValidationUsage + Environment.NewLine +
-            ResearchWalkForwardCommand.DiagnosticsUsage);
+            ResearchWalkForwardCommand.DiagnosticsUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.ProfitProtectionUsage);
     }
     catch (OperationCanceledException)
     {
@@ -155,4 +161,26 @@ static async Task<int> DiagnoseStrategyLossesAsync(
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
     return 0;
+}
+
+static async Task<int> ValidateProfitProtectionAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseProfitProtectionValidation(arguments);
+    var orchestrator = new ProfitProtectionValidationOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator(),
+        new BuyAndHoldBenchmark());
+    var report = await orchestrator.RunAsync(
+        request.Baseline,
+        request.Candidate,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.RandomSeed,
+        new BacktestDiagnosticsPolicy(),
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return report.Acceptance.IsAccepted ? 0 : 3;
 }

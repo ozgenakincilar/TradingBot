@@ -33,6 +33,14 @@ public sealed record ResearchStrategyLossDiagnosticsRequest(
     CsvHistoricalCandleDatasetFactory DatasetFactory,
     int RandomSeed);
 
+public sealed record ResearchProfitProtectionValidationRequest(
+    StrategyDefinition Baseline,
+    StrategyDefinition Candidate,
+    BacktestExecutionPolicy ExecutionPolicy,
+    WalkForwardSchedule Schedule,
+    CsvHistoricalCandleDatasetFactory DatasetFactory,
+    int RandomSeed);
+
 public static class ResearchWalkForwardCommand
 {
     private static readonly Timeframe SignalTimeframe =
@@ -250,6 +258,58 @@ public static class ResearchWalkForwardCommand
         "diagnose-hysteresis-v2",
         StringComparison.Ordinal);
 
+    public static ResearchProfitProtectionValidationRequest ParseProfitProtectionValidation(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count is not (25 or 33) ||
+            !string.Equals(
+                arguments[0],
+                "validate-profit-protection-v3",
+                StringComparison.Ordinal))
+        {
+            throw InvalidProfitProtectionCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "validate-hysteresis-v2";
+        try
+        {
+            var validation = ParseValidation(normalized);
+            var candidate = StrategyDefinition.Create(
+                validation.Candidate.StrategyId,
+                3,
+                validation.Candidate.InstrumentId,
+                validation.Candidate.SignalTimeframe,
+                validation.Candidate.TrendTimeframe,
+                validation.Candidate.SignalEmaPeriod,
+                validation.Candidate.TrendEmaPeriod,
+                validation.Candidate.MaximumSignalCandleMovePercent,
+                validation.Candidate.MinimumSignalWarmupCandles,
+                validation.Candidate.MinimumTrendWarmupCandles,
+                signalEmaHysteresisBasisPoints: 30m,
+                reentryCooldownCandles: 4,
+                profitProtectionActivationBasisPoints: 100m,
+                profitProtectionTrailingBasisPoints: 50m);
+            return new ResearchProfitProtectionValidationRequest(
+                validation.Candidate,
+                candidate,
+                validation.ExecutionPolicy,
+                validation.Schedule,
+                validation.DatasetFactory,
+                validation.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidProfitProtectionCommand();
+        }
+    }
+
+    public static string ProfitProtectionUsage => Usage.Replace(
+        "run-walk-forward",
+        "validate-profit-protection-v3",
+        StringComparison.Ordinal);
+
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
             value,
@@ -296,4 +356,8 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidDiagnosticsCommand() => new(
         "Research strategy loss diagnostics command is invalid. " + DiagnosticsUsage);
+
+    private static DomainRuleViolationException InvalidProfitProtectionCommand() => new(
+        "Research profit protection validation command is invalid. " +
+        ProfitProtectionUsage);
 }

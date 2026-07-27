@@ -109,6 +109,21 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void AdxLossDiagnosticsCommandSelectsLockedV4Candidate()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "diagnose-adx-regime-v4";
+
+        var result = ResearchWalkForwardCommand.ParseAdxLossDiagnostics(arguments);
+
+        Assert.Equal(4, result.Definition.Version);
+        Assert.Equal(30m, result.Definition.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(14, result.Definition.TrendStrengthPeriod);
+        Assert.Equal(25m, result.Definition.MinimumTrendStrength);
+        Assert.Equal(2, result.Schedule.Windows.Count);
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

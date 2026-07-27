@@ -126,6 +126,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Adaptif v6 walk-forward testleri grid snapshot/duplicate sınırını, v1-v5 reddini, warm-up fail-fast davranışını, tamamlanmış validation trade'i olmayan grid'de OOS'un açılmamasını ve OOS fiyatları değişse bile seçimin aynı kalmasını kanıtlamalıdır.
 - Dinamik benchmark testleri önceki kapalı mum nedenselliğini, volatilite arttıkça maliyet monotonluğunu, iki yönlü ortak TWAP çekirdeğini, `%5` terminal kapasite reddini ve aynı girdide aynı raporu kanıtlamalıdır.
 - v6 CLI testleri instrument kurallarını, kilitli dynamic policy/grid'i ve process exit `3` kodunun yalnız acceptance reddinden üretildiğini doğrulamalıdır.
+- Forward evidence testleri exact 30 günlük pencere sayısını, çevrim başına tek catch-up bölümünü, restart idempotency'yi, `2880/720` candle zorunluluğunu, gap halinde publish edilmemesini, read-only dosyaları ve CSV/manifest SHA-256 tekrar doğrulamasını kanıtlamalıdır.
+- EF model ve migration kanıtı iki research ledger tablosunun unique kimliklerini ve SQL seviyesinde UPDATE/DELETE reddeden append-only trigger'ları kapsamalıdır.
 
 ## 5. Determinizm
 

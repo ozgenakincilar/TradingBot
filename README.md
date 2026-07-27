@@ -95,3 +95,18 @@ Reddedilmiş ADX v4 adayının aynı kilitli train/validation stream'indeki işl
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.
 
 SQL Server connection string environment variable veya secret provider üzerinden verilir; repository dosyalarına yazılmaz. EF Core komutlarında `TRADINGBOT_DB_CONNECTION` environment variable kullanılır.
+
+## Forward evidence worker
+
+`ForwardEvidence` worker yalnız OKX TR public market data kullanır; API anahtarı
+ve para gerektirmez. `appsettings.json` içindeki başlangıç tarihi, storage root,
+polling süresi ve minimum-notional snapshot'ı dışında v6 strateji/grid/acceptance
+değerleri runtime configuration'a açık değildir. Her tamamlanan 30 günlük UTC
+aralık `data/forward-evidence` altında read-only `15m/1H` CSV ve SHA-256 manifest
+olarak mühürlenir. Bu dizin Git tarafından izlenmez.
+
+Worker başlatılmadan önce `AddForwardEvidencePipeline` migration'ı uygulanmalıdır.
+İlk otomatik acceptance koşusu 30 günlük train + 30 günlük validation + beş adet
+30 günlük OOS için toplam yedi mühürlü bölüm oluştuğunda çalışır. Daha erken bir
+kârlılık sonucu üretilmez. Ayrıntılı sözleşme:
+[Forward Evidence Pipeline](docs/28-forward-evidence-pipeline.md).

@@ -63,3 +63,5 @@ v4 brüt kazanan trade toplamı `17,3119`, brüt kaybeden trade toplamı `73,497
 Sekiz kapının trade azalması, maliyet azalması, minimum aktivite ve drawdown olmak üzere yalnız dördü geçti. ADX filtresi turnover ve maliyet problemini anlamlı biçimde azalttı fakat seçtiği işlemler pozitif expectancy üretmedi; v4 reddedildi.
 
 ADX periyodu/eşiği ve acceptance değerleri değiştirilmez. 2022 holdout açılmaz, sonuç forward OOS sayılmaz ve v4 paper/testnet/live profile'a alınmaz. Bir sonraki aday, aynı yıllarda parametre taraması yapmak yerine zararların giriş/exit ve rejim koşullarını yeni bir hipotez için analiz etmeli; yeni model ve veri sınırı sonuçtan önce tekrar kaydedilmelidir.
+
+İşlem seviyesindeki MFE/MAE, exit reason ve maliyet ayrımı [ayrı attribution kanıtında](21-2022-v4-kayip-attribution-kaniti.md) kaydedilmiştir.

@@ -24,6 +24,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [18-2023-v3-validation-kaniti.md](18-2023-v3-validation-kaniti.md) | Ayrı 2023 development verisinde reddedilen v3 validation sonucu ve exit attribution |
 | [19-v4-adx-rejim-on-kaydi.md](19-v4-adx-rejim-on-kaydi.md) | ADX(14) trend-kalite v4 tasarımı, exact matematik ve sonuç öncesi validation kapıları |
 | [20-2022-v4-validation-kaniti.md](20-2022-v4-validation-kaniti.md) | Ayrı 2022 historical development verisinde reddedilen v4 ADX validation sonucu |
+| [21-2022-v4-kayip-attribution-kaniti.md](21-2022-v4-kayip-attribution-kaniti.md) | Reddedilmiş v4 işlemlerinin exit reason, MFE/MAE ve execution maliyeti ayrımı |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

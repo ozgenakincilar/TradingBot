@@ -89,6 +89,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] v4 için yalnız entry'de `1H ADX(14) >= 25` kullanan trend-kalite filtresi, exact Wilder matematiği ve sekiz acceptance kapısının veri çalıştırmadan önce tasarımı/ön kaydı.
 - [x] v4 ADX domain implementasyonu, legacy hash regression testleri ve fail-closed v2-v4 validation CLI.
 - [x] Ayrı 2022 historical development train/validation değerlendirmesi; v4 turnover/maliyet kapılarını geçmesine rağmen profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemediği için reddedildi; holdout açılmadı ve sonuç forward OOS sayılmadı.
+- [x] Reddedilmiş v4 için 2022 train/validation işlem bazlı attribution; zarar yalnız maliyet kaynaklı değil, ADX gücünün long yönlü follow-through sağlamaması ve EMA cross-down grubundaki negatif brüt edge ile açıklanıyor.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

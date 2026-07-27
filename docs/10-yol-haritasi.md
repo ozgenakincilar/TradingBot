@@ -97,6 +97,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Ayrı 2021 historical development train/validation değerlendirmesi; v5 trade/maliyet azaltımı ve drawdown kapılarını geçmesine rağmen profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemediği için reddedildi; holdout açılmadı ve sonuç forward OOS sayılmadı.
 - [x] Reddedilmiş v5 için 2021 train/validation işlem bazlı attribution; yaklaşık brüt edge'in pozitif fakat çok küçük olduğu, 15m EMA cross-down turnover'ı ve execution maliyetinin bu edge'i tükettiği gösterildi.
 - [x] v6 için v5 yön/güç kurallarını koruyan `ATR(14) × 0,2` signal EMA bandı, exact Wilder matematiği, legacy hash koruması ve forward acceptance kapılarının ön kaydı.
+- [x] v6 ATR period/multiplier için bounded immutable grid, validation-only Profit Factor seçimi, deterministik tie-break ve taze dataset oturumuyla bakir OOS enjeksiyonu; legacy walk-forward yolu korunuyor.
 - [ ] Dinamik buy-and-hold benchmark parity, v5-v6 validation CLI ve 2026-07-27 sonrası en az beş kesişmeyen forward pencere.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 

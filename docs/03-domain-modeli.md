@@ -36,7 +36,7 @@
 
 ### Strategy Context
 
-- `StrategyDefinition`, strategy ID/version, instrument, signal/trend timeframe, EMA periyodu, sürümlü signal EMA hysteresis bandı ve iki seri için minimum warm-up sınırını immutable tutar.
+- `StrategyDefinition`, strategy ID/version, instrument, signal/trend timeframe, EMA periyodu, sürümlü sabit veya ATR tabanlı signal EMA hysteresis bandı ve iki seri için minimum warm-up sınırını immutable tutar.
 - İlk kabul edilen zarf `btc-usdt-long-flat-baseline/v1`: `OKX:BTC-USDT`, `15m` sinyal, `1H EMA(200)` trend ve her iki seride en az 200 kapalı candle.
 - `ExponentialMovingAverage`, yalnız aynı instrument/timeframe'e ait ardışık kapalı candle'lardan `decimal` ile hesaplanır. Son tam periyot penceresinin ilk kapanışı seed, `2 / (period + 1)` ise alpha'dır; böylece aynı son 200 candle restart sonrasında aynı sonucu üretir.
 - `EmaTrendFilter`, son `1H` kapanışı EMA(200)'ün kesin olarak üzerindeyse long yönüne izin verir; eşitlik veya altı fail-closed biçimde izin vermez. Bu filtre henüz ekonomik intent ya da emre bağlı değildir.
@@ -156,6 +156,7 @@ stateDiagram-v2
 - v4 `AverageDirectionalIndex`, yalnız contiguous kapalı `1H` candle'lardan checked `decimal` Wilder ADX(14) hesaplayan testli saf domain servisidir; emir veya portfolio state'i bilmez ve eksik/gap veride fail-closed davranır.
 - v4 trend-kalite filtresi yalnız flat → long girişini engelleyebilir. Açık pozisyonu ADX nedeniyle kapatmak domain sözleşmesine aykırıdır.
 - v5, aynı bounded Wilder sonucundaki `plusDI` ve `minusDI` değerlerini kullanır; `plusDI > minusDI` testli olarak yalnız flat → long giriş kapısıdır ve açık pozisyon state'ini değiştiremez.
+- v6, v5'in yön/güç kapılarını korur ve sabit 30 bps yerine önceki/güncel kapalı `15m` seriden ayrı hesaplanan `ATR(14) × 0,2` EMA bandı kullanır; ATR alanları diğer sürümlerde sıfır olmak zorundadır.
 
 ## 6. Domain event’ler
 

@@ -145,6 +145,16 @@ public sealed class BacktestDatasetGovernanceTests
     }
 
     [Fact]
+    public void V6AtrParametersChangeConfigurationIdentity()
+    {
+        var baseline = CreateManifest(DefinitionV6(0.2m));
+        var changed = CreateManifest(DefinitionV6(0.3m));
+
+        Assert.NotEqual(baseline.ConfigurationSha256, changed.ConfigurationSha256);
+        Assert.NotEqual(baseline.ManifestSha256, changed.ManifestSha256);
+    }
+
+    [Fact]
     public void InstrumentRulesChangeConfigurationIdentity()
     {
         var legacy = CreateManifest(Definition(), ExecutionPolicy());
@@ -416,6 +426,16 @@ public sealed class BacktestDatasetGovernanceTests
             reentryCooldownCandles: 4,
             profitProtectionActivationBasisPoints: 100m,
             profitProtectionTrailingBasisPoints: trailingBasisPoints);
+
+    private static StrategyDefinition DefinitionV6(decimal atrMultiplier) =>
+        StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline", 6, Instrument, Signal, Trend,
+            20, 200, 2m, 200, 200,
+            trendStrengthPeriod: 14,
+            minimumTrendStrength: 25m,
+            requirePositiveDirectionalMovement: true,
+            signalAtrPeriod: 14,
+            signalAtrHysteresisMultiplier: atrMultiplier);
 
     private static BacktestExecutionPolicy ExecutionPolicy(
         decimal initialQuoteBalance = 10_000m) => new(

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.EventLog;
 using TradingBot.Application;
 using TradingBot.Application.Abstractions;
 using TradingBot.Application.Backtesting;
@@ -13,6 +14,11 @@ using TradingBot.Infrastructure.Backtesting;
 using TradingBot.Infrastructure.Integrations.Okx;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (OperatingSystem.IsWindows())
+{
+    builder.Logging.AddFilter<EventLogLoggerProvider>(static (_, _) => false);
+}
 
 var tradingBotConnectionString = builder.Configuration.GetConnectionString("TradingBot");
 var marketDataSource = builder.Configuration

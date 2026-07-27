@@ -100,6 +100,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] v6 ATR period/multiplier için bounded immutable grid, validation-only Profit Factor seçimi, deterministik tie-break ve taze dataset oturumuyla bakir OOS enjeksiyonu; legacy walk-forward yolu korunuyor.
 - [x] Kilitli dinamik execution policy, dokuz adaylı ATR grid'i, sekiz acceptance kapısı ve yalnız acceptance reddinde exit `3` üreten v5-v6 forward validation CLI.
 - [x] OKX TR public REST için Polly resilience, 30 günlük atomik/read-only `15m/1H` CSV + SHA-256 manifest, append-only SQL ledger ve yedinci bölümden itibaren otomatik kilitli v6 evaluation worker'ı.
+- [x] Forward evidence için gerçek SQL append-only trigger/rollback testi, yedi bölümlü streaming E2E prova, persistence'sız OKX smoke, tek-yazar lease ve temel health/metric uçları.
 - [ ] 2026-07-27 sonrası en az beş kesişmeyen 30 günlük forward pencerenin oluşması ve kilitli v6 acceptance koşusu.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 

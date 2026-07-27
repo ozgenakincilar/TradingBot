@@ -110,3 +110,14 @@ Worker başlatılmadan önce `AddForwardEvidencePipeline` migration'ı uygulanma
 30 günlük OOS için toplam yedi mühürlü bölüm oluştuğunda çalışır. Daha erken bir
 kârlılık sonucu üretilmez. Ayrıntılı sözleşme:
 [Forward Evidence Pipeline](docs/28-forward-evidence-pipeline.md).
+
+Public OKX bağlantısını evidence deposuna yazmadan sınamak için:
+
+```powershell
+dotnet run --project src/TradingBot.Research/TradingBot.Research.csproj -c Release -- smoke-okx-candles --instrument BTC-USDT --timeout-seconds 15
+```
+
+Worker'ın process-local operasyon durumu `/health/forward-evidence` ve
+`/metrics/forward-evidence` uçlarında yayınlanır. Aynı evidence root için ikinci
+writer `.writer.lock` nedeniyle fail-fast olur; deployment replica sayısı `1`
+kalmalıdır. Ayrıntılı doğrulama: [Forward Evidence Operasyonel Doğrulama](docs/29-forward-evidence-operasyonel-dogrulama.md).

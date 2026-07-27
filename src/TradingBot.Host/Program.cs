@@ -96,6 +96,8 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<ForwardEvidenceTelemetryState>();
+builder.Services.AddTransient<ForwardEvidenceHttpTelemetryHandler>();
 builder.Services.AddSingleton(
     new TradingReadinessState(marketDataSource == MarketDataSource.OkxPublic));
 builder.Services.AddSingleton(new ClosedCandleSeriesStore(capacityPerSeries: 300));
@@ -117,22 +119,24 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     });
     builder.Services.AddTransient<IMarketDataSnapshotClient>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotMarketSnapshotClient>());
-    builder.Services.AddHttpClient<OkxSpotInstrumentCatalog>((serviceProvider, client) =>
+    var instrumentHttpClient = builder.Services.AddHttpClient<OkxSpotInstrumentCatalog>((serviceProvider, client) =>
         {
             var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
             client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
             client.Timeout = Timeout.InfiniteTimeSpan;
-        })
-        .AddStandardResilienceHandler();
+        });
+    instrumentHttpClient.AddStandardResilienceHandler();
+    instrumentHttpClient.AddHttpMessageHandler<ForwardEvidenceHttpTelemetryHandler>();
     builder.Services.AddTransient<ISpotInstrumentCatalog>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotInstrumentCatalog>());
-    builder.Services.AddHttpClient<OkxClosedCandleHistoryClient>((serviceProvider, client) =>
+    var historyHttpClient = builder.Services.AddHttpClient<OkxClosedCandleHistoryClient>((serviceProvider, client) =>
         {
             var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
             client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
             client.Timeout = Timeout.InfiniteTimeSpan;
-        })
-        .AddStandardResilienceHandler();
+        });
+    historyHttpClient.AddStandardResilienceHandler();
+    historyHttpClient.AddHttpMessageHandler<ForwardEvidenceHttpTelemetryHandler>();
     builder.Services.AddTransient<IClosedCandleHistoryClient>(serviceProvider =>
         new PagedClosedCandleHistoryClient(
             serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>(),
@@ -212,5 +216,18 @@ app.MapGet("/health/ready", (TradingReadinessState readiness) =>
         ? Results.Ok(snapshot)
         : Results.Json(snapshot, statusCode: StatusCodes.Status503ServiceUnavailable);
 });
+
+app.MapGet("/health/forward-evidence", (
+    ForwardEvidenceTelemetryState telemetry,
+    IOptions<ForwardEvidenceOptions> forwardOptions) =>
+{
+    var snapshot = telemetry.Snapshot;
+    return forwardOptions.Value.Enabled && snapshot.IsHealthy
+        ? Results.Ok(snapshot)
+        : Results.Json(snapshot, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
+
+app.MapGet("/metrics/forward-evidence", (
+    ForwardEvidenceTelemetryState telemetry) => Results.Ok(telemetry.Snapshot));
 
 app.Run();

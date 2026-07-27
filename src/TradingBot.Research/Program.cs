@@ -20,6 +20,11 @@ static async Task<int> RunAsync(string[] arguments)
             return await ExportAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "smoke-okx-candles")
+        {
+            return await SmokeOkxCandlesAsync(arguments, shutdown.Token);
+        }
+
         if (arguments.FirstOrDefault() == "run-walk-forward")
         {
             return await RunWalkForwardAsync(arguments, shutdown.Token);
@@ -62,6 +67,7 @@ static async Task<int> RunAsync(string[] arguments)
 
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
+            ResearchOkxSmokeCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.ValidationUsage + Environment.NewLine +
             ResearchWalkForwardCommand.DiagnosticsUsage + Environment.NewLine +
@@ -94,6 +100,60 @@ static async Task<int> RunAsync(string[] arguments)
     {
         eventArgs.Cancel = true;
         shutdown.Cancel();
+    }
+}
+
+static async Task<int> SmokeOkxCandlesAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchOkxSmokeCommand.Parse(arguments);
+    var transport = new SocketsHttpHandler
+    {
+        AutomaticDecompression = DecompressionMethods.All,
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+        ConnectTimeout = request.Timeout
+    };
+    using var observer = new OkxSmokeHttpObserverHandler(transport);
+    using var httpClient = new HttpClient(observer)
+    {
+        BaseAddress = new Uri("https://tr.okx.com/", UriKind.Absolute),
+        Timeout = Timeout.InfiniteTimeSpan,
+        DefaultRequestVersion = HttpVersion.Version20,
+        DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
+    };
+    var probe = new OkxCandleSmokeProbe(httpClient, observer, TimeProvider.System);
+    try
+    {
+        var result = await probe.RunAsync(request, cancellationToken);
+        await Console.Out.WriteLineAsync(JsonSerializer.Serialize(result));
+        return 0;
+    }
+    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+    {
+        await Console.Error.WriteLineAsync(JsonSerializer.Serialize(new
+        {
+            succeeded = false,
+            timedOut = true,
+            observer.RequestCount,
+            observer.RateLimitResponseCount
+        }));
+        return 1;
+    }
+    catch (Exception exception) when (
+        exception is DomainRuleViolationException or HttpRequestException)
+    {
+        await Console.Error.WriteLineAsync(JsonSerializer.Serialize(new
+        {
+            succeeded = false,
+            timedOut = false,
+            observer.RequestCount,
+            observer.RateLimitResponseCount,
+            error = exception is DomainRuleViolationException
+                ? "invalid-payload"
+                : "http-failure"
+        }));
+        return 1;
     }
 }
 

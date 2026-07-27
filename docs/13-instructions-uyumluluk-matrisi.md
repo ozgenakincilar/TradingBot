@@ -20,8 +20,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | Statü | Adet |
 |---|---:|
 | ✅ Uygulandı | 18 |
-| 🟡 Kısmi | 35 |
-| ⬜ Planlandı | 41 |
+| 🟡 Kısmi | 36 |
+| ⬜ Planlandı | 40 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -37,7 +37,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 6 | Borsa bakım modu | ⬜ Planlandı | Exchange system-status poll ve trading-ready kapısı gerekli. |
 | 7 | Proxy/CDN bayat yanıt | ⬜ Planlandı | Signed timestamp/nonce ve cache-control politikası gerekli. |
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
-| 9 | Reconnection storm | 🟡 Kısmi | Hosted OKX supervisor bounded exponential backoff+jitter; forward REST collector Polly retry/circuit-breaker/timeout zinciri uyguluyor. Retry/reconnect metriği ve uzun chaos testi kaldı. [Forward worker](../src/TradingBot.Host/ForwardEvidenceWorker.cs), [ADR-0029](adr/0029-forward-evidence-pipeline.md) |
+| 9 | Reconnection storm | 🟡 Kısmi | Hosted OKX supervisor bounded exponential backoff+jitter; forward REST collector Polly zinciri kullanıyor ve retryable HTTP sinyallerini atomik sayaçta tutuyor. Uzun chaos testi kaldı. [Forward telemetry](../src/TradingBot.Host/ForwardEvidenceTelemetryState.cs), [ADR-0030](adr/0030-forward-evidence-operasyonel-dogrulama.md) |
 | 10 | Paket kaybı/sequence | 🟡 Kısmi | Genel incremental session gap'te fail-closed; OKX books5 her mesajı full snapshot olarak uygular. Incremental OKX `books` ve uzun chaos testi kaldı. [Session testleri](../tests/TradingBot.Application.Tests/MarketDataStreamSessionTests.cs) |
 | 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | OKX REST snapshot `seqId` authority'si recovery portuna bağlandı; WebSocket `prevSeqId/seqId` adapter'ı kaldı. [OKX contract testleri](../tests/TradingBot.Infrastructure.Tests/OkxSpotMarketSnapshotClientTests.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
@@ -89,7 +89,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
-| 46 | Rate-limit score | 🟡 Kısmi | Tarihsel export resmî 20 istek/2 saniye sınırı için sayfa başlangıçlarını 100 ms pace eder; response-header/weight izleyen global çoklu-client limiter kaldı. [Export testleri](../tests/TradingBot.Application.Tests/HistoricalCandleDatasetExportTests.cs) |
+| 46 | Rate-limit score | 🟡 Kısmi | Tarihsel export sayfaları pace edilir; diagnostic smoke iki bounded istek ve 429 sayacı üretir. Response-header/weight izleyen global çoklu-client limiter kaldı. [Smoke komutu](../src/TradingBot.Research/ResearchOkxSmokeCommand.cs) |
 | 47 | Açık emir limiti | ✅ Uygulandı | Risk profili maksimum açık emir sayısını reddediyor. [RiskEngine](../src/TradingBot.Domain/Risk/RiskEngine.cs) |
 | 48 | Cancel ratio | ⬜ Planlandı | Cancel/fill metriği ve throttle gerekli. |
 | 49 | Account freeze | 🟡 Kısmi | `canTrade=false` kalıcı halt üretiyor; iki temiz snapshot ve operatör kanıtı olmadan açılamıyor. Gerçek exchange account adaptörü henüz yok. [Recovery SQL testi](../tests/TradingBot.Infrastructure.Tests/SpotReconciliationIntegrationTests.cs) |
@@ -121,7 +121,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 70 | Log rotasyonu | ⬜ Planlandı | Retention/rotation ve disk alarmı gerekli. |
 | 71 | Alert fatigue | ⬜ Planlandı | Dedup/throttle/batch notification pipeline gerekli. |
 | 72 | NuGet vulnerability | ✅ Uygulandı | CI transitif NuGet vulnerability raporunu JSON üretip bulgu varsa job'ı durduruyor; yerel tarama da kalite kapısıdır. [CI workflow](../.github/workflows/ci.yml) |
-| 73 | Runtime watchdog | 🟡 Kısmi | `/health/ready`, Spot metadata kapısı ve ilk geçerli market event tamamlanana kadar veya stream kopunca 503 döndürüyor. SQL/reconciliation dependency, ayrı startup probe ve bağımsız watchdog kaldı. [Program](../src/TradingBot.Host/Program.cs) |
+| 73 | Runtime watchdog | 🟡 Kısmi | `/health/ready` trading readiness'i; `/health/forward-evidence` son başarılı çevrim ve disk durumunu fail-closed yayınlıyor. Bağımsız dış watchdog ve startup probe kaldı. [Program](../src/TradingBot.Host/Program.cs) |
 | 74 | Yedek bildirim kanalı | ⬜ Planlandı | Birincil/yedek kanal seçimi ve failover testi gerekli. |
 | 75 | Güvenlik güncellemeleri | ⬜ Planlandı | OS/runtime patch runbook ve image scanning gerekli. |
 
@@ -151,9 +151,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 |---:|---|---|---|
 | 91 | Açık pozisyonda deploy | ⬜ Planlandı | Deployment precondition ve zero-position guard gerekli. |
 | 92 | Kontrolsüz OS restart | ⬜ Planlandı | Maintenance window ve service auto-recovery runbook'u gerekli. |
-| 93 | Altyapı failover | ⬜ Planlandı | Single-active ownership/reconciliation çözülmeden failover açılmayacak. |
+| 93 | Altyapı failover | ⬜ Planlandı | Forward writer aynı paylaşılan root'ta file lease ile tek-active; çok düğümlü distributed ownership/reconciliation çözülmeden failover açılmayacak. [ADR-0030](adr/0030-forward-evidence-operasyonel-dogrulama.md) |
 | 94 | DB/tick I/O şişmesi | 🟡 Kısmi | Forward market data candle başına SQL'e yazılmaz; 30 günlük CSV bölümü mühürlendikten sonra yalnız manifest/evaluation metadata'sı append edilir. Genel market-data retention ve disk quota kaldı. [Forward pipeline](28-forward-evidence-pipeline.md) |
-| 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
+| 95 | Telemetry | 🟡 Kısmi | Forward worker son çevrim/pencere/disk/retry/SQL hata sayaçlarını allocation-free atomik state ve HTTP uçlarıyla yayınlıyor. Kalıcı OpenTelemetry/Prometheus/Grafana ve dashboard kaldı. [Telemetry state](../src/TradingBot.Host/ForwardEvidenceTelemetryState.cs) |
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |
 | 98 | Environment mix-up | 🟡 Kısmi | Trading yalnız Paper; OKX public endpoint/instrument startup'ta fail-fast ve CI secretsiz ağsız job olarak ayrık. Testnet/live credential ve deployment pipeline'ları henüz yok. [CI workflow](../.github/workflows/ci.yml) |

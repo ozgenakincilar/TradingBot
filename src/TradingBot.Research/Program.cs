@@ -55,6 +55,11 @@ static async Task<int> RunAsync(string[] arguments)
             return await ValidateDmiDirectionAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "validate-atr-hysteresis-v6")
+        {
+            return await ValidateAtrHysteresisAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
@@ -63,7 +68,8 @@ static async Task<int> RunAsync(string[] arguments)
             ResearchWalkForwardCommand.ProfitProtectionUsage + Environment.NewLine +
             ResearchWalkForwardCommand.AdxRegimeUsage + Environment.NewLine +
             ResearchWalkForwardCommand.AdxDiagnosticsUsage + Environment.NewLine +
-            ResearchWalkForwardCommand.DmiDirectionUsage);
+            ResearchWalkForwardCommand.DmiDirectionUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.AtrHysteresisUsage);
     }
     catch (OperationCanceledException)
     {
@@ -158,7 +164,7 @@ static async Task<int> ValidateStrategyAsync(
         request.RandomSeed,
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
-    return report.Acceptance.IsAccepted ? 0 : 3;
+    return ResearchExitCode.FromAcceptance(report.Acceptance.IsAccepted);
 }
 
 static async Task<int> DiagnoseStrategyLossesAsync(
@@ -200,7 +206,7 @@ static async Task<int> ValidateProfitProtectionAsync(
         new BacktestDiagnosticsPolicy(),
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
-    return report.Acceptance.IsAccepted ? 0 : 3;
+    return ResearchExitCode.FromAcceptance(report.Acceptance.IsAccepted);
 }
 
 static async Task<int> ValidateAdxRegimeAsync(
@@ -222,7 +228,7 @@ static async Task<int> ValidateAdxRegimeAsync(
         new BacktestDiagnosticsPolicy(),
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
-    return report.Acceptance.IsAccepted ? 0 : 3;
+    return ResearchExitCode.FromAcceptance(report.Acceptance.IsAccepted);
 }
 
 static async Task<int> DiagnoseAdxLossesAsync(
@@ -258,5 +264,27 @@ static async Task<int> ValidateDmiDirectionAsync(
         request.Schedule, request.RandomSeed, new BacktestDiagnosticsPolicy(),
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
-    return report.Acceptance.IsAccepted ? 0 : 3;
+    return ResearchExitCode.FromAcceptance(report.Acceptance.IsAccepted);
+}
+
+static async Task<int> ValidateAtrHysteresisAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseAtrHysteresisValidation(arguments);
+    var orchestrator = new AtrHysteresisValidationOrchestrator(
+        request.DatasetFactory,
+        new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator(),
+        new BuyAndHoldBenchmark());
+    var report = await orchestrator.RunAsync(
+        request.Baseline,
+        request.Candidate,
+        request.ExecutionPolicy,
+        request.Schedule,
+        request.ParameterGrid,
+        request.RandomSeed,
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return ResearchExitCode.FromAcceptance(report.Acceptance.IsAccepted);
 }

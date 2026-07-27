@@ -49,6 +49,15 @@ public sealed record ResearchAdxRegimeValidationRequest(
     CsvHistoricalCandleDatasetFactory DatasetFactory,
     int RandomSeed);
 
+public sealed record ResearchAtrHysteresisValidationRequest(
+    StrategyDefinition Baseline,
+    StrategyDefinition Candidate,
+    BacktestExecutionPolicy ExecutionPolicy,
+    WalkForwardSchedule Schedule,
+    CsvHistoricalCandleDatasetFactory DatasetFactory,
+    AtrHysteresisParameterGrid ParameterGrid,
+    int RandomSeed);
+
 public static class ResearchWalkForwardCommand
 {
     private static readonly Timeframe SignalTimeframe =
@@ -426,6 +435,85 @@ public static class ResearchWalkForwardCommand
     public static string DmiDirectionUsage => Usage.Replace(
         "run-walk-forward", "validate-dmi-direction-v5", StringComparison.Ordinal);
 
+    public static ResearchAtrHysteresisValidationRequest ParseAtrHysteresisValidation(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count != 33 ||
+            !string.Equals(arguments[0], "validate-atr-hysteresis-v6", StringComparison.Ordinal))
+        {
+            throw InvalidAtrHysteresisCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "validate-dmi-direction-v5";
+        try
+        {
+            var v5 = ParseDmiDirectionValidation(normalized);
+            if (v5.ExecutionPolicy.InstrumentRules is null)
+            {
+                throw InvalidAtrHysteresisCommand();
+            }
+
+            var candidate = StrategyDefinition.Create(
+                v5.Candidate.StrategyId,
+                6,
+                v5.Candidate.InstrumentId,
+                v5.Candidate.SignalTimeframe,
+                v5.Candidate.TrendTimeframe,
+                v5.Candidate.SignalEmaPeriod,
+                v5.Candidate.TrendEmaPeriod,
+                v5.Candidate.MaximumSignalCandleMovePercent,
+                v5.Candidate.MinimumSignalWarmupCandles,
+                v5.Candidate.MinimumTrendWarmupCandles,
+                signalEmaHysteresisBasisPoints: 0m,
+                trendStrengthPeriod: 14,
+                minimumTrendStrength: 25m,
+                requirePositiveDirectionalMovement: true,
+                signalAtrPeriod: 14,
+                signalAtrHysteresisMultiplier: 0.2m);
+            var execution = v5.ExecutionPolicy with
+            {
+                DynamicExecution = new VolatilityAdjustedExecutionPolicy(
+                    MinimumSpreadBasisPoints: 2m,
+                    MaximumSpreadBasisPoints: 100m,
+                    MinimumSlippageBasisPoints: 1m,
+                    MaximumSlippageBasisPoints: 150m,
+                    VolatilitySpreadMultiplier: 1m,
+                    VolatilitySlippageMultiplier: 2m,
+                    ParticipationSpreadAtLimitBasisPoints: 5m,
+                    ParticipationPenaltyAtLimitBasisPoints: 20m,
+                    TwapChildOrderCount: 4)
+            };
+            var grid = AtrHysteresisParameterGrid.Create(
+                AtrHysteresisParameterCandidate.Create(7, 0.1m),
+                AtrHysteresisParameterCandidate.Create(7, 0.2m),
+                AtrHysteresisParameterCandidate.Create(7, 0.3m),
+                AtrHysteresisParameterCandidate.Create(14, 0.1m),
+                AtrHysteresisParameterCandidate.Create(14, 0.2m),
+                AtrHysteresisParameterCandidate.Create(14, 0.3m),
+                AtrHysteresisParameterCandidate.Create(21, 0.1m),
+                AtrHysteresisParameterCandidate.Create(21, 0.2m),
+                AtrHysteresisParameterCandidate.Create(21, 0.3m));
+            return new ResearchAtrHysteresisValidationRequest(
+                v5.Candidate,
+                candidate,
+                execution,
+                v5.Schedule,
+                v5.DatasetFactory,
+                grid,
+                v5.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidAtrHysteresisCommand();
+        }
+    }
+
+    public static string AtrHysteresisUsage => Usage.Replace(
+        "run-walk-forward", "validate-atr-hysteresis-v6", StringComparison.Ordinal) +
+        " (all four instrument-rule options are required)";
+
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
             value,
@@ -485,4 +573,7 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidDmiDirectionCommand() => new(
         "Research DMI direction validation command is invalid. " + DmiDirectionUsage);
+
+    private static DomainRuleViolationException InvalidAtrHysteresisCommand() => new(
+        "Research ATR hysteresis validation command is invalid. " + AtrHysteresisUsage);
 }

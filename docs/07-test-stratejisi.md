@@ -124,6 +124,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - Dinamik execution parametreleri ayrı configuration hash üretir; legacy sabit maliyet placeholder'ları dinamik kimliği değiştirmez ve v1-v5 kilitli hash yolları korunur. Benchmark maliyet parity'si kurulmadan walk-forward acceptance fail-closed kalır.
 - v6 için sabit/yükselen range ATR fixture'ları, future-candle dışlayan `CalculateAt`, gap/overflow reddi, dar-yüksek volatilite band davranışı, exact reason code ve ATR parametrelerinin configuration identity'yi değiştirdiği regression testleri zorunludur.
 - Adaptif v6 walk-forward testleri grid snapshot/duplicate sınırını, v1-v5 reddini, warm-up fail-fast davranışını, tamamlanmış validation trade'i olmayan grid'de OOS'un açılmamasını ve OOS fiyatları değişse bile seçimin aynı kalmasını kanıtlamalıdır.
+- Dinamik benchmark testleri önceki kapalı mum nedenselliğini, volatilite arttıkça maliyet monotonluğunu, iki yönlü ortak TWAP çekirdeğini, `%5` terminal kapasite reddini ve aynı girdide aynı raporu kanıtlamalıdır.
+- v6 CLI testleri instrument kurallarını, kilitli dynamic policy/grid'i ve process exit `3` kodunun yalnız acceptance reddinden üretildiğini doğrulamalıdır.
 
 ## 5. Determinizm
 

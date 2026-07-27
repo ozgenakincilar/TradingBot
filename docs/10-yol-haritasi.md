@@ -79,7 +79,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Strategy ve benchmark için muhafazakâr tick/lot rounding, minimum quantity/notional kapısı, versioned configuration hash ve legacy kanıt uyumluluğu.
 - [x] OKX `books5`/REST için bounded beş seviyeli depth ve paper execution'da participation-sınırlı cumulative VWAP market impact.
 - [x] Son kapalı mum volatilitesi/hacmiyle doğrusal olmayan spread/slippage, `%5` toplam katılım ve bounded mum-içi TWAP child-order execution sözleşmesi; legacy v1-v5 hash yolları korundu.
-- [ ] Buy-and-hold benchmark için aynı dinamik maliyet/TWAP parity'si; tamamlanmadan yeni execution modeli acceptance çalışmasına giremez.
+- [x] Buy-and-hold benchmark için strateji simülatörüyle ortak dinamik maliyet, `%5` katılım, quantization ve bounded TWAP çekirdeği.
 - Gerçek limit-order queue replay, hidden liquidity ve cancel latency.
 - [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
 - [x] v1 hash/karar uyumluluğunu koruyan, round-trip maliyetinden türetilmiş 30 bps EMA hysteresis v2 araştırma sözleşmesi.
@@ -98,7 +98,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Reddedilmiş v5 için 2021 train/validation işlem bazlı attribution; yaklaşık brüt edge'in pozitif fakat çok küçük olduğu, 15m EMA cross-down turnover'ı ve execution maliyetinin bu edge'i tükettiği gösterildi.
 - [x] v6 için v5 yön/güç kurallarını koruyan `ATR(14) × 0,2` signal EMA bandı, exact Wilder matematiği, legacy hash koruması ve forward acceptance kapılarının ön kaydı.
 - [x] v6 ATR period/multiplier için bounded immutable grid, validation-only Profit Factor seçimi, deterministik tie-break ve taze dataset oturumuyla bakir OOS enjeksiyonu; legacy walk-forward yolu korunuyor.
-- [ ] Dinamik buy-and-hold benchmark parity, v5-v6 validation CLI ve 2026-07-27 sonrası en az beş kesişmeyen forward pencere.
+- [x] Kilitli dinamik execution policy, dokuz adaylı ATR grid'i, sekiz acceptance kapısı ve yalnız acceptance reddinde exit `3` üreten v5-v6 forward validation CLI.
+- [ ] 2026-07-27 sonrası en az beş kesişmeyen 30 günlük forward pencerenin oluşması ve kilitli v6 acceptance koşusu.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

@@ -145,7 +145,61 @@ public sealed class BuyAndHoldBenchmarkTests
     }
 
     [Fact]
-    public async Task DynamicExecutionFailsClosedUntilBenchmarkCostParityExists()
+    public async Task DynamicExecutionUsesVolatilityAdjustedBoundedTwapForBothSides()
+    {
+        var policy = Policy() with
+        {
+            DynamicExecution = new VolatilityAdjustedExecutionPolicy(
+                2m, 100m, 1m, 150m, 1m, 2m, 5m, 20m, 4)
+        };
+
+        var first = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(DynamicCandles(previousLow: 99m, previousHigh: 101m, volume: 100m)),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+        var second = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(DynamicCandles(previousLow: 99m, previousHigh: 101m, volume: 100m)),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+
+        Assert.Equal(first, second);
+        Assert.True(first.BaseQuantity > 0m);
+        Assert.True(first.TotalFees > 0m);
+        Assert.True(first.EstimatedSpreadCost > 0m);
+        Assert.True(first.EstimatedSlippageCost > 0m);
+        Assert.Equal(Start.AddMinutes(30), first.EntryAt);
+        Assert.Equal(Start.AddMinutes(75), first.ExitAt);
+    }
+
+    [Fact]
+    public async Task DynamicBenchmarkEntryCostRisesWithKnownVolatility()
+    {
+        var policy = Policy() with
+        {
+            DynamicExecution = new VolatilityAdjustedExecutionPolicy(
+                2m, 100m, 1m, 150m, 1m, 2m, 5m, 20m, 4)
+        };
+
+        var narrow = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(DynamicCandles(previousLow: 99.5m, previousHigh: 100.5m, volume: 100m)),
+            Split(), policy, Instrument, Signal, CancellationToken.None);
+        var wide = await new BuyAndHoldBenchmark().RunAsync(
+            Stream(DynamicCandles(previousLow: 95m, previousHigh: 105m, volume: 100m)),
+            Split(), policy, Instrument, Signal, CancellationToken.None);
+
+        Assert.True(wide.EntryPrice > narrow.EntryPrice);
+        Assert.True(wide.EstimatedSpreadCost > narrow.EstimatedSpreadCost);
+        Assert.True(wide.EstimatedSlippageCost > narrow.EstimatedSlippageCost);
+    }
+
+    [Fact]
+    public async Task DynamicBenchmarkRequiresCausalPreBoundaryReference()
     {
         var policy = Policy() with
         {
@@ -155,14 +209,27 @@ public sealed class BuyAndHoldBenchmarkTests
 
         var action = () => new BuyAndHoldBenchmark().RunAsync(
             Stream(Candles([100m, 110m, 120m])),
-            Split(),
-            policy,
-            Instrument,
-            Signal,
-            CancellationToken.None);
+            Split(), policy, Instrument, Signal, CancellationToken.None);
 
         var exception = await Assert.ThrowsAsync<DomainRuleViolationException>(action);
-        Assert.Contains("benchmark cost parity", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("completed candle", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DynamicTerminalTwapCannotExceedFivePercentLiquidity()
+    {
+        var policy = Policy() with
+        {
+            DynamicExecution = new VolatilityAdjustedExecutionPolicy(
+                2m, 100m, 1m, 150m, 1m, 2m, 5m, 20m, 4)
+        };
+
+        var action = () => new BuyAndHoldBenchmark().RunAsync(
+            Stream(DynamicCandles(previousLow: 99m, previousHigh: 101m, volume: 10m)),
+            Split(), policy, Instrument, Signal, CancellationToken.None);
+
+        var exception = await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+        Assert.Contains("5% participation", exception.Message, StringComparison.Ordinal);
     }
 
     private static Task<BuyAndHoldBenchmarkReport> RunAsync(decimal[] closes) =>
@@ -192,6 +259,37 @@ public sealed class BuyAndHoldBenchmarkTests
             close,
             baseVolume: 10m))
         .ToArray();
+
+    private static IReadOnlyList<Candle> DynamicCandles(
+        decimal previousLow,
+        decimal previousHigh,
+        decimal volume)
+    {
+        var oos = Candles([100m, 110m, 120m]);
+        return
+        [
+            Candle.CreateClosed(
+                Instrument,
+                Signal,
+                Start.AddMinutes(15),
+                Start.AddMinutes(30),
+                100m,
+                previousHigh,
+                previousLow,
+                100m,
+                volume),
+            .. oos.Select(candle => Candle.CreateClosed(
+                candle.InstrumentId,
+                candle.Timeframe,
+                candle.OpenTime,
+                candle.CloseTime,
+                candle.Open,
+                candle.High,
+                candle.Low,
+                candle.Close,
+                volume))
+        ];
+    }
 
     private static async IAsyncEnumerable<Candle> Stream(
         IEnumerable<Candle> candles,

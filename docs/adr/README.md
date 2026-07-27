@@ -31,6 +31,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0025](0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) | Volatilite/hacim ayarlı maliyet ve `%5` katılımlı TWAP child-order simülasyonu | Kabul edildi |
 | [ADR-0026](0026-atr-hysteresis-v6-arastirma-adayi.md) | Sabit 30 bps yerine `ATR(14) × 0,2` kullanan v6 araştırma adayı | Kabul edildi |
 | [ADR-0027](0027-v6-adaptif-walk-forward-parametre-secimi.md) | Validation-only Profit Factor seçimi ve sonraki bakir OOS'a v6 parametre enjeksiyonu | Kabul edildi |
+| [ADR-0028](0028-dinamik-benchmark-twap-paritesi.md) | Strateji ve buy-and-hold için ortak dinamik maliyet, `%5` katılım ve bounded TWAP çekirdeği | Kabul edildi |
 
 Yeni ADR biçimi:
 

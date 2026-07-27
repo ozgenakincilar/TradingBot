@@ -195,6 +195,7 @@ public sealed class BacktestExecutionSimulator
         Guid.Parse("e27bc43d-67bd-482e-8f41-9c030ab89fe4"));
 
     private readonly PaperExecutionEngine _execution = new();
+    private readonly DynamicTwapExecutionModel _dynamicExecution = new();
 
     public async Task<BacktestExecutionReport> RunAsync(
         StrategyDefinition definition,
@@ -258,7 +259,7 @@ public sealed class BacktestExecutionSimulator
             if (state.Target != ExecutionTarget.None)
             {
                 state.KnownLiquidityQuantity = item.SignalCandle.BaseVolume;
-                state.KnownMarketReference = CompletedCandleMarketReference.Create(
+                state.KnownMarketReference = CompletedCandleExecutionReference.Create(
                     item.SignalCandle);
             }
 
@@ -351,108 +352,22 @@ public sealed class BacktestExecutionSimulator
             return;
         }
 
-        var participation = policy.PaperExecution.MaximumLiquidityParticipation.Fraction;
-        var candleCapacity = BacktestInstrumentQuantization.NormalizeQuantity(
-            policy,
-            Checked(reference.BaseVolume * participation));
-        var executableQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
-            policy,
-            Math.Min(requestedQuantity, candleCapacity));
-        if (executableQuantity <= 0m)
-        {
-            return;
-        }
-
-        var maximumExecutionPrice = CalculateMaximumExecutionPrice(
-            policy,
-            dynamicExecution,
+        var request = new DynamicTwapExecutionRequest(
+            definition.InstrumentId,
+            policy.QuoteAsset,
+            side,
+            reference,
             executionCandle.Open,
-            side);
-        var childCount = DetermineChildOrderCount(
+            requestedQuantity,
+            state.TargetSubmittedAt,
+            executionCandle.OpenTime,
+            executionCandle.Timeframe.Duration);
+        var consumer = new SimulationTwapFillConsumer(position, state);
+        _dynamicExecution.Execute(
             policy,
-            maximumExecutionPrice,
-            executableQuantity,
-            dynamicExecution.TwapChildOrderCount);
-        var remainingThisCandle = executableQuantity;
-        var filledThisCandle = 0m;
-        for (var childIndex = 0; childIndex < childCount; childIndex++)
-        {
-            var remainingChildren = childCount - childIndex;
-            var childQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
-                policy,
-                remainingThisCandle / remainingChildren);
-            if (childQuantity <= 0m)
-            {
-                continue;
-            }
-
-            var cumulativeQuantity = Checked(filledThisCandle + childQuantity);
-            var input = new ExecutionCostInput(
-                reference.Close,
-                reference.High,
-                reference.Low,
-                reference.BaseVolume,
-                cumulativeQuantity,
-                participation);
-            var quote = VolatilityAdjustedExecutionCostModel.CalculateValidated(
-                in dynamicExecution,
-                in input);
-            var occurredAt = CalculateChildOrderTime(
-                executionCandle,
-                policy.PaperExecution.MinimumLatency,
-                childIndex,
-                childCount);
-            var market = CreateDynamicMarket(
-                definition.InstrumentId,
-                executionCandle.Open,
-                childQuantity,
-                participation,
-                quote.SpreadBasisPoints,
-                occurredAt,
-                policy);
-            var childPolicy = policy.PaperExecution with
-            {
-                SlippageBasisPoints = quote.SlippageBasisPoints
-            };
-            var result = _execution.Evaluate(
-                childPolicy,
-                new PaperExecutionRequest(
-                    side == OrderSide.Buy ? BuyOrderId : SellOrderId,
-                    definition.InstrumentId,
-                    policy.QuoteAsset,
-                    side,
-                    OrderType.Market,
-                    Quantity.From(childQuantity),
-                    null,
-                    state.TargetSubmittedAt),
-                market);
-            if (result.Fill is not { } rawFill ||
-                BacktestInstrumentQuantization.NormalizeFill(
-                    policy,
-                    rawFill,
-                    side) is not { } fill)
-            {
-                continue;
-            }
-
-            if (side == OrderSide.Buy)
-            {
-                ApplyDynamicBuyFill(market, fill, position, state);
-            }
-            else
-            {
-                ApplyDynamicSellFill(market, fill, position, state);
-            }
-
-            filledThisCandle = Checked(filledThisCandle + fill.Quantity.Value);
-            remainingThisCandle = Math.Max(
-                0m,
-                Checked(remainingThisCandle - fill.Quantity.Value));
-            if (state.Target == ExecutionTarget.None)
-            {
-                break;
-            }
-        }
+            in dynamicExecution,
+            in request,
+            ref consumer);
 
         CompleteDynamicTargetIfSatisfied(
             policy,
@@ -483,9 +398,9 @@ public sealed class BacktestExecutionSimulator
         }
 
         var maximumCost = Math.Min(state.RemainingEntryBudget, state.Cash);
-        var maximumPrice = CalculateMaximumExecutionPrice(
+        var maximumPrice = DynamicTwapExecutionModel.CalculateMaximumExecutionPrice(
             policy,
-            dynamicExecution,
+            in dynamicExecution,
             openPrice,
             OrderSide.Buy);
         var unitCost = Checked(
@@ -495,115 +410,17 @@ public sealed class BacktestExecutionSimulator
             maximumCost / unitCost);
     }
 
-    private static decimal CalculateMaximumExecutionPrice(
-        BacktestExecutionPolicy policy,
-        VolatilityAdjustedExecutionPolicy dynamicExecution,
-        decimal openPrice,
-        OrderSide side)
-    {
-        var spreadFraction = dynamicExecution.MaximumSpreadBasisPoints / 20_000m;
-        var reference = side == OrderSide.Buy
-            ? Checked(openPrice * (1m + spreadFraction))
-            : Checked(openPrice * (1m - spreadFraction));
-        return BacktestInstrumentQuantization.NormalizePrice(
-            policy,
-            side,
-            ApplySlippage(
-                reference,
-                side,
-                dynamicExecution.MaximumSlippageBasisPoints));
-    }
-
-    private static int DetermineChildOrderCount(
-        BacktestExecutionPolicy policy,
-        decimal expectedPrice,
-        decimal executableQuantity,
-        int configuredCount)
-    {
-        for (var count = configuredCount; count >= 2; count--)
-        {
-            var childQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
-                policy,
-                executableQuantity / count);
-            if (BacktestInstrumentQuantization.IsTradable(
-                policy,
-                expectedPrice,
-                childQuantity))
-            {
-                return count;
-            }
-        }
-
-        return 1;
-    }
-
-    private static DateTimeOffset CalculateChildOrderTime(
-        Candle candle,
-        TimeSpan minimumLatency,
-        int childIndex,
-        int childCount)
-    {
-        try
-        {
-            var availableTicks = checked(candle.Timeframe.Duration.Ticks -
-                minimumLatency.Ticks);
-            var offsetTicks = checked(minimumLatency.Ticks +
-                availableTicks * childIndex / childCount);
-            return candle.OpenTime.AddTicks(offsetTicks);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            throw new DomainRuleViolationException(
-                "TWAP child-order time exceeded the supported range.");
-        }
-        catch (OverflowException)
-        {
-            throw new DomainRuleViolationException(
-                "TWAP child-order time calculation overflowed.");
-        }
-    }
-
-    private static PaperTopOfBookSnapshot CreateDynamicMarket(
-        InstrumentId instrumentId,
-        decimal openPrice,
-        decimal childQuantity,
-        decimal participationFraction,
-        decimal spreadBasisPoints,
-        DateTimeOffset occurredAt,
-        BacktestExecutionPolicy policy)
-    {
-        var halfSpread = spreadBasisPoints / 20_000m;
-        var bid = BacktestInstrumentQuantization.NormalizePrice(
-            policy,
-            OrderSide.Sell,
-            Checked(openPrice * (1m - halfSpread)));
-        var ask = BacktestInstrumentQuantization.NormalizePrice(
-            policy,
-            OrderSide.Buy,
-            Checked(openPrice * (1m + halfSpread)));
-        var childLiquidity = Checked(childQuantity / participationFraction);
-        return new PaperTopOfBookSnapshot(
-            instrumentId,
-            Price.From(bid),
-            childLiquidity,
-            Price.From(ask),
-            childLiquidity,
-            occurredAt);
-    }
-
     private static void ApplyDynamicBuyFill(
         PaperTopOfBookSnapshot market,
         PaperFill fill,
         SpotPosition position,
         SimulationState state)
     {
-        var totalCost = Checked(
+        var requestedCost = Checked(
             fill.Price.Value * fill.Quantity.Value + fill.QuoteFee.Amount);
-        if (totalCost > state.Cash || totalCost > state.RemainingEntryBudget)
-        {
-            throw new DomainRuleViolationException(
-                "TWAP buy fill exceeded its available budget.");
-        }
+        var totalCost = DynamicTwapExecutionModel.ClampQuoteDebit(
+            requestedCost,
+            Math.Min(state.Cash, state.RemainingEntryBudget));
 
         state.Cash = Checked(state.Cash - totalCost);
         state.RemainingEntryBudget = Math.Max(
@@ -640,6 +457,26 @@ public sealed class BacktestExecutionSimulator
         }
     }
 
+    private readonly struct SimulationTwapFillConsumer(
+        SpotPosition position,
+        SimulationState state) : IDynamicTwapFillConsumer
+    {
+        public void Accept(
+            PaperTopOfBookSnapshot market,
+            PaperFill fill,
+            OrderSide side)
+        {
+            if (side == OrderSide.Buy)
+            {
+                ApplyDynamicBuyFill(market, fill, position, state);
+            }
+            else
+            {
+                ApplyDynamicSellFill(market, fill, position, state);
+            }
+        }
+    }
+
     private static void CompleteDynamicTargetIfSatisfied(
         BacktestExecutionPolicy policy,
         VolatilityAdjustedExecutionPolicy dynamicExecution,
@@ -652,22 +489,12 @@ public sealed class BacktestExecutionSimulator
             return;
         }
 
-        var maximumPrice = CalculateMaximumExecutionPrice(
-            policy,
-            dynamicExecution,
-            openPrice,
-            OrderSide.Buy);
-        var remainingQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
-            policy,
-            state.RemainingEntryBudget /
-            Checked(maximumPrice *
-                (1m + policy.PaperExecution.CommissionRate.Fraction)));
-        if (state.RemainingEntryBudget <= 0.00000001m ||
-            state.Cash <= 0.00000001m ||
-            !BacktestInstrumentQuantization.IsTradable(
+        if (!DynamicTwapExecutionModel.HasTradableEntryRemainder(
                 policy,
-                maximumPrice,
-                remainingQuantity))
+                in dynamicExecution,
+                openPrice,
+                state.RemainingEntryBudget,
+                state.Cash))
         {
             state.ClearTarget();
         }
@@ -958,25 +785,6 @@ public sealed class BacktestExecutionSimulator
         }
     }
 
-    private readonly record struct CompletedCandleMarketReference(
-        decimal Close,
-        decimal High,
-        decimal Low,
-        decimal BaseVolume,
-        bool IsAvailable)
-    {
-        public static CompletedCandleMarketReference Create(Candle candle)
-        {
-            ArgumentNullException.ThrowIfNull(candle);
-            return new CompletedCandleMarketReference(
-                candle.Close,
-                candle.High,
-                candle.Low,
-                candle.BaseVolume,
-                IsAvailable: true);
-        }
-    }
-
     private enum ExecutionTarget
     {
         None = 0,
@@ -1027,7 +835,7 @@ public sealed class BacktestExecutionSimulator
 
         public decimal KnownLiquidityQuantity { get; set; }
 
-        public CompletedCandleMarketReference KnownMarketReference { get; set; }
+        public CompletedCandleExecutionReference KnownMarketReference { get; set; }
 
         public decimal RealizedPnlAtTradeOpen { get; set; }
 

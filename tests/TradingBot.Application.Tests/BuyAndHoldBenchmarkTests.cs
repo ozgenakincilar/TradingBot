@@ -144,6 +144,27 @@ public sealed class BuyAndHoldBenchmarkTests
         Assert.True(report.MaximumDrawdownPercent > 0m);
     }
 
+    [Fact]
+    public async Task DynamicExecutionFailsClosedUntilBenchmarkCostParityExists()
+    {
+        var policy = Policy() with
+        {
+            DynamicExecution = new VolatilityAdjustedExecutionPolicy(
+                2m, 100m, 1m, 150m, 1m, 2m, 5m, 20m, 4)
+        };
+
+        var action = () => new BuyAndHoldBenchmark().RunAsync(
+            Stream(Candles([100m, 110m, 120m])),
+            Split(),
+            policy,
+            Instrument,
+            Signal,
+            CancellationToken.None);
+
+        var exception = await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+        Assert.Contains("benchmark cost parity", exception.Message, StringComparison.Ordinal);
+    }
+
     private static Task<BuyAndHoldBenchmarkReport> RunAsync(decimal[] closes) =>
         new BuyAndHoldBenchmark().RunAsync(
             Stream(Candles(closes)),

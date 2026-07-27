@@ -27,7 +27,8 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0021](0021-deterministik-islem-kayip-attribution.md) | Legacy hash'leri koruyan bounded ve deterministik trade-loss attribution | Kabul edildi |
 | [ADR-0022](0022-profit-protection-v3-arastirma-adayi.md) | Cooldown ve trailing profit-protection v3 araştırma adayı | Kabul edildi |
 | [ADR-0023](0023-adx-trend-kalite-v4-arastirma-adayi.md) | Yalnız entry'de ADX(14) trend-kalite filtresi kullanan v4 araştırma adayı | Kabul edildi |
-| [ADR-0024](0024-dmi-yon-v5-arastirma-adayi.md) | ADX gücüne entry-only `+DI > -DI` yön doğrulaması ekleyen v5 araştırma adayı | Kabul edildi |
+| [ADR-0024](0024-dmi-yon-v5-arastirma-adayi.md) | ADX gücüne entry-only `+DI > -DI` yön doğrulaması ekleyen v5 araştırma adayı | Araştırma kararı tamamlandı — reddedildi |
+| [ADR-0025](0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) | Volatilite/hacim ayarlı maliyet ve `%5` katılımlı TWAP child-order simülasyonu | Kabul edildi |
 
 Yeni ADR biçimi:
 

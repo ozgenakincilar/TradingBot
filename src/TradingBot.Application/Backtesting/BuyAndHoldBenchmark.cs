@@ -65,6 +65,11 @@ public sealed class BuyAndHoldBenchmark
         }
 
         policy.Validate(signalTimeframe, instrumentId);
+        if (policy.DynamicExecution is not null)
+        {
+            throw new DomainRuleViolationException(
+                "Dynamic execution cannot enter walk-forward acceptance until benchmark cost parity is implemented.");
+        }
 
         Candle? first = null;
         Candle? previous = null;

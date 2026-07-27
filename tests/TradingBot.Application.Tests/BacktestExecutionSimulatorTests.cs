@@ -118,6 +118,104 @@ public sealed class BacktestExecutionSimulatorTests
     }
 
     [Fact]
+    public void DynamicCostGrowsNonlinearlyWithVolatilityAndParticipation()
+    {
+        var policy = DynamicExecution();
+        var calmSmall = new ExecutionCostInput(
+            100m, 100.5m, 99.5m, 1_000m, 5m, 0.05m);
+        var volatileSmall = calmSmall with { High = 104m, Low = 96m };
+        var volatileLarge = volatileSmall with { RequestedQuantity = 50m };
+
+        var calmQuote = VolatilityAdjustedExecutionCostModel.Calculate(
+            in policy,
+            in calmSmall);
+        var volatileQuote = VolatilityAdjustedExecutionCostModel.Calculate(
+            in policy,
+            in volatileSmall);
+        var largeQuote = VolatilityAdjustedExecutionCostModel.Calculate(
+            in policy,
+            in volatileLarge);
+
+        Assert.True(volatileQuote.SpreadBasisPoints > calmQuote.SpreadBasisPoints);
+        Assert.True(volatileQuote.SlippageBasisPoints > calmQuote.SlippageBasisPoints);
+        Assert.True(largeQuote.SpreadBasisPoints > volatileQuote.SpreadBasisPoints);
+        Assert.True(largeQuote.SlippageBasisPoints > volatileQuote.SlippageBasisPoints);
+        Assert.True(largeQuote.SpreadBasisPoints <= policy.MaximumSpreadBasisPoints);
+        Assert.True(largeQuote.SlippageBasisPoints <= policy.MaximumSlippageBasisPoints);
+    }
+
+    [Fact]
+    public async Task DynamicExecutionRejectsParticipationAboveFivePercent()
+    {
+        var policy = DynamicPolicy() with
+        {
+            PaperExecution = DynamicPolicy().PaperExecution with
+            {
+                MaximumLiquidityParticipation = Percentage.FromPercent(5.01m)
+            }
+        };
+
+        var action = () => RunAsync(Decisions(110m), policy);
+
+        await Assert.ThrowsAsync<DomainRuleViolationException>(action);
+    }
+
+    [Fact]
+    public async Task DynamicExecutionSplitsAllowedParticipationAcrossTwapChildren()
+    {
+        StrategyBacktestDecision[] decisions =
+        [
+            Item(CandleWithRangeAndVolume(0, 100m, 102m, 98m, 100m),
+                StrategyAction.EnterLong, StrategyPositionState.Long,
+                "signal-ema-cross-up"),
+            Item(CandleWithRangeAndVolume(1, 100m, 180m, 20m, 1m),
+                StrategyAction.Hold, StrategyPositionState.Long,
+                "long-position-held")
+        ];
+
+        var report = await RunAsync(decisions, DynamicPolicy());
+
+        Assert.Equal(4, report.FillCount);
+        Assert.True(report.OpenQuantity > 0m);
+        Assert.True(report.OpenQuantity <= 5m);
+        Assert.Equal(Start.AddMinutes(15).AddMilliseconds(100), report.FirstFillAt);
+        Assert.True(report.LastFillAt > report.FirstFillAt);
+        Assert.True(report.LastFillAt < Start.AddMinutes(30));
+    }
+
+    [Fact]
+    public async Task DynamicFillCostsUseOnlyPreviouslyCompletedCandleState()
+    {
+        var known = CandleWithRangeAndVolume(0, 100m, 102m, 98m, 100m);
+        StrategyBacktestDecision[] firstDecisions =
+        [
+            Item(known, StrategyAction.EnterLong, StrategyPositionState.Long,
+                "signal-ema-cross-up"),
+            Item(CandleWithRangeAndVolume(1, 100m, 101m, 99m, 1_000m),
+                StrategyAction.Hold, StrategyPositionState.Long,
+                "long-position-held")
+        ];
+        StrategyBacktestDecision[] secondDecisions =
+        [
+            Item(known, StrategyAction.EnterLong, StrategyPositionState.Long,
+                "signal-ema-cross-up"),
+            Item(CandleWithRangeAndVolume(1, 100m, 500m, 1m, 0.01m),
+                StrategyAction.Hold, StrategyPositionState.Long,
+                "long-position-held")
+        ];
+
+        var first = await RunAsync(firstDecisions, DynamicPolicy());
+        var second = await RunAsync(secondDecisions, DynamicPolicy());
+
+        Assert.Equal(first.OpenQuantity, second.OpenQuantity);
+        Assert.Equal(first.TotalFees, second.TotalFees);
+        Assert.Equal(first.EstimatedSpreadCost, second.EstimatedSpreadCost);
+        Assert.Equal(first.EstimatedSlippageCost, second.EstimatedSlippageCost);
+        Assert.Equal(first.FirstFillAt, second.FirstFillAt);
+        Assert.Equal(first.LastFillAt, second.LastFillAt);
+    }
+
+    [Fact]
     public async Task LatencyAtLeastOneSignalCandleIsRejected()
     {
         var policy = Policy() with
@@ -390,6 +488,23 @@ public sealed class BacktestExecutionSimulatorTests
             open,
             100m);
 
+    private static Candle CandleWithRangeAndVolume(
+        int index,
+        decimal open,
+        decimal high,
+        decimal low,
+        decimal volume) =>
+        Candle.CreateClosed(
+            Instrument,
+            Signal,
+            Start + (Signal.Duration * index),
+            Start.AddHours(2),
+            open,
+            high,
+            low,
+            open,
+            volume);
+
     private static async IAsyncEnumerable<StrategyBacktestDecision> ToAsync(
         IEnumerable<StrategyBacktestDecision> decisions)
     {
@@ -412,6 +527,26 @@ public sealed class BacktestExecutionSimulatorTests
             Percentage.FromPercent(0.1m),
             SlippageBasisPoints: 10m,
             Percentage.FromPercent(100m)));
+
+    private static BacktestExecutionPolicy DynamicPolicy() => Policy() with
+    {
+        PaperExecution = Policy().PaperExecution with
+        {
+            MaximumLiquidityParticipation = Percentage.FromPercent(5m)
+        },
+        DynamicExecution = DynamicExecution()
+    };
+
+    private static VolatilityAdjustedExecutionPolicy DynamicExecution() => new(
+        MinimumSpreadBasisPoints: 2m,
+        MaximumSpreadBasisPoints: 100m,
+        MinimumSlippageBasisPoints: 1m,
+        MaximumSlippageBasisPoints: 150m,
+        VolatilitySpreadMultiplier: 1m,
+        VolatilitySlippageMultiplier: 2m,
+        ParticipationSpreadAtLimitBasisPoints: 5m,
+        ParticipationPenaltyAtLimitBasisPoints: 20m,
+        TwapChildOrderCount: 4);
 
     private static TradingBot.Domain.Instruments.Instrument InstrumentRules(
         decimal priceTickSize,

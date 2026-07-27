@@ -88,6 +88,8 @@ Reddedilmiş v2 adayındaki zararları işlem seviyesinde incelemek için aynı 
 
 Ön kayıtlı cooldown ve trailing profit-protection v3 adayını ayrı development verisinde v2 ile karşılaştırmak için aynı argümanlarla `validate-profit-protection-v3` kullanılır. Komut diagnostics tabanlı yedi acceptance kapısının tamamını ister, OOS candle'larını strategy stream'ine vermez ve ret durumunda `exit 3` döndürür. v3'ün 2023 validation sonucu reddedilmiştir; kodun bulunması paper/testnet/live izni değildir.
 
+Reddedilmiş ADX v4 adayının aynı kilitli train/validation stream'indeki işlem bazlı exit reason, MFE/MAE ve maliyet attribution raporu için `diagnose-adx-regime-v4` kullanılır. Komut holdout/OOS açmaz ve yeni strateji izni üretmez.
+
 ## Güvenlik
 
 API anahtarları kaynak koda, `appsettings*.json` dosyalarına veya loglara yazılmaz. İlk sürüm yalnızca `Paper` modunda çalışır. Live moda geçiş ayrı bir güvenlik kontrol listesi ve açık onay gerektirir.

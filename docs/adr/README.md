@@ -33,6 +33,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0027](0027-v6-adaptif-walk-forward-parametre-secimi.md) | Validation-only Profit Factor seçimi ve sonraki bakir OOS'a v6 parametre enjeksiyonu | Kabul edildi |
 | [ADR-0028](0028-dinamik-benchmark-twap-paritesi.md) | Strateji ve buy-and-hold için ortak dinamik maliyet, `%5` katılım ve bounded TWAP çekirdeği | Kabul edildi |
 | [ADR-0029](0029-forward-evidence-pipeline.md) | Polly dayanıklılığı, immutable CSV/SHA-256, append-only SQL ve otomatik forward v6 kanıt hattı | Kabul edildi |
+| [ADR-0030](0030-forward-evidence-operasyonel-dogrulama.md) | Gerçek SQL, yedi pencereli E2E prova, izole OKX smoke ve atomik telemetry sınırı | Kabul edildi |
 
 Yeni ADR biçimi:
 

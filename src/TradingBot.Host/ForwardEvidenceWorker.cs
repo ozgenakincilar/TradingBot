@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using System.Data.Common;
 using TradingBot.Application.Backtesting;
 using TradingBot.Domain.Instruments;
 using TradingBot.Domain.MarketData;
@@ -10,11 +11,14 @@ public sealed class ForwardEvidenceWorker(
     IOptions<ForwardEvidenceOptions> options,
     IOptions<TradingOptions> tradingOptions,
     TimeProvider timeProvider,
+    ForwardEvidenceTelemetryState telemetry,
     ILogger<ForwardEvidenceWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var settings = options.Value;
+        using var instanceLease = ForwardEvidenceSingleInstanceLease.Acquire(
+            settings.RootPath);
         var trading = tradingOptions.Value;
         var policy = new ForwardEvidencePolicy(
             settings.PipelineId,
@@ -34,6 +38,12 @@ public sealed class ForwardEvidenceWorker(
                     .GetRequiredService<ForwardEvidencePipeline>();
                 var result = await pipeline.RunOnceAsync(policy, stoppingToken);
                 failures = 0;
+                telemetry.RecordSuccessfulCycle(
+                    timeProvider.GetUtcNow(),
+                    result.CompletedWindowCount,
+                    result.SealedWindowCount,
+                    result.WindowSealed,
+                    GetAvailableDiskBytes(settings.RootPath));
                 logger.LogInformation(
                     "Forward evidence cycle completed: completed={CompletedWindowCount}, sealed={SealedWindowCount}, newWindow={WindowSealed}, evaluationStored={EvaluationStored}, accepted={Accepted}",
                     result.CompletedWindowCount,
@@ -49,6 +59,11 @@ public sealed class ForwardEvidenceWorker(
             }
             catch (Exception exception)
             {
+                if (ContainsDatabaseException(exception))
+                {
+                    telemetry.RecordSqlError();
+                }
+
                 failures = Math.Min(failures + 1, 6);
                 var backoff = TimeSpan.FromSeconds(1 << (failures - 1)) +
                               TimeSpan.FromMilliseconds(Random.Shared.Next(100, 1_001));
@@ -59,5 +74,27 @@ public sealed class ForwardEvidenceWorker(
                 await Task.Delay(backoff, timeProvider, stoppingToken);
             }
         }
+    }
+
+    private static long GetAvailableDiskBytes(string rootPath)
+    {
+        var fullPath = Path.GetFullPath(rootPath);
+        var root = Path.GetPathRoot(fullPath)
+            ?? throw new InvalidOperationException(
+                "Forward evidence storage root has no filesystem volume.");
+        return new DriveInfo(root).AvailableFreeSpace;
+    }
+
+    private static bool ContainsDatabaseException(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is DbException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

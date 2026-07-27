@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$trackedFiles = @(git ls-files)
+$trackedFiles = @(git -c core.quotepath=false ls-files)
 if ($LASTEXITCODE -ne 0) {
     throw 'Unable to enumerate tracked files.'
 }

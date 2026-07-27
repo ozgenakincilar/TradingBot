@@ -388,6 +388,44 @@ public static class ResearchWalkForwardCommand
     public static string AdxDiagnosticsUsage => Usage.Replace(
         "run-walk-forward", "diagnose-adx-regime-v4", StringComparison.Ordinal);
 
+    public static ResearchAdxRegimeValidationRequest ParseDmiDirectionValidation(
+        IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (arguments.Count is not (25 or 33) ||
+            !string.Equals(arguments[0], "validate-dmi-direction-v5", StringComparison.Ordinal))
+        {
+            throw InvalidDmiDirectionCommand();
+        }
+
+        var normalized = arguments.ToArray();
+        normalized[0] = "validate-adx-regime-v4";
+        try
+        {
+            var v4 = ParseAdxRegimeValidation(normalized).Candidate;
+            var commonArguments = arguments.ToArray();
+            commonArguments[0] = "validate-hysteresis-v2";
+            var common = ParseValidation(commonArguments);
+            var candidate = StrategyDefinition.Create(
+                v4.StrategyId, 5, v4.InstrumentId, v4.SignalTimeframe, v4.TrendTimeframe,
+                v4.SignalEmaPeriod, v4.TrendEmaPeriod,
+                v4.MaximumSignalCandleMovePercent, v4.MinimumSignalWarmupCandles,
+                v4.MinimumTrendWarmupCandles, signalEmaHysteresisBasisPoints: 30m,
+                trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+                requirePositiveDirectionalMovement: true);
+            return new ResearchAdxRegimeValidationRequest(
+                v4, candidate, common.ExecutionPolicy, common.Schedule,
+                common.DatasetFactory, common.RandomSeed);
+        }
+        catch (DomainRuleViolationException)
+        {
+            throw InvalidDmiDirectionCommand();
+        }
+    }
+
+    public static string DmiDirectionUsage => Usage.Replace(
+        "run-walk-forward", "validate-dmi-direction-v5", StringComparison.Ordinal);
+
     private static bool TryUtc(string value, out DateTimeOffset parsed) =>
         DateTimeOffset.TryParseExact(
             value,
@@ -444,4 +482,7 @@ public static class ResearchWalkForwardCommand
 
     private static DomainRuleViolationException InvalidAdxDiagnosticsCommand() => new(
         "Research ADX loss diagnostics command is invalid. " + AdxDiagnosticsUsage);
+
+    private static DomainRuleViolationException InvalidDmiDirectionCommand() => new(
+        "Research DMI direction validation command is invalid. " + DmiDirectionUsage);
 }

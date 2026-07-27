@@ -104,17 +104,27 @@ public static class LongFlatStrategyEvaluator
         {
             (action, reason) = (StrategyAction.Hold, "fomo-guard-blocked");
         }
-        else if (definition.Version == 4 &&
-                 AverageDirectionalIndex.Calculate(
-                     trendCandles,
-                     definition.TrendStrengthPeriod).MeetsMinimum(
-                         definition.MinimumTrendStrength) is false)
-        {
-            (action, reason) = (StrategyAction.Hold, "trend-strength-blocked");
-        }
         else
         {
-            (action, reason) = (StrategyAction.EnterLong, crossUpReason);
+            var directional = definition.Version is 4 or 5
+                ? AverageDirectionalIndex.Calculate(
+                    trendCandles, definition.TrendStrengthPeriod)
+                : null;
+            if (directional is not null &&
+                !directional.MeetsMinimum(definition.MinimumTrendStrength))
+            {
+                (action, reason) = (StrategyAction.Hold, "trend-strength-blocked");
+            }
+            else if (definition.RequirePositiveDirectionalMovement &&
+                     directional!.PlusDirectionalIndex <=
+                     directional.MinusDirectionalIndex)
+            {
+                (action, reason) = (StrategyAction.Hold, "trend-direction-blocked");
+            }
+            else
+            {
+                (action, reason) = (StrategyAction.EnterLong, crossUpReason);
+            }
         }
 
         return StrategyDecision.Create(

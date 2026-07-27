@@ -124,6 +124,20 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void DmiDirectionValidationCreatesLockedV4V5Comparison()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "validate-dmi-direction-v5";
+
+        var result = ResearchWalkForwardCommand.ParseDmiDirectionValidation(arguments);
+
+        Assert.Equal(4, result.Baseline.Version);
+        Assert.False(result.Baseline.RequirePositiveDirectionalMovement);
+        Assert.Equal(5, result.Candidate.Version);
+        Assert.True(result.Candidate.RequirePositiveDirectionalMovement);
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

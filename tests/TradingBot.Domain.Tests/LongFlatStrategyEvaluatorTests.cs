@@ -251,6 +251,30 @@ public sealed class LongFlatStrategyEvaluatorTests
         Assert.Equal("long-position-held", decision.ReasonCode);
     }
 
+    [Fact]
+    public void V5NegativeDirectionalMovementBlocksEntry()
+    {
+        var trend = Series(Trend, 200, index =>
+            index < 172 ? 100m + index : 272m - (index - 171));
+
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V5Definition(), SignalCandles(100m, 101m), trend,
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.Hold, decision.Action);
+        Assert.Equal("trend-direction-blocked", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V5PositiveDirectionalMovementAllowsEntry()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V5Definition(), SignalCandles(100m, 101m),
+            StrongBullishTrendCandles(), StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.EnterLong, decision.Action);
+    }
+
     private static StrategyDefinition Definition(
         int version = 1,
         decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
@@ -296,6 +320,12 @@ public sealed class LongFlatStrategyEvaluatorTests
         signalEmaHysteresisBasisPoints: 30m,
         trendStrengthPeriod: 14,
         minimumTrendStrength: 25m);
+
+    private static StrategyDefinition V5Definition() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline", 5, Instrument, Signal, Trend,
+        20, 200, 2m, 200, 200, signalEmaHysteresisBasisPoints: 30m,
+        trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+        requirePositiveDirectionalMovement: true);
 
     private static IReadOnlyList<Candle> SignalCandles(decimal latestOpen, decimal latestClose)
     {

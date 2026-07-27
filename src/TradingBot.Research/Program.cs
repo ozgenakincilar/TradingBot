@@ -50,6 +50,11 @@ static async Task<int> RunAsync(string[] arguments)
             return await DiagnoseAdxLossesAsync(arguments, shutdown.Token);
         }
 
+        if (arguments.FirstOrDefault() == "validate-dmi-direction-v5")
+        {
+            return await ValidateDmiDirectionAsync(arguments, shutdown.Token);
+        }
+
         throw new DomainRuleViolationException(
             ResearchExportCommand.Usage + Environment.NewLine +
             ResearchWalkForwardCommand.Usage + Environment.NewLine +
@@ -57,7 +62,8 @@ static async Task<int> RunAsync(string[] arguments)
             ResearchWalkForwardCommand.DiagnosticsUsage + Environment.NewLine +
             ResearchWalkForwardCommand.ProfitProtectionUsage + Environment.NewLine +
             ResearchWalkForwardCommand.AdxRegimeUsage + Environment.NewLine +
-            ResearchWalkForwardCommand.AdxDiagnosticsUsage);
+            ResearchWalkForwardCommand.AdxDiagnosticsUsage + Environment.NewLine +
+            ResearchWalkForwardCommand.DmiDirectionUsage);
     }
     catch (OperationCanceledException)
     {
@@ -237,4 +243,20 @@ static async Task<int> DiagnoseAdxLossesAsync(
         cancellationToken);
     await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
     return 0;
+}
+
+static async Task<int> ValidateDmiDirectionAsync(
+    string[] arguments,
+    CancellationToken cancellationToken)
+{
+    var request = ResearchWalkForwardCommand.ParseDmiDirectionValidation(arguments);
+    var orchestrator = new DmiDirectionValidationOrchestrator(
+        request.DatasetFactory, new DeterministicStrategyBacktest(),
+        new BacktestExecutionSimulator(), new BuyAndHoldBenchmark());
+    var report = await orchestrator.RunAsync(
+        request.Baseline, request.Candidate, request.ExecutionPolicy,
+        request.Schedule, request.RandomSeed, new BacktestDiagnosticsPolicy(),
+        cancellationToken);
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(report));
+    return report.Acceptance.IsAccepted ? 0 : 3;
 }

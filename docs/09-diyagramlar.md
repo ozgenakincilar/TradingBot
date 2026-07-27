@@ -959,4 +959,27 @@ flowchart TD
     FUTURE[2026-07-27 sonrası forward OOS] -. validation geçmeden bekler .-> DENY
 ```
 
-ADX yön değil trend gücü ölçer; yön EMA200 filtresinden gelir. v4, v3 state/cooldown/trailing davranışını taşımaz ve henüz uygulanmış ya da veri üzerinde denenmiş değildir.
+ADX yön değil trend gücü ölçer; yön EMA200 filtresinden gelir. v4, v3 state/cooldown/trailing davranışını taşımadan uygulanmış, 2022 historical validation'da turnover/maliyeti azaltmasına rağmen ekonomik kapıları geçemediği için reddedilmiştir.
+
+## 40. v5 DMI entry yön doğrulaması
+
+```mermaid
+flowchart TD
+    H[(Bounded closed 1H OHLC)] --> DMI[Wilder ADX,+DI,-DI 14<br/>tek checked decimal geçiş]
+    DMI --> POWER{ADX >= 25?}
+    POWER -- Hayır --> B1[trend-strength-blocked]
+    POWER -- Evet --> DIR{+DI > -DI?}
+    DIR -- Hayır --> B2[trend-direction-blocked]
+    EMA[1H close > EMA200] --> ENTRY{Flat entry gate}
+    CROSS[15m EMA20 30 bps cross<br/>FOMO <= %2] --> ENTRY
+    DIR -- Evet --> ENTRY
+    ENTRY --> LONG[EnterLong]
+    LONG --> EXIT[Değişmeyen v2/v4 exit]
+    DMI -. long exit'i etkilemez .-> EXIT
+    V4[v4 baseline] --> GATES[Ön kayıtlı 8 kapı]
+    V5[v5 candidate] --> GATES
+    DEV[(2021 train/validation)] --> GATES
+    HOLDOUT[2021 holdout] -. açılmaz .-> REJECT[Fail closed]
+```
+
+v5 yalnız kısa vadeli DMI yön üstünlüğünü ekler. 2021 verisi tasarım tamamlanmadan indirilmez; historical başarı forward OOS veya canlı işlem izni sayılmaz.

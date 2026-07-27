@@ -119,6 +119,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - v4 için canonical ADX fixture, zero-range, güçlü trend, choppy range, exact `25` sınırı, minimum 28 candle, gap/identity/overflow ve determinism testleri uygulanmıştır.
 - ADX'nin yalnız entry'yi engellediği, long pozisyonda ADX düşüşünün v2 exit kararını değiştirmediği ve v1-v3 test/hash yollarının aynı kaldığı regression testleri validation ön koşuludur.
 - v4 acceptance evaluator sekiz kapıyı bağımsız değerlendirir; sıfır işlem profit-factor başarısı sayılamaz ve herhangi bir başarısız kapı tüm adayı reddeder.
+- Planlanan v5 için yükselen/düşen/sabit DMI fixture'ları, strict `plusDI > minusDI` sınırı, entry-only davranış, v1-v4 hash regression ve sekiz v4-v5 acceptance kapısı zorunludur.
 
 ## 5. Determinizm
 

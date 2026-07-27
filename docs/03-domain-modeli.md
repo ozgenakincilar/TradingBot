@@ -155,6 +155,7 @@ stateDiagram-v2
 - Günlük kayıp limiti veya kill switch aktifken yeni exposure yasaktır.
 - v4 `AverageDirectionalIndex`, yalnız contiguous kapalı `1H` candle'lardan checked `decimal` Wilder ADX(14) hesaplayan testli saf domain servisidir; emir veya portfolio state'i bilmez ve eksik/gap veride fail-closed davranır.
 - v4 trend-kalite filtresi yalnız flat → long girişini engelleyebilir. Açık pozisyonu ADX nedeniyle kapatmak domain sözleşmesine aykırıdır.
+- Planlanan v5, aynı bounded Wilder sonucundaki `plusDI` ve `minusDI` değerlerini kullanır; `plusDI > minusDI` yalnız flat → long giriş kapısıdır ve açık pozisyon state'ini değiştiremez.
 
 ## 6. Domain event’ler
 

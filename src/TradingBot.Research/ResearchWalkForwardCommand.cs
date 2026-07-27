@@ -455,53 +455,20 @@ public static class ResearchWalkForwardCommand
                 throw InvalidAtrHysteresisCommand();
             }
 
-            var candidate = StrategyDefinition.Create(
-                v5.Candidate.StrategyId,
-                6,
-                v5.Candidate.InstrumentId,
-                v5.Candidate.SignalTimeframe,
-                v5.Candidate.TrendTimeframe,
-                v5.Candidate.SignalEmaPeriod,
-                v5.Candidate.TrendEmaPeriod,
-                v5.Candidate.MaximumSignalCandleMovePercent,
-                v5.Candidate.MinimumSignalWarmupCandles,
-                v5.Candidate.MinimumTrendWarmupCandles,
-                signalEmaHysteresisBasisPoints: 0m,
-                trendStrengthPeriod: 14,
-                minimumTrendStrength: 25m,
-                requirePositiveDirectionalMovement: true,
-                signalAtrPeriod: 14,
-                signalAtrHysteresisMultiplier: 0.2m);
-            var execution = v5.ExecutionPolicy with
+            var locked = LockedAtrHysteresisV6Configuration.Create(
+                v5.ExecutionPolicy.InstrumentRules);
+            if (locked.Baseline != v5.Candidate)
             {
-                DynamicExecution = new VolatilityAdjustedExecutionPolicy(
-                    MinimumSpreadBasisPoints: 2m,
-                    MaximumSpreadBasisPoints: 100m,
-                    MinimumSlippageBasisPoints: 1m,
-                    MaximumSlippageBasisPoints: 150m,
-                    VolatilitySpreadMultiplier: 1m,
-                    VolatilitySlippageMultiplier: 2m,
-                    ParticipationSpreadAtLimitBasisPoints: 5m,
-                    ParticipationPenaltyAtLimitBasisPoints: 20m,
-                    TwapChildOrderCount: 4)
-            };
-            var grid = AtrHysteresisParameterGrid.Create(
-                AtrHysteresisParameterCandidate.Create(7, 0.1m),
-                AtrHysteresisParameterCandidate.Create(7, 0.2m),
-                AtrHysteresisParameterCandidate.Create(7, 0.3m),
-                AtrHysteresisParameterCandidate.Create(14, 0.1m),
-                AtrHysteresisParameterCandidate.Create(14, 0.2m),
-                AtrHysteresisParameterCandidate.Create(14, 0.3m),
-                AtrHysteresisParameterCandidate.Create(21, 0.1m),
-                AtrHysteresisParameterCandidate.Create(21, 0.2m),
-                AtrHysteresisParameterCandidate.Create(21, 0.3m));
+                throw InvalidAtrHysteresisCommand();
+            }
+
             return new ResearchAtrHysteresisValidationRequest(
-                v5.Candidate,
-                candidate,
-                execution,
+                locked.Baseline,
+                locked.Candidate,
+                locked.ExecutionPolicy,
                 v5.Schedule,
                 v5.DatasetFactory,
-                grid,
+                locked.ParameterGrid,
                 v5.RandomSeed);
         }
         catch (DomainRuleViolationException)

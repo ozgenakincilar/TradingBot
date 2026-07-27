@@ -2,7 +2,7 @@
 
 **Durum:** Yaşayan belge  
 **Kaynak:** [`instructions.md`](../instructions.md)  
-**Son inceleme:** 2026-07-25
+**Son inceleme:** 2026-07-27
 
 Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianın kod, test, ADR veya runbook kanıtına bağlanmasını sağlar. Bir özelliğin planlanmış olması uygulanmış sayılmaz.
 
@@ -19,9 +19,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 17 |
+| ✅ Uygulandı | 18 |
 | 🟡 Kısmi | 35 |
-| ⬜ Planlandı | 42 |
+| ⬜ Planlandı | 41 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -37,13 +37,13 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 6 | Borsa bakım modu | ⬜ Planlandı | Exchange system-status poll ve trading-ready kapısı gerekli. |
 | 7 | Proxy/CDN bayat yanıt | ⬜ Planlandı | Signed timestamp/nonce ve cache-control politikası gerekli. |
 | 8 | IPv4/IPv6 geçişi | ⬜ Planlandı | Deployment ortamında ölçüme dayalı address-family politikası gerekli. |
-| 9 | Reconnection storm | 🟡 Kısmi | Hosted OKX supervisor bounded exponential backoff + jitter uyguluyor; retry/reconnect metriği ve uzun süreli chaos testi kaldı. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
+| 9 | Reconnection storm | 🟡 Kısmi | Hosted OKX supervisor bounded exponential backoff+jitter; forward REST collector Polly retry/circuit-breaker/timeout zinciri uyguluyor. Retry/reconnect metriği ve uzun chaos testi kaldı. [Forward worker](../src/TradingBot.Host/ForwardEvidenceWorker.cs), [ADR-0029](adr/0029-forward-evidence-pipeline.md) |
 | 10 | Paket kaybı/sequence | 🟡 Kısmi | Genel incremental session gap'te fail-closed; OKX books5 her mesajı full snapshot olarak uygular. Incremental OKX `books` ve uzun chaos testi kaldı. [Session testleri](../tests/TradingBot.Application.Tests/MarketDataStreamSessionTests.cs) |
 | 11 | REST/WebSocket tutarsızlığı | 🟡 Kısmi | OKX REST snapshot `seqId` authority'si recovery portuna bağlandı; WebSocket `prevSeqId/seqId` adapter'ı kaldı. [OKX contract testleri](../tests/TradingBot.Infrastructure.Tests/OkxSpotMarketSnapshotClientTests.cs) |
 | 12 | Bölgesel ağ blokajı | ⬜ Planlandı | Runbook ve onaylı failover network tasarımı gerekli. |
 | 13 | Partial network writes | 🟡 Kısmi | Fragmented WebSocket text frame'leri pooled buffer ve bounded 64 KiB limit ile birleştiriliyor; sentetik fragmentation transport testi/Pipelines değerlendirmesi kaldı. [OKX stream client](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketStreamClient.cs) |
 | 14 | API versiyon değişimi | 🟡 Kısmi | İlk gerçek adapter OKX V5 namespace ve application portu arkasında izole; changelog/contract CI izlemesi kaldı. [OKX adapter](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotMarketSnapshotClient.cs) |
-| 15 | Socket exhaustion | ⬜ Planlandı | Gerçek HTTP adaptöründe factory/uzun ömürlü handler uygulanacak. |
+| 15 | Socket exhaustion | ✅ Uygulandı | OKX REST adapter'ları typed `IHttpClientFactory` handler havuzu kullanır; forward history/catalog client'larında Polly tabanlı standart resilience handler vardır. [Host wiring](../src/TradingBot.Host/Program.cs) |
 
 ## Bölüm 2 — .NET Eşzamanlılık ve Bellek
 
@@ -62,7 +62,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 26 | Event subscription leak | ⬜ Planlandı | Stream/event abonelikleri eklendiğinde async-disposable yaşam döngüsü gerekli. |
 | 27 | Pinned memory | ⬜ Planlandı | Native/pinned buffer henüz yok; eklenirse profiling ve bounded lifetime zorunlu. |
 | 28 | Singleton/scoped karışımı | ✅ Uygulandı | DbContext/repository/UoW scoped; OKX hosted worker her ekonomik event için ayrı async scope açıyor ve scoped state saklamıyor. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
-| 29 | Büyük dosya okuma | ✅ Uygulandı | CSV export/read/hash 64 KiB buffer ile async streaming; export 100-candle API sayfalarıyla bounded, 25.000 candle reader fixture exact count/range ile testli. [Atomik export testleri](../tests/TradingBot.Infrastructure.Tests/AtomicCsvHistoricalCandleDatasetSinkTests.cs) |
+| 29 | Büyük dosya okuma | ✅ Uygulandı | CSV export/read/hash 64 KiB buffer ile async streaming; forward bölümleri 100-candle REST sayfalarıyla yazılır ve partitioned evaluator dosyaları belleğe almadan sırayla okur. [Forward artifact store](../src/TradingBot.Infrastructure/Backtesting/ImmutableForwardEvidenceArtifactStore.cs) |
 | 30 | AsyncLocal veri kayması | ⬜ Planlandı | Correlation context eklendiğinde immutable scope ve paralellik testi gerekli. |
 
 ## Bölüm 3 — Finansal Matematik ve Veri Doğruluğu
@@ -73,7 +73,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor; backtest/benchmark açıkça verilen tick/lot/minimum quantity/notional snapshot'ını hash'leyip minimum altı girişi reddediyor ve satılamayan remainder'ı pending bırakıyor. Public metadata minimum notional sağlamadığından uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli live order-decay politikası kaldı. [ADR-0019](adr/0019-backtest-instrument-quantization.md) |
 | 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee ve iki yönlü komisyon PnL/persistence'ta; backtest yeni sürümler için volatilite/hacim ayarlı spread/slippage ve ayrı cost attribution taşıyor. Exchange fee-asset çeşitleri, benchmark ve live parity henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs), [ADR-0025](adr/0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) |
-| 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
+| 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` stream gap'i bounded REST ile tamamlar; forward evidence ayrıca her 30 günlük aralığı REST'ten exact `2880/720` sayıyla yeniden kurar ve tek eksik timestamp'te publish etmez. [Forward store testleri](../tests/TradingBot.Infrastructure.Tests/ImmutableForwardEvidenceArtifactStoreTests.cs) |
 | 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız bilinen trend verisini alır; execution aynı candle'da fill etmez ve next-open likiditesi için mevcut candle toplam hacmi yerine önceki kapalı candle hacmini kullanır. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | 🟡 Kısmi | 2021-2025 yeniden seçime kapatıldı. v6 validation-only seçilip taze OOS'a uygulanıyor; dinamik benchmark parity tamamlandı, fakat 2026-07-27 sonrası en az beş pencere henüz oluşmadı. [v6 CLI sözleşmesi](27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md), [ADR-0028](adr/0028-dinamik-benchmark-twap-paritesi.md) |
+| 89 | Overfitting | 🟡 Kısmi | v6 strategy/grid/acceptance değerleri runtime ayarına kapalı tek factory'de kilitli; taze 30 günlük bölümler immutable hash ve append-only SQL ile otomatik toplanıyor. Yedi bölüm/ilk beş OOS henüz oluşmadı. [Forward pipeline](28-forward-evidence-pipeline.md), [ADR-0029](adr/0029-forward-evidence-pipeline.md) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç
@@ -152,7 +152,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 91 | Açık pozisyonda deploy | ⬜ Planlandı | Deployment precondition ve zero-position guard gerekli. |
 | 92 | Kontrolsüz OS restart | ⬜ Planlandı | Maintenance window ve service auto-recovery runbook'u gerekli. |
 | 93 | Altyapı failover | ⬜ Planlandı | Single-active ownership/reconciliation çözülmeden failover açılmayacak. |
-| 94 | DB/tick I/O şişmesi | 🟡 Kısmi | 100 ms stream bütünüyle integrity'den geçerken SQL execution yapılandırılmış aralıkta örnekleniyor; market-data persistence batch/retention kaldı. [OKX worker](../src/TradingBot.Host/OkxTradingWorker.cs) |
+| 94 | DB/tick I/O şişmesi | 🟡 Kısmi | Forward market data candle başına SQL'e yazılmaz; 30 günlük CSV bölümü mühürlendikten sonra yalnız manifest/evaluation metadata'sı append edilir. Genel market-data retention ve disk quota kaldı. [Forward pipeline](28-forward-evidence-pipeline.md) |
 | 95 | Telemetry | ⬜ Planlandı | OpenTelemetry/Prometheus/Grafana kararı ve dashboard gerekli. |
 | 96 | Graceful shutdown | 🟡 Kısmi | Generic Host cancellation market client, cycle, repository ve polling delay'e taşınıyor; açık emir iptal politikası/checkpoint henüz yok. [TradingWorker](../src/TradingBot.Host/TradingWorker.cs) |
 | 97 | Clock drift | ⬜ Planlandı | OS NTP/chrony kontrolü ve exchange offset metriği gerekli. |

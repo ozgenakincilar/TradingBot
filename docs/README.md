@@ -31,6 +31,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [25-v6-atr-hysteresis-on-kaydi.md](25-v6-atr-hysteresis-on-kaydi.md) | v6 için `ATR(14) × 0,2` EMA bandı, nedensellik ve forward acceptance ön kaydı |
 | [26-v6-adaptif-walk-forward-secim-sozlesmesi.md](26-v6-adaptif-walk-forward-secim-sozlesmesi.md) | v6 ATR grid'inin validation-only seçimi ve bakir OOS uygulama sözleşmesi |
 | [27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md](27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md) | Ortak dinamik TWAP benchmark paritesi, kilitli v6 CLI ve exit-code sözleşmesi |
+| [28-forward-evidence-pipeline.md](28-forward-evidence-pipeline.md) | OKX TR public veri, immutable 30 günlük CSV/manifest, append-only SQL ve otomatik v6 değerlendirme hattı |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

@@ -33,6 +33,12 @@ public sealed class TradingBotDbContext(DbContextOptions<TradingBotDbContext> op
     public DbSet<WalkForwardWindowResultEntity> WalkForwardWindowResults =>
         Set<WalkForwardWindowResultEntity>();
 
+    public DbSet<ForwardEvidenceArtifactEntity> ForwardEvidenceArtifacts =>
+        Set<ForwardEvidenceArtifactEntity>();
+
+    public DbSet<ForwardEvidenceEvaluationEntity> ForwardEvidenceEvaluations =>
+        Set<ForwardEvidenceEvaluationEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

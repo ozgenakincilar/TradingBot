@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using TradingBot.Application;
 using TradingBot.Application.Abstractions;
+using TradingBot.Application.Backtesting;
 using TradingBot.Application.Orders;
 using TradingBot.Application.Execution;
 using TradingBot.Application.Portfolio;
@@ -8,6 +9,7 @@ using TradingBot.Application.MarketData;
 using TradingBot.Domain;
 using TradingBot.Host;
 using TradingBot.Infrastructure;
+using TradingBot.Infrastructure.Backtesting;
 using TradingBot.Infrastructure.Integrations.Okx;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -72,6 +74,27 @@ builder.Services
         "Trend warm-up candle sayısı EMA200 için 200-300 arasında olmalıdır.")
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<ForwardEvidenceOptions>()
+    .Bind(builder.Configuration.GetSection(ForwardEvidenceOptions.SectionName))
+    .Validate(static options => !options.Enabled ||
+                                !string.IsNullOrWhiteSpace(options.PipelineId),
+        "Forward evidence pipeline kimliği zorunludur.")
+    .Validate(static options => !options.Enabled ||
+                                !string.IsNullOrWhiteSpace(options.RootPath),
+        "Forward evidence veri kökü zorunludur.")
+    .Validate(static options => !options.Enabled ||
+                                options.StartInclusive.Offset == TimeSpan.Zero &&
+                                options.StartInclusive >=
+                                AtrHysteresisValidationOrchestrator.EarliestForwardData,
+        "Forward evidence başlangıcı kilitli forward tarihten önce olamaz.")
+    .Validate(static options => !options.Enabled ||
+                                options.PollingIntervalSeconds is >= 30 and <= 3_600,
+        "Forward evidence polling aralığı 30-3600 saniye arasında olmalıdır.")
+    .Validate(static options => !options.Enabled || options.MinimumNotional > 0m,
+        "Forward evidence minimum notional değeri pozitif olmalıdır.")
+    .ValidateOnStart();
+
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(
     new TradingReadinessState(marketDataSource == MarketDataSource.OkxPublic));
@@ -95,19 +118,21 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     builder.Services.AddTransient<IMarketDataSnapshotClient>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotMarketSnapshotClient>());
     builder.Services.AddHttpClient<OkxSpotInstrumentCatalog>((serviceProvider, client) =>
-    {
-        var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
-        client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
-        client.Timeout = TimeSpan.FromSeconds(10);
-    });
+        {
+            var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
+            client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
+            client.Timeout = Timeout.InfiniteTimeSpan;
+        })
+        .AddStandardResilienceHandler();
     builder.Services.AddTransient<ISpotInstrumentCatalog>(serviceProvider =>
         serviceProvider.GetRequiredService<OkxSpotInstrumentCatalog>());
     builder.Services.AddHttpClient<OkxClosedCandleHistoryClient>((serviceProvider, client) =>
-    {
-        var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
-        client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
-        client.Timeout = TimeSpan.FromSeconds(10);
-    });
+        {
+            var settings = serviceProvider.GetRequiredService<IOptions<TradingOptions>>().Value;
+            client.BaseAddress = new Uri(settings.OkxRestBaseAddress);
+            client.Timeout = Timeout.InfiniteTimeSpan;
+        })
+        .AddStandardResilienceHandler();
     builder.Services.AddTransient<IClosedCandleHistoryClient>(serviceProvider =>
         new PagedClosedCandleHistoryClient(
             serviceProvider.GetRequiredService<OkxClosedCandleHistoryClient>(),
@@ -145,6 +170,25 @@ if (marketDataSource == MarketDataSource.OkxPublic)
     builder.Services.AddHostedService<OkxInstrumentStartupGate>();
     builder.Services.AddHostedService<OkxCandleWorker>();
     builder.Services.AddHostedService<OkxTradingWorker>();
+
+    var forwardEvidence = builder.Configuration
+        .GetSection(ForwardEvidenceOptions.SectionName)
+        .Get<ForwardEvidenceOptions>() ?? new ForwardEvidenceOptions();
+    if (forwardEvidence.Enabled)
+    {
+        builder.Services.AddScoped<IForwardEvidenceArtifactStore>(serviceProvider =>
+            new ImmutableForwardEvidenceArtifactStore(
+                forwardEvidence.RootPath,
+                serviceProvider.GetRequiredService<IClosedCandleHistoryClient>(),
+                serviceProvider.GetRequiredService<TimeProvider>()));
+        builder.Services.AddScoped<IForwardEvidenceEvaluator>(serviceProvider =>
+            new LockedV6ForwardEvidenceEvaluator(
+                serviceProvider.GetRequiredService<ISpotInstrumentCatalog>(),
+                forwardEvidence.RootPath,
+                forwardEvidence.MinimumNotional));
+        builder.Services.AddScoped<ForwardEvidencePipeline>();
+        builder.Services.AddHostedService<ForwardEvidenceWorker>();
+    }
 }
 else
 {

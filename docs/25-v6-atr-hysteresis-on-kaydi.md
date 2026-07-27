@@ -41,7 +41,7 @@ Sabit `SignalEmaHysteresisBasisPoints` v6 için zorunlu olarak sıfırdır. Entr
 
 - 2021-2025 verileri daha önce hipotez üretiminde kullanıldığı için v6 parametre seçimi veya başarı iddiasında tekrar kullanılamaz.
 - İlk ekonomik karşılaştırma v5 ve v6'yı aynı dinamik execution policy altında çalıştırmalıdır; böylece tek strateji farkı ATR bandıdır.
-- Buy-and-hold benchmark dinamik maliyet/TWAP parity'si tamamlanmadan validation komutu fail-closed kalır.
+- Buy-and-hold benchmark dinamik maliyet/TWAP parity'si ortak execution çekirdeğiyle tamamlandı; validation komutu forward tarih, pencere, instrument ve acceptance kapılarında fail-closed kalır.
 - İlk kabul verisi 2026-07-27 sonrasında oluşan, önceden görülmemiş en az beş adet kesişmeyen 30 günlük forward pencere olmalıdır.
 - Aylık hedef `%10` bir garanti veya acceptance eşiği değildir.
 

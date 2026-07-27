@@ -138,6 +138,40 @@ public sealed class ResearchWalkForwardCommandTests
     }
 
     [Fact]
+    public void AtrHysteresisValidationCreatesLockedDynamicV5V6Comparison()
+    {
+        var arguments = ValidArguments()
+            .Concat([
+                "--tick-size", "0.1",
+                "--quantity-step", "0.00000001",
+                "--minimum-quantity", "0.00001",
+                "--minimum-notional", "1"
+            ])
+            .ToArray();
+        arguments[0] = "validate-atr-hysteresis-v6";
+
+        var result = ResearchWalkForwardCommand.ParseAtrHysteresisValidation(arguments);
+
+        Assert.Equal(5, result.Baseline.Version);
+        Assert.Equal(6, result.Candidate.Version);
+        Assert.Equal(0m, result.Candidate.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(14, result.Candidate.SignalAtrPeriod);
+        Assert.Equal(0.2m, result.Candidate.SignalAtrHysteresisMultiplier);
+        Assert.NotNull(result.ExecutionPolicy.DynamicExecution);
+        Assert.Equal(9, result.ParameterGrid.Count);
+    }
+
+    [Fact]
+    public void AtrHysteresisValidationRequiresInstrumentRules()
+    {
+        var arguments = ValidArguments();
+        arguments[0] = "validate-atr-hysteresis-v6";
+
+        Assert.Throws<DomainRuleViolationException>(() =>
+            ResearchWalkForwardCommand.ParseAtrHysteresisValidation(arguments));
+    }
+
+    [Fact]
     public void CompleteInstrumentRulesEnableQuantizedExecution()
     {
         var arguments = ValidArguments()

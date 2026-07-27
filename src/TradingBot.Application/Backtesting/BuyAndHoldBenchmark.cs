@@ -1,8 +1,10 @@
 using TradingBot.Application.Strategies;
 using TradingBot.Domain.Common;
+using TradingBot.Domain.Execution;
 using TradingBot.Domain.Instruments;
 using TradingBot.Domain.MarketData;
 using TradingBot.Domain.Orders;
+using TradingBot.Domain.Portfolio;
 
 namespace TradingBot.Application.Backtesting;
 
@@ -65,14 +67,9 @@ public sealed class BuyAndHoldBenchmark
         }
 
         policy.Validate(signalTimeframe, instrumentId);
-        if (policy.DynamicExecution is not null)
-        {
-            throw new DomainRuleViolationException(
-                "Dynamic execution cannot enter walk-forward acceptance until benchmark cost parity is implemented.");
-        }
-
         Candle? first = null;
         Candle? previous = null;
+        Candle? completedReference = null;
         var state = new State(policy);
         await foreach (var candle in candles.WithCancellation(cancellationToken))
         {
@@ -85,6 +82,11 @@ public sealed class BuyAndHoldBenchmark
 
             if (candle.OpenTime < evaluationStartInclusive)
             {
+                if (candle.CloseTime <= evaluationStartInclusive)
+                {
+                    completedReference = candle;
+                }
+
                 continue;
             }
 
@@ -102,7 +104,16 @@ public sealed class BuyAndHoldBenchmark
                 }
 
                 first = candle;
-                state.Enter(candle);
+                if (policy.DynamicExecution is null)
+                {
+                    state.Enter(candle);
+                }
+                else if (completedReference is null ||
+                         completedReference.CloseTime != evaluationStartInclusive)
+                {
+                    throw new DomainRuleViolationException(
+                        "Dynamic benchmark requires the completed candle immediately before its evaluation boundary.");
+                }
             }
             else if (previous is not null && candle.OpenTime != previous.CloseTime)
             {
@@ -110,8 +121,14 @@ public sealed class BuyAndHoldBenchmark
                     "Benchmark OOS candles must be contiguous.");
             }
 
+            if (policy.DynamicExecution is not null)
+            {
+                state.EnterDynamic(candle, completedReference!);
+            }
+
             state.Observe(candle);
             previous = candle;
+            completedReference = candle;
         }
 
         if (first is null || previous is null ||
@@ -127,12 +144,15 @@ public sealed class BuyAndHoldBenchmark
     private sealed class State
     {
         private readonly BacktestExecutionPolicy _policy;
+        private readonly DynamicTwapExecutionModel _dynamicExecution = new();
         private readonly decimal _initial;
         private decimal _peakEquity;
         private decimal _maximumDrawdownPercent;
         private decimal _buyFee;
         private decimal _buySpreadCost;
         private decimal _buySlippageCost;
+        private decimal _remainingEntryBudget;
+        private decimal _entryNotional;
         private int _candleCount;
 
         public State(BacktestExecutionPolicy policy)
@@ -140,6 +160,7 @@ public sealed class BuyAndHoldBenchmark
             _policy = policy;
             _initial = policy.InitialQuoteBalance;
             _peakEquity = _initial;
+            Cash = _initial;
         }
 
         public decimal Allocated { get; private set; }
@@ -182,10 +203,72 @@ public sealed class BuyAndHoldBenchmark
             _buySlippageCost = Checked((EntryPrice - ask) * Quantity);
         }
 
+        public void EnterDynamic(Candle executionCandle, Candle completedReference)
+        {
+            var dynamicExecution = _policy.DynamicExecution!.Value;
+            if (_remainingEntryBudget == 0m && Quantity == 0m)
+            {
+                _remainingEntryBudget = Checked(
+                    _initial * _policy.QuoteAllocation.Fraction);
+            }
+
+            if (_remainingEntryBudget <= 0m || Cash <= 0m)
+            {
+                return;
+            }
+
+            var maximumPrice = DynamicTwapExecutionModel.CalculateMaximumExecutionPrice(
+                _policy,
+                in dynamicExecution,
+                executionCandle.Open,
+                OrderSide.Buy);
+            var unitCost = Checked(maximumPrice *
+                (1m + _policy.PaperExecution.CommissionRate.Fraction));
+            var requestedQuantity = BacktestInstrumentQuantization.NormalizeQuantity(
+                _policy,
+                Math.Min(_remainingEntryBudget, Cash) / unitCost);
+            if (requestedQuantity <= 0m)
+            {
+                _remainingEntryBudget = 0m;
+                return;
+            }
+
+            var request = new DynamicTwapExecutionRequest(
+                executionCandle.InstrumentId,
+                _policy.QuoteAsset,
+                OrderSide.Buy,
+                CompletedCandleExecutionReference.Create(completedReference),
+                executionCandle.Open,
+                requestedQuantity,
+                completedReference.CloseTime,
+                executionCandle.OpenTime,
+                executionCandle.Timeframe.Duration);
+            var consumer = new BenchmarkEntryFillConsumer(this);
+            _dynamicExecution.Execute(
+                _policy,
+                in dynamicExecution,
+                in request,
+                ref consumer);
+            if (!DynamicTwapExecutionModel.HasTradableEntryRemainder(
+                    _policy,
+                    in dynamicExecution,
+                    executionCandle.Open,
+                    _remainingEntryBudget,
+                    Cash))
+            {
+                _remainingEntryBudget = 0m;
+            }
+
+            Allocated = Checked(_initial - Cash);
+            EntryPrice = Quantity == 0m ? 0m : Checked(_entryNotional / Quantity);
+        }
+
         public void Observe(Candle candle)
         {
             _candleCount = Increment(_candleCount);
-            var liquidation = Liquidate(candle.Close, requireTradable: false);
+            var liquidation = _policy.DynamicExecution is null
+                ? Liquidate(candle.Close, requireTradable: false)
+                : MarkDynamic(candle);
             _peakEquity = Math.Max(_peakEquity, liquidation.Value);
             var drawdown = Checked(((_peakEquity - liquidation.Value) / _peakEquity) * 100m);
             _maximumDrawdownPercent = Math.Max(_maximumDrawdownPercent, drawdown);
@@ -193,7 +276,15 @@ public sealed class BuyAndHoldBenchmark
 
         public BuyAndHoldBenchmarkReport CreateReport(Candle first, Candle last)
         {
-            var liquidation = Liquidate(last.Close, requireTradable: true);
+            if (_policy.DynamicExecution is not null && Quantity <= 0m)
+            {
+                throw new DomainRuleViolationException(
+                    "Dynamic benchmark could not establish a tradable position.");
+            }
+
+            var liquidation = _policy.DynamicExecution is null
+                ? Liquidate(last.Close, requireTradable: true)
+                : LiquidateDynamic(last);
             var totalFees = Checked(_buyFee + liquidation.Fee);
             var spreadCost = Checked(_buySpreadCost + liquidation.SpreadCost);
             var slippageCost = Checked(_buySlippageCost + liquidation.SlippageCost);
@@ -246,6 +337,127 @@ public sealed class BuyAndHoldBenchmark
                 Checked((bid - price) * Quantity));
         }
 
+        private Liquidation MarkDynamic(Candle candle)
+        {
+            if (Quantity <= 0m)
+            {
+                return new Liquidation(Cash, candle.Close, 0m, 0m, 0m);
+            }
+
+            var dynamicExecution = _policy.DynamicExecution!.Value;
+            var input = new ExecutionCostInput(
+                candle.Close,
+                candle.High,
+                candle.Low,
+                candle.BaseVolume,
+                Quantity,
+                _policy.PaperExecution.MaximumLiquidityParticipation.Fraction);
+            var quote = VolatilityAdjustedExecutionCostModel.CalculateValidated(
+                in dynamicExecution,
+                in input);
+            return LiquidateWithCosts(
+                candle.Close,
+                Quantity,
+                quote.SpreadBasisPoints,
+                quote.SlippageBasisPoints);
+        }
+
+        private Liquidation LiquidateDynamic(Candle last)
+        {
+            var dynamicExecution = _policy.DynamicExecution!.Value;
+            var maximumPrice = DynamicTwapExecutionModel.CalculateMaximumExecutionPrice(
+                _policy,
+                in dynamicExecution,
+                last.Close,
+                OrderSide.Sell);
+            if (!BacktestInstrumentQuantization.IsTradable(
+                    _policy,
+                    maximumPrice,
+                    Quantity))
+            {
+                throw new DomainRuleViolationException(
+                    "Dynamic benchmark liquidation is not tradable under the instrument rules.");
+            }
+
+            var request = new DynamicTwapExecutionRequest(
+                last.InstrumentId,
+                _policy.QuoteAsset,
+                OrderSide.Sell,
+                CompletedCandleExecutionReference.Create(last),
+                last.Close,
+                Quantity,
+                last.CloseTime,
+                last.CloseTime,
+                last.Timeframe.Duration);
+            var consumer = new BenchmarkExitFillConsumer();
+            var summary = _dynamicExecution.Execute(
+                _policy,
+                in dynamicExecution,
+                in request,
+                ref consumer);
+            if (summary.FilledQuantity != Quantity || consumer.Quantity != Quantity)
+            {
+                throw new DomainRuleViolationException(
+                    "Dynamic benchmark terminal TWAP could not liquidate the complete position within the 5% participation limit.");
+            }
+
+            return new Liquidation(
+                Checked(Cash + consumer.Proceeds),
+                Checked(consumer.Notional / consumer.Quantity),
+                consumer.Fee,
+                consumer.SpreadCost,
+                consumer.SlippageCost);
+        }
+
+        private Liquidation LiquidateWithCosts(
+            decimal midPrice,
+            decimal quantity,
+            decimal spreadBasisPoints,
+            decimal slippageBasisPoints)
+        {
+            var bid = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Sell,
+                Checked(midPrice * (1m - spreadBasisPoints / 20_000m)));
+            var price = BacktestInstrumentQuantization.NormalizePrice(
+                _policy,
+                OrderSide.Sell,
+                Checked(bid * (1m - slippageBasisPoints / 10_000m)));
+            var gross = Checked(price * quantity);
+            var fee = Checked(gross * _policy.PaperExecution.CommissionRate.Fraction);
+            return new Liquidation(
+                Checked(Cash + gross - fee),
+                price,
+                fee,
+                Checked((midPrice - bid) * quantity),
+                Checked((bid - price) * quantity));
+        }
+
+        private void ApplyEntryFill(
+            PaperTopOfBookSnapshot market,
+            PaperFill fill)
+        {
+            var requestedCost = Checked(
+                fill.Price.Value * fill.Quantity.Value + fill.QuoteFee.Amount);
+            var totalCost = DynamicTwapExecutionModel.ClampQuoteDebit(
+                requestedCost,
+                Math.Min(Cash, _remainingEntryBudget));
+
+            Cash = Checked(Cash - totalCost);
+            _remainingEntryBudget = Math.Max(
+                0m,
+                Checked(_remainingEntryBudget - totalCost));
+            Quantity = Checked(Quantity + fill.Quantity.Value);
+            _entryNotional = Checked(
+                _entryNotional + fill.Price.Value * fill.Quantity.Value);
+            _buyFee = Checked(_buyFee + fill.QuoteFee.Amount);
+            var mid = Checked((market.BestAsk.Value + market.BestBid.Value) / 2m);
+            _buySpreadCost = Checked(_buySpreadCost +
+                Math.Abs(market.BestAsk.Value - mid) * fill.Quantity.Value);
+            _buySlippageCost = Checked(_buySlippageCost +
+                Math.Abs(fill.Price.Value - market.BestAsk.Value) * fill.Quantity.Value);
+        }
+
         private decimal ApplyHalfSpread(decimal price, bool isBuy)
         {
             var fraction = _policy.SyntheticSpreadBasisPoints / 20_000m;
@@ -256,6 +468,62 @@ public sealed class BuyAndHoldBenchmark
         {
             var fraction = _policy.PaperExecution.SlippageBasisPoints / 10_000m;
             return Checked(isBuy ? price * (1m + fraction) : price * (1m - fraction));
+        }
+
+        private readonly struct BenchmarkEntryFillConsumer(State state) :
+            IDynamicTwapFillConsumer
+        {
+            public void Accept(
+                PaperTopOfBookSnapshot market,
+                PaperFill fill,
+                OrderSide side)
+            {
+                if (side != OrderSide.Buy)
+                {
+                    throw new DomainRuleViolationException(
+                        "Dynamic benchmark entry received a non-buy fill.");
+                }
+
+                state.ApplyEntryFill(market, fill);
+            }
+        }
+
+        private struct BenchmarkExitFillConsumer : IDynamicTwapFillConsumer
+        {
+            public decimal Quantity { get; private set; }
+
+            public decimal Notional { get; private set; }
+
+            public decimal Proceeds { get; private set; }
+
+            public decimal Fee { get; private set; }
+
+            public decimal SpreadCost { get; private set; }
+
+            public decimal SlippageCost { get; private set; }
+
+            public void Accept(
+                PaperTopOfBookSnapshot market,
+                PaperFill fill,
+                OrderSide side)
+            {
+                if (side != OrderSide.Sell)
+                {
+                    throw new DomainRuleViolationException(
+                        "Dynamic benchmark exit received a non-sell fill.");
+                }
+
+                var fillNotional = Checked(fill.Price.Value * fill.Quantity.Value);
+                Quantity = Checked(Quantity + fill.Quantity.Value);
+                Notional = Checked(Notional + fillNotional);
+                Fee = Checked(Fee + fill.QuoteFee.Amount);
+                Proceeds = Checked(Proceeds + fillNotional - fill.QuoteFee.Amount);
+                var mid = Checked((market.BestAsk.Value + market.BestBid.Value) / 2m);
+                SpreadCost = Checked(SpreadCost +
+                    Math.Abs(mid - market.BestBid.Value) * fill.Quantity.Value);
+                SlippageCost = Checked(SlippageCost +
+                    Math.Abs(market.BestBid.Value - fill.Price.Value) * fill.Quantity.Value);
+            }
         }
     }
 

@@ -30,6 +30,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [24-2021-v5-kayip-attribution-kaniti.md](24-2021-v5-kayip-attribution-kaniti.md) | Reddedilmiş v5 işlemlerinin exit reason, MFE/MAE ve execution maliyeti ayrımı |
 | [25-v6-atr-hysteresis-on-kaydi.md](25-v6-atr-hysteresis-on-kaydi.md) | v6 için `ATR(14) × 0,2` EMA bandı, nedensellik ve forward acceptance ön kaydı |
 | [26-v6-adaptif-walk-forward-secim-sozlesmesi.md](26-v6-adaptif-walk-forward-secim-sozlesmesi.md) | v6 ATR grid'inin validation-only seçimi ve bakir OOS uygulama sözleşmesi |
+| [27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md](27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md) | Ortak dinamik TWAP benchmark paritesi, kilitli v6 CLI ve exit-code sözleşmesi |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

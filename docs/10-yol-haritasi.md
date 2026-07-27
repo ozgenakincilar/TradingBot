@@ -96,6 +96,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] v5 DMI domain/strategy implementasyonu, legacy hash regression testleri ve fail-closed v4-v5 validation CLI.
 - [x] Ayrı 2021 historical development train/validation değerlendirmesi; v5 trade/maliyet azaltımı ve drawdown kapılarını geçmesine rağmen profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemediği için reddedildi; holdout açılmadı ve sonuç forward OOS sayılmadı.
 - [x] Reddedilmiş v5 için 2021 train/validation işlem bazlı attribution; yaklaşık brüt edge'in pozitif fakat çok küçük olduğu, 15m EMA cross-down turnover'ı ve execution maliyetinin bu edge'i tükettiği gösterildi.
+- [x] v6 için v5 yön/güç kurallarını koruyan `ATR(14) × 0,2` signal EMA bandı, exact Wilder matematiği, legacy hash koruması ve forward acceptance kapılarının ön kaydı.
+- [ ] Dinamik buy-and-hold benchmark parity, v5-v6 validation CLI ve 2026-07-27 sonrası en az beş kesişmeyen forward pencere.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

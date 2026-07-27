@@ -28,7 +28,9 @@ public sealed record StrategyDefinition
         decimal profitProtectionTrailingBasisPoints,
         int trendStrengthPeriod,
         decimal minimumTrendStrength,
-        bool requirePositiveDirectionalMovement)
+        bool requirePositiveDirectionalMovement,
+        int signalAtrPeriod,
+        decimal signalAtrHysteresisMultiplier)
     {
         StrategyId = strategyId;
         Version = version;
@@ -47,6 +49,8 @@ public sealed record StrategyDefinition
         TrendStrengthPeriod = trendStrengthPeriod;
         MinimumTrendStrength = minimumTrendStrength;
         RequirePositiveDirectionalMovement = requirePositiveDirectionalMovement;
+        SignalAtrPeriod = signalAtrPeriod;
+        SignalAtrHysteresisMultiplier = signalAtrHysteresisMultiplier;
     }
 
     public string StrategyId { get; }
@@ -85,6 +89,10 @@ public sealed record StrategyDefinition
 
     public bool RequirePositiveDirectionalMovement { get; }
 
+    public int SignalAtrPeriod { get; }
+
+    public decimal SignalAtrHysteresisMultiplier { get; }
+
     public static StrategyDefinition Create(
         string strategyId,
         int version,
@@ -102,7 +110,9 @@ public sealed record StrategyDefinition
         decimal profitProtectionTrailingBasisPoints = 0m,
         int trendStrengthPeriod = 0,
         decimal minimumTrendStrength = 0m,
-        bool requirePositiveDirectionalMovement = false)
+        bool requirePositiveDirectionalMovement = false,
+        int signalAtrPeriod = 0,
+        decimal signalAtrHysteresisMultiplier = 0m)
     {
         if (!IsValidStrategyId(strategyId))
         {
@@ -139,7 +149,7 @@ public sealed record StrategyDefinition
         }
 
         if (signalEmaHysteresisBasisPoints is < 0m or > 1_000m ||
-            (version == 1 && signalEmaHysteresisBasisPoints != 0m))
+            (version is 1 or 6 && signalEmaHysteresisBasisPoints != 0m))
         {
             throw new DomainRuleViolationException(
                 "Signal EMA hysteresis must be zero for v1 and between zero and 1,000 basis points.");
@@ -160,20 +170,32 @@ public sealed record StrategyDefinition
         }
 
         var hasTrendStrength = trendStrengthPeriod != 0 || minimumTrendStrength != 0m;
-        if ((version is not (4 or 5) && hasTrendStrength) ||
-            (version is 4 or 5 &&
+        if ((version is not (4 or 5 or 6) && hasTrendStrength) ||
+            (version is 4 or 5 or 6 &&
              (trendStrengthPeriod is < 2 or > 100 ||
               minimumTrendStrength is <= 0m or > 100m ||
               minimumTrendWarmupCandles < trendStrengthPeriod * 2)))
         {
             throw new DomainRuleViolationException(
-                "Trend strength must be disabled outside v4/v5; v4/v5 require a bounded period, threshold, and complete ADX warm-up.");
+                "Trend strength must be disabled outside v4/v5/v6; v4/v5/v6 require a bounded period, threshold, and complete ADX warm-up.");
         }
 
-        if ((version == 5) != requirePositiveDirectionalMovement)
+        if ((version is 5 or 6) != requirePositiveDirectionalMovement)
         {
             throw new DomainRuleViolationException(
-                "Positive directional movement must be required only by v5.");
+                "Positive directional movement must be required only by v5/v6.");
+        }
+
+        var hasAtrHysteresis = signalAtrPeriod != 0 ||
+            signalAtrHysteresisMultiplier != 0m;
+        if ((version != 6 && hasAtrHysteresis) ||
+            (version == 6 &&
+             (signalAtrPeriod is < 2 or > 100 ||
+              signalAtrHysteresisMultiplier is <= 0m or > 10m ||
+              minimumSignalWarmupCandles < signalAtrPeriod + 2)))
+        {
+            throw new DomainRuleViolationException(
+                "ATR hysteresis must be disabled outside v6; v6 requires a bounded period, multiplier, and complete previous/current ATR warm-up.");
         }
 
         return new StrategyDefinition(
@@ -193,7 +215,9 @@ public sealed record StrategyDefinition
             profitProtectionTrailingBasisPoints,
             trendStrengthPeriod,
             minimumTrendStrength,
-            requirePositiveDirectionalMovement);
+            requirePositiveDirectionalMovement,
+            signalAtrPeriod,
+            signalAtrHysteresisMultiplier);
     }
 
     private static bool IsValidStrategyId(string? value) =>

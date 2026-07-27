@@ -59,21 +59,29 @@ public static class LongFlatStrategyEvaluator
             signalCandles,
             definition.SignalEmaPeriod);
         var previousSignal = signalCandles[^2];
-        var hysteresisFraction = definition.SignalEmaHysteresisBasisPoints / 10_000m;
-        var previousUpperBand = Multiply(previousSignalEma.Value, 1m + hysteresisFraction);
-        var currentUpperBand = Multiply(currentSignalEma.Value, 1m + hysteresisFraction);
-        var previousLowerBand = Multiply(previousSignalEma.Value, 1m - hysteresisFraction);
-        var currentLowerBand = Multiply(currentSignalEma.Value, 1m - hysteresisFraction);
+        var (previousBandDistance, currentBandDistance) = CalculateBandDistances(
+            definition,
+            signalCandles,
+            previousSignalEma.Value,
+            currentSignalEma.Value);
+        var previousUpperBand = Add(previousSignalEma.Value, previousBandDistance);
+        var currentUpperBand = Add(currentSignalEma.Value, currentBandDistance);
+        var previousLowerBand = Add(previousSignalEma.Value, -previousBandDistance);
+        var currentLowerBand = Add(currentSignalEma.Value, -currentBandDistance);
         var crossedUp = previousSignal.Close <= previousUpperBand &&
                         signal.Close > currentUpperBand;
         var crossedDown = previousSignal.Close >= previousLowerBand &&
                           signal.Close < currentLowerBand;
-        var crossUpReason = definition.SignalEmaHysteresisBasisPoints == 0m
-            ? "signal-ema-cross-up"
-            : "signal-ema-hysteresis-cross-up";
-        var crossDownReason = definition.SignalEmaHysteresisBasisPoints == 0m
-            ? "signal-ema-cross-down"
-            : "signal-ema-hysteresis-cross-down";
+        var crossUpReason = definition.SignalAtrPeriod > 0
+            ? "signal-ema-atr-hysteresis-cross-up"
+            : definition.SignalEmaHysteresisBasisPoints == 0m
+                ? "signal-ema-cross-up"
+                : "signal-ema-hysteresis-cross-up";
+        var crossDownReason = definition.SignalAtrPeriod > 0
+            ? "signal-ema-atr-hysteresis-cross-down"
+            : definition.SignalEmaHysteresisBasisPoints == 0m
+                ? "signal-ema-cross-down"
+                : "signal-ema-hysteresis-cross-down";
 
         StrategyAction action;
         string reason;
@@ -106,7 +114,7 @@ public static class LongFlatStrategyEvaluator
         }
         else
         {
-            var directional = definition.Version is 4 or 5
+            var directional = definition.Version is 4 or 5 or 6
                 ? AverageDirectionalIndex.Calculate(
                     trendCandles, definition.TrendStrengthPeriod)
                 : null;
@@ -155,6 +163,30 @@ public static class LongFlatStrategyEvaluator
             peak,
             1m - definition.ProfitProtectionTrailingBasisPoints / 10_000m);
         return peak >= activation && currentClose <= trailingFloor;
+    }
+
+    private static (decimal Previous, decimal Current) CalculateBandDistances(
+        StrategyDefinition definition,
+        IReadOnlyList<Candle> signalCandles,
+        decimal previousEma,
+        decimal currentEma)
+    {
+        if (definition.SignalAtrPeriod > 0)
+        {
+            var previousAtr = AverageTrueRange.CalculateAt(
+                signalCandles,
+                definition.SignalAtrPeriod,
+                signalCandles.Count - 1);
+            var currentAtr = AverageTrueRange.Calculate(
+                signalCandles,
+                definition.SignalAtrPeriod);
+            return (
+                Multiply(previousAtr.Value, definition.SignalAtrHysteresisMultiplier),
+                Multiply(currentAtr.Value, definition.SignalAtrHysteresisMultiplier));
+        }
+
+        var fraction = definition.SignalEmaHysteresisBasisPoints / 10_000m;
+        return (Multiply(previousEma, fraction), Multiply(currentEma, fraction));
     }
 
     private static void ValidateTradeContext(
@@ -208,6 +240,18 @@ public static class LongFlatStrategyEvaluator
         try
         {
             return checked(left * right);
+        }
+        catch (OverflowException)
+        {
+            throw new DomainRuleViolationException("Signal EMA hysteresis band exceeded decimal bounds.");
+        }
+    }
+
+    private static decimal Add(decimal left, decimal right)
+    {
+        try
+        {
+            return checked(left + right);
         }
         catch (OverflowException)
         {

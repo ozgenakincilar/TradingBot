@@ -275,6 +275,35 @@ public sealed class LongFlatStrategyEvaluatorTests
         Assert.Equal(StrategyAction.EnterLong, decision.Action);
     }
 
+    [Fact]
+    public void V6AtrHysteresisAllowsCrossBeyondDynamicBand()
+    {
+        var decision = LongFlatStrategyEvaluator.Evaluate(
+            V6Definition(), SignalCandles(100m, 101m),
+            StrongBullishTrendCandles(), StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.EnterLong, decision.Action);
+        Assert.Equal("signal-ema-atr-hysteresis-cross-up", decision.ReasonCode);
+    }
+
+    [Fact]
+    public void V6WiderCurrentRangeExpandsBandAndBlocksMarginalCross()
+    {
+        var narrow = AtrSignalCandles(100.1m, 100.2m, 100m);
+        var wide = AtrSignalCandles(100.1m, 110m, 90m);
+
+        var allowed = LongFlatStrategyEvaluator.Evaluate(
+            V6Definition(), narrow, StrongBullishTrendCandles(),
+            StrategyPositionState.Flat);
+        var blocked = LongFlatStrategyEvaluator.Evaluate(
+            V6Definition(), wide, StrongBullishTrendCandles(),
+            StrategyPositionState.Flat);
+
+        Assert.Equal(StrategyAction.EnterLong, allowed.Action);
+        Assert.Equal(StrategyAction.Hold, blocked.Action);
+        Assert.Equal("no-entry-signal", blocked.ReasonCode);
+    }
+
     private static StrategyDefinition Definition(
         int version = 1,
         decimal hysteresisBasisPoints = 0m) => StrategyDefinition.Create(
@@ -326,6 +355,26 @@ public sealed class LongFlatStrategyEvaluatorTests
         20, 200, 2m, 200, 200, signalEmaHysteresisBasisPoints: 30m,
         trendStrengthPeriod: 14, minimumTrendStrength: 25m,
         requirePositiveDirectionalMovement: true);
+
+    private static StrategyDefinition V6Definition() => StrategyDefinition.Create(
+        "btc-usdt-long-flat-baseline", 6, Instrument, Signal, Trend,
+        20, 200, 2m, 200, 200,
+        trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+        requirePositiveDirectionalMovement: true,
+        signalAtrPeriod: 14, signalAtrHysteresisMultiplier: 0.2m);
+
+    private static IReadOnlyList<Candle> AtrSignalCandles(
+        decimal latestClose,
+        decimal latestHigh,
+        decimal latestLow)
+    {
+        var candles = Series(Signal, 200, index => index == 198 ? 99m :
+            index == 199 ? latestClose : 100m);
+        candles[^1] = Candle.CreateClosed(
+            Instrument, Signal, candles[^1].OpenTime, End.AddHours(2),
+            100m, latestHigh, latestLow, latestClose, 1m);
+        return candles;
+    }
 
     private static IReadOnlyList<Candle> SignalCandles(decimal latestOpen, decimal latestClose)
     {

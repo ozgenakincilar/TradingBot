@@ -79,6 +79,7 @@ public static class BacktestRunManifestFactory
                 3 => HashProfitProtectionInstrumentConfiguration(definition, execution),
                 4 => HashAdxInstrumentConfiguration(definition, execution),
                 5 => HashDmiInstrumentConfiguration(definition, execution),
+                6 => HashAtrHysteresisInstrumentConfiguration(definition, execution),
                 _ => HashInstrumentQuantizedConfiguration(definition, execution)
             }
             : definition.Version switch
@@ -86,6 +87,7 @@ public static class BacktestRunManifestFactory
                 3 => HashProfitProtectionConfiguration(definition, execution),
                 4 => HashAdxConfiguration(definition, execution),
                 5 => HashDmiConfiguration(definition, execution),
+                6 => HashAtrHysteresisConfiguration(definition, execution),
                 _ when definition.SignalEmaHysteresisBasisPoints == 0m =>
                     HashLegacyConfiguration(definition, execution),
                 _ => HashHysteresisConfiguration(definition, execution)
@@ -147,6 +149,8 @@ public static class BacktestRunManifestFactory
             definition.TrendStrengthPeriod,
             definition.MinimumTrendStrength,
             definition.RequirePositiveDirectionalMovement,
+            definition.SignalAtrPeriod,
+            definition.SignalAtrHysteresisMultiplier,
             execution.InitialQuoteBalance,
             BaseAsset = execution.BaseAsset.Value,
             QuoteAsset = execution.QuoteAsset.Value,
@@ -312,6 +316,38 @@ public static class BacktestRunManifestFactory
             Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
         });
 
+    private static string HashAtrHysteresisConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution) => Hash(new
+        {
+            StrategyConfigurationSchema = "atr-hysteresis-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            definition.TrendStrengthPeriod,
+            definition.MinimumTrendStrength,
+            definition.RequirePositiveDirectionalMovement,
+            definition.SignalAtrPeriod,
+            definition.SignalAtrHysteresisMultiplier,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction
+        });
+
     private static string HashInstrumentQuantizedConfiguration(
         StrategyDefinition definition,
         BacktestExecutionPolicy execution)
@@ -453,6 +489,48 @@ public static class BacktestRunManifestFactory
             definition.TrendStrengthPeriod,
             definition.MinimumTrendStrength,
             definition.RequirePositiveDirectionalMovement,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            execution.SyntheticSpreadBasisPoints,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            execution.PaperExecution.SlippageBasisPoints,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction,
+            RulesInstrument = instrument.Id.ToString(),
+            instrument.PriceTickSize,
+            instrument.QuantityStepSize,
+            instrument.MinimumQuantity,
+            instrument.MinimumNotional
+        });
+    }
+
+    private static string HashAtrHysteresisInstrumentConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution)
+    {
+        var instrument = execution.InstrumentRules!;
+        return Hash(new
+        {
+            ConfigurationSchema = "instrument-quantized-backtest-v1",
+            StrategyConfigurationSchema = "atr-hysteresis-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            definition.TrendStrengthPeriod,
+            definition.MinimumTrendStrength,
+            definition.RequirePositiveDirectionalMovement,
+            definition.SignalAtrPeriod,
+            definition.SignalAtrHysteresisMultiplier,
             execution.InitialQuoteBalance,
             BaseAsset = execution.BaseAsset.Value,
             QuoteAsset = execution.QuoteAsset.Value,

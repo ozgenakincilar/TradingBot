@@ -87,6 +87,45 @@ public sealed class StrategyContractTests
         Assert.True(definition.RequirePositiveDirectionalMovement);
     }
 
+    [Fact]
+    public void V6ReplacesFixedBasisPointsWithAtrHysteresis()
+    {
+        var definition = StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline", 6, Instrument, SignalTimeframe, TrendTimeframe,
+            20, 200, 2m, 200, 200,
+            trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+            requirePositiveDirectionalMovement: true,
+            signalAtrPeriod: 14, signalAtrHysteresisMultiplier: 0.2m);
+
+        Assert.Equal(0m, definition.SignalEmaHysteresisBasisPoints);
+        Assert.Equal(14, definition.SignalAtrPeriod);
+        Assert.Equal(0.2m, definition.SignalAtrHysteresisMultiplier);
+        Assert.True(definition.RequirePositiveDirectionalMovement);
+    }
+
+    [Theory]
+    [InlineData(5, 14, 0.2)]
+    [InlineData(6, 0, 0.2)]
+    [InlineData(6, 14, 0)]
+    [InlineData(6, 101, 0.2)]
+    [InlineData(6, 14, 10.1)]
+    public void AtrHysteresisMustRespectV6AndBounds(
+        int version,
+        int period,
+        decimal multiplier)
+    {
+        var action = () => StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline", version, Instrument,
+            SignalTimeframe, TrendTimeframe, 20, 200, 2m, 200, 200,
+            signalEmaHysteresisBasisPoints: version == 5 ? 30m : 0m,
+            trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+            requirePositiveDirectionalMovement: true,
+            signalAtrPeriod: period,
+            signalAtrHysteresisMultiplier: multiplier);
+
+        Assert.Throws<DomainRuleViolationException>(action);
+    }
+
     [Theory]
     [InlineData(3, 14, 25)]
     [InlineData(4, 0, 25)]

@@ -122,6 +122,7 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - v5 için yükselen/düşen/sabit DMI fixture'ları, strict `plusDI > minusDI` sınırı, entry-only davranış, v1-v4 hash regression ve sekiz v4-v5 acceptance kapısı uygulanmıştır.
 - Dinamik execution için volatilite/katılım karesine bağlı monoton maliyet, ayrı bps cap'leri, `%5` fail-closed sınırı, aynı mum içine deterministik TWAP zaman dağılımı ve execution mumunun gelecekteki range/volume değerlerinin fill maliyetine sızmadığı regression testleri zorunludur.
 - Dinamik execution parametreleri ayrı configuration hash üretir; legacy sabit maliyet placeholder'ları dinamik kimliği değiştirmez ve v1-v5 kilitli hash yolları korunur. Benchmark maliyet parity'si kurulmadan walk-forward acceptance fail-closed kalır.
+- v6 için sabit/yükselen range ATR fixture'ları, future-candle dışlayan `CalculateAt`, gap/overflow reddi, dar-yüksek volatilite band davranışı, exact reason code ve ATR parametrelerinin configuration identity'yi değiştirdiği regression testleri zorunludur.
 
 ## 5. Determinizm
 

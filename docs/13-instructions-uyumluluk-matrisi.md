@@ -142,7 +142,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 86 | Çift borsa arbitrajı | ⬜ Planlandı | İlk kapsam tek Spot borsası; gelecekte eklenirse iki bacaklı execution/saga koruması gerekli. |
 | 87 | NaN/Infinity | ✅ Uygulandı | EMA yalnız finite `decimal` OHLC girdisiyle checked arithmetic kullanır; yetersiz/gap'li seri ve decimal overflow karar üretmeden reddedilir. [EMA uygulaması](../src/TradingBot.Domain/Strategies/ExponentialMovingAverage.cs) |
 | 88 | Korelasyon körlüğü | ⬜ Planlandı | Portfolio correlation/sector exposure modeli gerekli. |
-| 89 | Overfitting | 🟡 Kısmi | 2021-2025 yeniden seçime kapatıldı. v6 `ATR(14) × 0,2` davranışı ve sekiz kapısı forward veri oluşmadan kilitlendi; dinamik benchmark parity ve 2026-07-27 sonrası en az beş pencere gerekir. [v6 ön kayıt](25-v6-atr-hysteresis-on-kaydi.md), [ADR-0026](adr/0026-atr-hysteresis-v6-arastirma-adayi.md) |
+| 89 | Overfitting | 🟡 Kısmi | 2021-2025 yeniden seçime kapatıldı. v6 grid'i train warm-up + validation-only Profit Factor ile seçilip taze oturumda sonraki OOS'a uygulanıyor; dinamik benchmark parity ve 2026-07-27 sonrası en az beş pencere gerekir. [adaptif seçim sözleşmesi](26-v6-adaptif-walk-forward-secim-sozlesmesi.md), [ADR-0027](adr/0027-v6-adaptif-walk-forward-parametre-secimi.md) |
 | 90 | Order state machine | ✅ Uygulandı | Geçişler, terminal state, partial fill ve cancel/fill yarışı order+reservation+portfolio SQL transaction'ında testli. [SQL entegrasyon testi](../tests/TradingBot.Infrastructure.Tests/SpotOrderReservationIntegrationTests.cs) |
 
 ## Bölüm 7 — DevOps, Deployment ve Süreç

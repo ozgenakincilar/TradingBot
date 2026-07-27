@@ -30,6 +30,7 @@ ADR’ler önemli ve geri dönüş maliyetli teknik kararların bağlamını kor
 | [ADR-0024](0024-dmi-yon-v5-arastirma-adayi.md) | ADX gücüne entry-only `+DI > -DI` yön doğrulaması ekleyen v5 araştırma adayı | Araştırma kararı tamamlandı — reddedildi |
 | [ADR-0025](0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) | Volatilite/hacim ayarlı maliyet ve `%5` katılımlı TWAP child-order simülasyonu | Kabul edildi |
 | [ADR-0026](0026-atr-hysteresis-v6-arastirma-adayi.md) | Sabit 30 bps yerine `ATR(14) × 0,2` kullanan v6 araştırma adayı | Kabul edildi |
+| [ADR-0027](0027-v6-adaptif-walk-forward-parametre-secimi.md) | Validation-only Profit Factor seçimi ve sonraki bakir OOS'a v6 parametre enjeksiyonu | Kabul edildi |
 
 Yeni ADR biçimi:
 

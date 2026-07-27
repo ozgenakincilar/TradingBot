@@ -29,6 +29,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [23-2021-v5-validation-kaniti.md](23-2021-v5-validation-kaniti.md) | Ayrı 2021 historical development verisinde reddedilen v5 DMI yön validation sonucu |
 | [24-2021-v5-kayip-attribution-kaniti.md](24-2021-v5-kayip-attribution-kaniti.md) | Reddedilmiş v5 işlemlerinin exit reason, MFE/MAE ve execution maliyeti ayrımı |
 | [25-v6-atr-hysteresis-on-kaydi.md](25-v6-atr-hysteresis-on-kaydi.md) | v6 için `ATR(14) × 0,2` EMA bandı, nedensellik ve forward acceptance ön kaydı |
+| [26-v6-adaptif-walk-forward-secim-sozlesmesi.md](26-v6-adaptif-walk-forward-secim-sozlesmesi.md) | v6 ATR grid'inin validation-only seçimi ve bakir OOS uygulama sözleşmesi |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

@@ -133,7 +133,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 77 | FOMO koruması | 🟡 Kısmi | Pozitif `15m` candle gövdesi `%2`yi aşınca cross-up girişi bloklanıyor; eşik için out-of-sample/volatilite kanıtı kaldı. [Strategy evaluator testleri](../tests/TradingBot.Domain.Tests/LongFlatStrategyEvaluatorTests.cs) |
 | 78 | Trailing-stop flaw | ⬜ Planlandı | Volatilite tabanlı mesafe ve monotonic stop testleri gerekli. |
 | 79 | İndikatör çelişkisi | ⬜ Planlandı | Ağırlıklı scoring sözleşmesi gerekli. |
-| 80 | Regime switching | 🟡 Kısmi | v5 strict `+DI > -DI` yön filtresi uygulandı ve 2021 historical validation'da turnover/maliyeti azalttı; ekonomik kapıları geçemediği için reddedildi. Yeni ön kayıtlı aday ve gerçek forward OOS kanıtı kaldı. [v5 ret kanıtı](23-2021-v5-validation-kaniti.md), [v5 ön kayıt](22-v5-dmi-yon-on-kaydi.md), [ADR-0024](adr/0024-dmi-yon-v5-arastirma-adayi.md) |
+| 80 | Regime switching | 🟡 Kısmi | v5 strict `+DI > -DI` yön filtresi turnover/maliyeti azalttı fakat ekonomik kapıları geçemedi. Attribution, kalan küçük brüt edge'in 15m EMA cross-down turnover ve maliyetiyle tüketildiğini gösterdi; yeni ön kayıtlı aday ve gerçek forward OOS kanıtı kaldı. [v5 attribution](24-2021-v5-kayip-attribution-kaniti.md), [v5 ret kanıtı](23-2021-v5-validation-kaniti.md), [ADR-0024](adr/0024-dmi-yon-v5-arastirma-adayi.md) |
 | 81 | News/event blackout | ⬜ Planlandı | Güvenilir ekonomik takvim adapter'i ve safe mode gerekli. |
 | 82 | Risk/reward dengesizliği | ⬜ Planlandı | Minimum reward/risk ve exit-policy testleri gerekli. |
 | 83 | Grid trap | ⬜ Planlandı | Grid ilk sürümde yok; eklenirse sermaye tüketimi ve maksimum kademe koruması zorunlu. |

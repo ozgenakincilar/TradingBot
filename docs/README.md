@@ -27,6 +27,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [21-2022-v4-kayip-attribution-kaniti.md](21-2022-v4-kayip-attribution-kaniti.md) | Reddedilmiş v4 işlemlerinin exit reason, MFE/MAE ve execution maliyeti ayrımı |
 | [22-v5-dmi-yon-on-kaydi.md](22-v5-dmi-yon-on-kaydi.md) | v5 için entry-only `+DI > -DI` yön hipotezi, exact matematik ve veri öncesi kapılar |
 | [23-2021-v5-validation-kaniti.md](23-2021-v5-validation-kaniti.md) | Ayrı 2021 historical development verisinde reddedilen v5 DMI yön validation sonucu |
+| [24-2021-v5-kayip-attribution-kaniti.md](24-2021-v5-kayip-attribution-kaniti.md) | Reddedilmiş v5 işlemlerinin exit reason, MFE/MAE ve execution maliyeti ayrımı |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

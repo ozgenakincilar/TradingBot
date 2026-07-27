@@ -1,6 +1,6 @@
 # v5 DMI yön doğrulaması tasarımı ve ön kaydı
 
-**Durum:** Tasarım kilitli ve uygulanmış; veri üzerinde çalıştırılmadı
+**Durum:** Tasarım kilitli ve uygulanmış; 2021 historical validation'da reddedildi
 
 **Tarih:** 2026-07-27
 
@@ -97,4 +97,4 @@ Bir kapı başarısızsa v5 reddedilir. Period, ADX eşiği, DI karşılaştırm
 - `dmi-direction-v1` configuration hash yolu v1-v4 yollarından ayrıdır.
 - `validate-dmi-direction-v5` komutu v4-v5 diagnostics, benchmark ve sekiz kapıyı fail-closed birleştirir.
 
-Bu kanıt historical başarı değildir. 2021 datasetinin indirilmesi ve validation çalışması bu implementasyon/CI adımından sonra yapılacaktır.
+2021 datasetinin indirilmesi ve validation çalışması implementasyon/CI adımından sonra tamamlandı. v5 sekiz kapının yalnız dördünü geçti: trade ve maliyeti azalttı, minimum aktivite ve drawdown sınırını korudu; profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemedi. Aday reddedildi ve holdout açılmadı. Artifact kimlikleri ve tam sonuç [2021 v5 ret kanıtında](23-2021-v5-validation-kaniti.md) kayıtlıdır.

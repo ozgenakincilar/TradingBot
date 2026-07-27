@@ -1,6 +1,6 @@
 # ADR-0024: DMI yön doğrulaması v5 araştırma adayı
 
-**Durum:** Kabul edildi
+**Durum:** Araştırma kararı tamamlandı — aday validation'da reddedildi
 
 **Tarih:** 2026-07-27
 
@@ -22,6 +22,7 @@ v4 ADX filtresi turnover ve maliyeti azalttı ancak pozitif expectancy üretmedi
 - Güç ve yön aynı bounded Wilder geçişinden üretilir; yeni bağımsız indikatör yığını kurulmaz.
 - Tek davranış değişikliği nedeniyle v4-v5 farkı kısa vadeli DMI yön koşuluna bağlanabilir.
 - Uygulama veya historical başarı paper/testnet/live izni oluşturmaz.
+- 2021 historical development validation daha sonra tamamlandı. v5 trade sayısını `%29,2035`, execution maliyetini `%28,8959` azalttı ve profit factor'ı `0,3293` değerinden `0,4170` değerine yükseltti; ancak compounded net return `-%4,5272`, benchmark excess `-%9,2336` ve kârlı pencere oranı `%0` olduğu için sekiz kapının yalnız dördünü geçti ve reddedildi. Ayrıntılı artifact kimlikleri [ret kanıtında](../23-2021-v5-validation-kaniti.md) yer alır. Holdout açılmadı; paper/testnet/live izni verilmedi.
 
 ## Alternatifler
 

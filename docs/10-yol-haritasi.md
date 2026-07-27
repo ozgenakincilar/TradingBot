@@ -92,7 +92,7 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Reddedilmiş v4 için 2022 train/validation işlem bazlı attribution; zarar yalnız maliyet kaynaklı değil, ADX gücünün long yönlü follow-through sağlamaması ve EMA cross-down grubundaki negatif brüt edge ile açıklanıyor.
 - [x] v5 için v4 gücünü koruyan entry-only `+DI > -DI` yön doğrulaması, exact DMI matematiği ve sekiz validation kapısının 2021 verisi indirilmeden önce ön kaydı.
 - [x] v5 DMI domain/strategy implementasyonu, legacy hash regression testleri ve fail-closed v4-v5 validation CLI.
-- [ ] Ayrı 2021 historical development train/validation değerlendirmesi; holdout açılmayacak ve sonuç forward OOS sayılmayacak.
+- [x] Ayrı 2021 historical development train/validation değerlendirmesi; v5 trade/maliyet azaltımı ve drawdown kapılarını geçmesine rağmen profit factor, pozitif net, benchmark excess ve kârlı pencere kapılarını geçemediği için reddedildi; holdout açılmadı ve sonuç forward OOS sayılmadı.
 - Pozitif expectancy hipotezli yeni strateji sürümü, ayrı development dataset, kilitli yeni market-regime OOS kabulü ve aylık segmentasyon.
 
 **Çıkış ölçütü:** Aynı event seti aynı kararları üretiyor; look-ahead testleri başarılı.

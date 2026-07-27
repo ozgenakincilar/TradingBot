@@ -27,7 +27,8 @@ public sealed record StrategyDefinition
         decimal profitProtectionActivationBasisPoints,
         decimal profitProtectionTrailingBasisPoints,
         int trendStrengthPeriod,
-        decimal minimumTrendStrength)
+        decimal minimumTrendStrength,
+        bool requirePositiveDirectionalMovement)
     {
         StrategyId = strategyId;
         Version = version;
@@ -45,6 +46,7 @@ public sealed record StrategyDefinition
         ProfitProtectionTrailingBasisPoints = profitProtectionTrailingBasisPoints;
         TrendStrengthPeriod = trendStrengthPeriod;
         MinimumTrendStrength = minimumTrendStrength;
+        RequirePositiveDirectionalMovement = requirePositiveDirectionalMovement;
     }
 
     public string StrategyId { get; }
@@ -81,6 +83,8 @@ public sealed record StrategyDefinition
 
     public decimal MinimumTrendStrength { get; }
 
+    public bool RequirePositiveDirectionalMovement { get; }
+
     public static StrategyDefinition Create(
         string strategyId,
         int version,
@@ -97,7 +101,8 @@ public sealed record StrategyDefinition
         decimal profitProtectionActivationBasisPoints = 0m,
         decimal profitProtectionTrailingBasisPoints = 0m,
         int trendStrengthPeriod = 0,
-        decimal minimumTrendStrength = 0m)
+        decimal minimumTrendStrength = 0m,
+        bool requirePositiveDirectionalMovement = false)
     {
         if (!IsValidStrategyId(strategyId))
         {
@@ -155,14 +160,20 @@ public sealed record StrategyDefinition
         }
 
         var hasTrendStrength = trendStrengthPeriod != 0 || minimumTrendStrength != 0m;
-        if ((version != 4 && hasTrendStrength) ||
-            (version == 4 &&
+        if ((version is not (4 or 5) && hasTrendStrength) ||
+            (version is 4 or 5 &&
              (trendStrengthPeriod is < 2 or > 100 ||
               minimumTrendStrength is <= 0m or > 100m ||
               minimumTrendWarmupCandles < trendStrengthPeriod * 2)))
         {
             throw new DomainRuleViolationException(
-                "Trend strength must be disabled outside v4; v4 requires a bounded period, threshold, and complete ADX warm-up.");
+                "Trend strength must be disabled outside v4/v5; v4/v5 require a bounded period, threshold, and complete ADX warm-up.");
+        }
+
+        if ((version == 5) != requirePositiveDirectionalMovement)
+        {
+            throw new DomainRuleViolationException(
+                "Positive directional movement must be required only by v5.");
         }
 
         return new StrategyDefinition(
@@ -181,7 +192,8 @@ public sealed record StrategyDefinition
             profitProtectionActivationBasisPoints,
             profitProtectionTrailingBasisPoints,
             trendStrengthPeriod,
-            minimumTrendStrength);
+            minimumTrendStrength,
+            requirePositiveDirectionalMovement);
     }
 
     private static bool IsValidStrategyId(string? value) =>

@@ -6,7 +6,9 @@ namespace TradingBot.Domain.Strategies;
 public sealed record AverageDirectionalIndexResult(
     int Period,
     int SampleCount,
-    decimal Value)
+    decimal Value,
+    decimal PlusDirectionalIndex = 0m,
+    decimal MinusDirectionalIndex = 0m)
 {
     public bool MeetsMinimum(decimal minimum) =>
         minimum is > 0m and <= 100m && Value >= minimum;
@@ -30,6 +32,8 @@ public static class AverageDirectionalIndex
         decimal smoothedPlusDm = 0m;
         decimal smoothedMinusDm = 0m;
         decimal adx = 0m;
+        decimal plusDi = 0m;
+        decimal minusDi = 0m;
         var dxCount = 0;
 
         try
@@ -74,7 +78,9 @@ public static class AverageDirectionalIndex
                     continue;
                 }
 
-                var dx = CalculateDx(smoothedTrueRange, smoothedPlusDm, smoothedMinusDm);
+                (plusDi, minusDi) = CalculateDirectionalIndexes(
+                    smoothedTrueRange, smoothedPlusDm, smoothedMinusDm);
+                var dx = CalculateDx(plusDi, minusDi);
                 dxCount++;
                 if (dxCount <= period)
                 {
@@ -95,21 +101,30 @@ public static class AverageDirectionalIndex
             throw new DomainRuleViolationException("ADX calculation exceeded decimal bounds.");
         }
 
-        return new AverageDirectionalIndexResult(period, candles.Count, adx);
+        return new AverageDirectionalIndexResult(
+            period, candles.Count, adx, plusDi, minusDi);
     }
 
     private static decimal Smooth(decimal previous, decimal current, int period) =>
         checked(previous - previous / period + current);
 
-    private static decimal CalculateDx(decimal trueRange, decimal plusDm, decimal minusDm)
+    private static (decimal Plus, decimal Minus) CalculateDirectionalIndexes(
+        decimal trueRange,
+        decimal plusDm,
+        decimal minusDm)
     {
         if (trueRange == 0m)
         {
-            return 0m;
+            return (0m, 0m);
         }
 
         var plusDi = checked(100m * plusDm / trueRange);
         var minusDi = checked(100m * minusDm / trueRange);
+        return (plusDi, minusDi);
+    }
+
+    private static decimal CalculateDx(decimal plusDi, decimal minusDi)
+    {
         var denominator = checked(plusDi + minusDi);
         return denominator == 0m
             ? 0m

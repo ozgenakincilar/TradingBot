@@ -1,6 +1,6 @@
 # v5 DMI yön doğrulaması tasarımı ve ön kaydı
 
-**Durum:** Tasarım kilitli; uygulanmadı ve veri üzerinde çalıştırılmadı
+**Durum:** Tasarım kilitli ve uygulanmış; veri üzerinde çalıştırılmadı
 
 **Tarih:** 2026-07-27
 
@@ -88,3 +88,13 @@ Bir kapı başarısızsa v5 reddedilir. Period, ADX eşiği, DI karşılaştırm
 - DMI lagging bir fiyat türevidir; haber, likidite ve spike koruması değildir.
 - Historical validation paper/testnet/live izni değildir.
 - Aylık `%10` hedefi bu kapıları veya risk sınırlarını gevşetmez.
+
+## 9. Uygulama kanıtı
+
+- Bounded Wilder sonucu ADX ile güncel `plusDI`/`minusDI` değerlerini tek checked-decimal geçişte üretir.
+- v5 tanımı strict yön doğrulaması olmadan, v1-v4 ise bu davranış açıkken oluşturulamaz.
+- `trend-direction-blocked` yalnız flat entry'de üretilir; long exit davranışı değişmez.
+- `dmi-direction-v1` configuration hash yolu v1-v4 yollarından ayrıdır.
+- `validate-dmi-direction-v5` komutu v4-v5 diagnostics, benchmark ve sekiz kapıyı fail-closed birleştirir.
+
+Bu kanıt historical başarı değildir. 2021 datasetinin indirilmesi ve validation çalışması bu implementasyon/CI adımından sonra yapılacaktır.

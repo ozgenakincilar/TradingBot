@@ -75,6 +75,18 @@ public sealed class StrategyContractTests
         Assert.Equal(0m, definition.ProfitProtectionActivationBasisPoints);
     }
 
+    [Fact]
+    public void V5RequiresPositiveDirectionalMovement()
+    {
+        var definition = StrategyDefinition.Create(
+            "btc-usdt-long-flat-baseline", 5, Instrument, SignalTimeframe, TrendTimeframe,
+            20, 200, 2m, 200, 200, signalEmaHysteresisBasisPoints: 30m,
+            trendStrengthPeriod: 14, minimumTrendStrength: 25m,
+            requirePositiveDirectionalMovement: true);
+
+        Assert.True(definition.RequirePositiveDirectionalMovement);
+    }
+
     [Theory]
     [InlineData(3, 14, 25)]
     [InlineData(4, 0, 25)]

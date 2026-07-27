@@ -31,6 +31,17 @@ public sealed class AverageDirectionalIndexTests
             14);
 
         Assert.Equal(100m, result.Value);
+        Assert.True(result.PlusDirectionalIndex > result.MinusDirectionalIndex);
+    }
+
+    [Fact]
+    public void CanonicalFallingSeriesProducesNegativeDirectionalDominance()
+    {
+        var result = AverageDirectionalIndex.Calculate(
+            Series(28, static index => 200m - index), 14);
+
+        Assert.Equal(100m, result.Value);
+        Assert.True(result.MinusDirectionalIndex > result.PlusDirectionalIndex);
     }
 
     [Fact]

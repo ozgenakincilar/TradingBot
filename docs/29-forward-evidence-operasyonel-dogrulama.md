@@ -55,3 +55,11 @@ kilit distributed consensus sağlamaz.
 Bu paket v6 strateji tanımını, ATR grid'ini, execution policy'yi, random seed'i
 ve sekiz acceptance kapısını değiştirmez. Sentetik test yalnız operasyonel
 determinizm kanıtıdır; kârlılık veya gerçek forward OOS sonucu değildir.
+
+## Windows servis loglaması
+
+Host Windows üzerinde console veya yönlendirilmiş stdout/stderr ile çalıştırılırken
+`EventLogLoggerProvider` devre dışı bırakılır. Böylece Event Log kaynağı yazma
+izninin bulunmaması, OKX veya SQL kaynaklı asıl başlangıç hatasını ikincil bir
+`AggregateException` ile maskelemez. Operasyonel loglar supervisor tarafından
+stdout/stderr üzerinden toplanmalıdır.

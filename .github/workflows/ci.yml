@@ -69,3 +69,7 @@ jobs:
       - name: Verify repository policy
         shell: pwsh
         run: ./scripts/Test-RepositoryPolicy.ps1
+
+      - name: Verify Windows service scripts
+        shell: pwsh
+        run: ./scripts/Test-WindowsDeploymentScripts.ps1

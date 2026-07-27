@@ -121,3 +121,9 @@ Worker'ın process-local operasyon durumu `/health/forward-evidence` ve
 `/metrics/forward-evidence` uçlarında yayınlanır. Aynı evidence root için ikinci
 writer `.writer.lock` nedeniyle fail-fast olur; deployment replica sayısı `1`
 kalmalıdır. Ayrıntılı doğrulama: [Forward Evidence Operasyonel Doğrulama](docs/29-forward-evidence-operasyonel-dogrulama.md).
+
+Yerel production-benzeri soak, Windows Service delayed-auto/SCM recovery ve ayrı
+60 saniyelik watchdog ile çalıştırılabilir. Kurulum bağlantı dizesini yalnız
+environment üzerinden alır, `NT SERVICE\\TradingBot` sanal hesabını kullanır ve
+aynı service adı/port için ikinci instance'ı reddeder. Runbook:
+[Windows Service ve Bağımsız Watchdog](docs/30-windows-service-ve-watchdog.md).

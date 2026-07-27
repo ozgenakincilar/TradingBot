@@ -19,9 +19,9 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 
 | Statü | Adet |
 |---|---:|
-| ✅ Uygulandı | 18 |
+| ✅ Uygulandı | 19 |
 | 🟡 Kısmi | 36 |
-| ⬜ Planlandı | 40 |
+| ⬜ Planlandı | 39 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -121,7 +121,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 70 | Log rotasyonu | ⬜ Planlandı | Retention/rotation ve disk alarmı gerekli. |
 | 71 | Alert fatigue | ⬜ Planlandı | Dedup/throttle/batch notification pipeline gerekli. |
 | 72 | NuGet vulnerability | ✅ Uygulandı | CI transitif NuGet vulnerability raporunu JSON üretip bulgu varsa job'ı durduruyor; yerel tarama da kalite kapısıdır. [CI workflow](../.github/workflows/ci.yml) |
-| 73 | Runtime watchdog | 🟡 Kısmi | `/health/ready` trading readiness'i; `/health/forward-evidence` son başarılı çevrim ve disk durumunu fail-closed yayınlıyor. Bağımsız dış watchdog ve startup probe kaldı. [Program](../src/TradingBot.Host/Program.cs) |
+| 73 | Runtime watchdog | ✅ Uygulandı | Bağımsız `SYSTEM` scheduled task her 60 saniyede local liveness, forward health ve heartbeat'i bounded timeout ile ölçer; üç ardışık hata ve cooldown sonrası SCM üzerinden idempotent restart uygular. [Watchdog](../scripts/tradingbot-watchdog.ps1), [ADR-0031](adr/0031-windows-service-ve-bagimsiz-watchdog.md) |
 | 74 | Yedek bildirim kanalı | ⬜ Planlandı | Birincil/yedek kanal seçimi ve failover testi gerekli. |
 | 75 | Güvenlik güncellemeleri | ⬜ Planlandı | OS/runtime patch runbook ve image scanning gerekli. |
 
@@ -150,7 +150,7 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | No | Kural | Statü | Kanıt veya kalan iş |
 |---:|---|---|---|
 | 91 | Açık pozisyonda deploy | ⬜ Planlandı | Deployment precondition ve zero-position guard gerekli. |
-| 92 | Kontrolsüz OS restart | ⬜ Planlandı | Maintenance window ve service auto-recovery runbook'u gerekli. |
+| 92 | Kontrolsüz OS restart | 🟡 Kısmi | Windows Service delayed automatic başlar; SCM üç kademeli crash recovery ve bağımsız watchdog uygular. OS update maintenance-window politikası kaldı. [Deployment](../scripts/deploy-windows-service.ps1), [ADR-0031](adr/0031-windows-service-ve-bagimsiz-watchdog.md) |
 | 93 | Altyapı failover | ⬜ Planlandı | Forward writer aynı paylaşılan root'ta file lease ile tek-active; çok düğümlü distributed ownership/reconciliation çözülmeden failover açılmayacak. [ADR-0030](adr/0030-forward-evidence-operasyonel-dogrulama.md) |
 | 94 | DB/tick I/O şişmesi | 🟡 Kısmi | Forward market data candle başına SQL'e yazılmaz; 30 günlük CSV bölümü mühürlendikten sonra yalnız manifest/evaluation metadata'sı append edilir. Genel market-data retention ve disk quota kaldı. [Forward pipeline](28-forward-evidence-pipeline.md) |
 | 95 | Telemetry | 🟡 Kısmi | Forward worker son çevrim/pencere/disk/retry/SQL hata sayaçlarını allocation-free atomik state ve HTTP uçlarıyla yayınlıyor. Kalıcı OpenTelemetry/Prometheus/Grafana ve dashboard kaldı. [Telemetry state](../src/TradingBot.Host/ForwardEvidenceTelemetryState.cs) |

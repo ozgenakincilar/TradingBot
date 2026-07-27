@@ -33,6 +33,7 @@ Bu klasör, uygulama kodundan önce kabul edilmesi gereken ürün, mimari ve ope
 | [27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md](27-v6-dinamik-benchmark-paritesi-ve-acceptance-cli.md) | Ortak dinamik TWAP benchmark paritesi, kilitli v6 CLI ve exit-code sözleşmesi |
 | [28-forward-evidence-pipeline.md](28-forward-evidence-pipeline.md) | OKX TR public veri, immutable 30 günlük CSV/manifest, append-only SQL ve otomatik v6 değerlendirme hattı |
 | [29-forward-evidence-operasyonel-dogrulama.md](29-forward-evidence-operasyonel-dogrulama.md) | Gerçek SQL trigger testi, yedi pencereli prova, OKX smoke ve hafif telemetry kanıtı |
+| [30-windows-service-ve-watchdog.md](30-windows-service-ve-watchdog.md) | Yerel Windows Service, SCM recovery, bağımsız watchdog ve single-instance dağıtım runbook'u |
 | [adr/README.md](adr/README.md) | Architecture Decision Record indeksi |
 
 ## Belge statüleri

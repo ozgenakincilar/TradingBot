@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.EventLog;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using TradingBot.Application;
 using TradingBot.Application.Abstractions;
 using TradingBot.Application.Backtesting;
@@ -14,8 +15,16 @@ using TradingBot.Infrastructure.Backtesting;
 using TradingBot.Infrastructure.Integrations.Okx;
 
 var builder = WebApplication.CreateBuilder(args);
+var windowsServiceName = builder.Configuration["WindowsService:ServiceName"] ??
+                         "TradingBot";
+using var processLease = OperatingSystem.IsWindows()
+    ? WindowsProcessSingleInstanceLease.Acquire(windowsServiceName)
+    : null;
 
-if (OperatingSystem.IsWindows())
+builder.Services.AddWindowsService(options =>
+    options.ServiceName = windowsServiceName);
+
+if (OperatingSystem.IsWindows() && !WindowsServiceHelpers.IsWindowsService())
 {
     builder.Logging.AddFilter<EventLogLoggerProvider>(static (_, _) => false);
 }

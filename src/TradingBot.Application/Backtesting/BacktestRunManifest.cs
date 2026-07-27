@@ -71,7 +71,9 @@ public static class BacktestRunManifestFactory
             TrendFirst = completedTrend.FirstOpenTime,
             TrendLast = completedTrend.LastCloseTime
         });
-        var configurationHash = execution.InstrumentRules is not null
+        var configurationHash = execution.DynamicExecution is not null
+            ? HashDynamicExecutionConfiguration(definition, execution)
+            : execution.InstrumentRules is not null
             ? definition.Version switch
             {
                 3 => HashProfitProtectionInstrumentConfiguration(definition, execution),
@@ -117,6 +119,56 @@ public static class BacktestRunManifestFactory
             trendDataset,
             completedTrend,
             split);
+    }
+
+    private static string HashDynamicExecutionConfiguration(
+        StrategyDefinition definition,
+        BacktestExecutionPolicy execution)
+    {
+        var dynamicExecution = execution.DynamicExecution!.Value;
+        var instrument = execution.InstrumentRules;
+        return Hash(new
+        {
+            ConfigurationSchema = "volatility-adjusted-twap-backtest-v1",
+            definition.StrategyId,
+            definition.Version,
+            Instrument = definition.InstrumentId.ToString(),
+            SignalTimeframeTicks = definition.SignalTimeframe.Duration.Ticks,
+            TrendTimeframeTicks = definition.TrendTimeframe.Duration.Ticks,
+            definition.SignalEmaPeriod,
+            definition.TrendEmaPeriod,
+            definition.MaximumSignalCandleMovePercent,
+            definition.MinimumSignalWarmupCandles,
+            definition.MinimumTrendWarmupCandles,
+            definition.SignalEmaHysteresisBasisPoints,
+            definition.ReentryCooldownCandles,
+            definition.ProfitProtectionActivationBasisPoints,
+            definition.ProfitProtectionTrailingBasisPoints,
+            definition.TrendStrengthPeriod,
+            definition.MinimumTrendStrength,
+            definition.RequirePositiveDirectionalMovement,
+            execution.InitialQuoteBalance,
+            BaseAsset = execution.BaseAsset.Value,
+            QuoteAsset = execution.QuoteAsset.Value,
+            Allocation = execution.QuoteAllocation.Fraction,
+            LatencyTicks = execution.PaperExecution.MinimumLatency.Ticks,
+            Commission = execution.PaperExecution.CommissionRate.Fraction,
+            Participation = execution.PaperExecution.MaximumLiquidityParticipation.Fraction,
+            dynamicExecution.MinimumSpreadBasisPoints,
+            dynamicExecution.MaximumSpreadBasisPoints,
+            dynamicExecution.MinimumSlippageBasisPoints,
+            dynamicExecution.MaximumSlippageBasisPoints,
+            dynamicExecution.VolatilitySpreadMultiplier,
+            dynamicExecution.VolatilitySlippageMultiplier,
+            dynamicExecution.ParticipationSpreadAtLimitBasisPoints,
+            dynamicExecution.ParticipationPenaltyAtLimitBasisPoints,
+            dynamicExecution.TwapChildOrderCount,
+            RulesInstrument = instrument?.Id.ToString(),
+            RulesPriceTickSize = instrument?.PriceTickSize,
+            RulesQuantityStepSize = instrument?.QuantityStepSize,
+            RulesMinimumQuantity = instrument?.MinimumQuantity,
+            RulesMinimumNotional = instrument?.MinimumNotional
+        });
     }
 
     private static string HashLegacyConfiguration(

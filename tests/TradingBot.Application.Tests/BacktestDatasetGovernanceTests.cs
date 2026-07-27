@@ -176,6 +176,38 @@ public sealed class BacktestDatasetGovernanceTests
     }
 
     [Fact]
+    public void DynamicExecutionParametersOwnConfigurationIdentity()
+    {
+        var dynamicPolicy = ExecutionPolicy() with
+        {
+            DynamicExecution = DynamicExecution()
+        };
+        var ignoredLegacyPlaceholders = dynamicPolicy with
+        {
+            SyntheticSpreadBasisPoints = 999m,
+            PaperExecution = dynamicPolicy.PaperExecution with
+            {
+                SlippageBasisPoints = 999m
+            }
+        };
+        var changedDynamicParameter = dynamicPolicy with
+        {
+            DynamicExecution = DynamicExecution() with
+            {
+                VolatilitySlippageMultiplier = 3m
+            }
+        };
+
+        var baseline = CreateManifest(Definition(), dynamicPolicy);
+        var ignored = CreateManifest(Definition(), ignoredLegacyPlaceholders);
+        var changed = CreateManifest(Definition(), changedDynamicParameter);
+
+        Assert.Equal(baseline.ConfigurationSha256, ignored.ConfigurationSha256);
+        Assert.NotEqual(baseline.ConfigurationSha256, changed.ConfigurationSha256);
+        Assert.NotEqual(baseline.ManifestSha256, changed.ManifestSha256);
+    }
+
+    [Fact]
     public void IncompleteDatasetCannotProduceManifest()
     {
         var action = () => BacktestRunManifestFactory.Create(
@@ -397,4 +429,15 @@ public sealed class BacktestDatasetGovernanceTests
             Percentage.FromPercent(0.1m),
             SlippageBasisPoints: 10m,
             Percentage.FromPercent(5m)));
+
+    private static VolatilityAdjustedExecutionPolicy DynamicExecution() => new(
+        MinimumSpreadBasisPoints: 2m,
+        MaximumSpreadBasisPoints: 100m,
+        MinimumSlippageBasisPoints: 1m,
+        MaximumSlippageBasisPoints: 150m,
+        VolatilitySpreadMultiplier: 1m,
+        VolatilitySlippageMultiplier: 2m,
+        ParticipationSpreadAtLimitBasisPoints: 5m,
+        ParticipationPenaltyAtLimitBasisPoints: 20m,
+        TwapChildOrderCount: 4);
 }

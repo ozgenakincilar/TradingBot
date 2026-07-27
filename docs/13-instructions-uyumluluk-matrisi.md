@@ -20,8 +20,8 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | Statü | Adet |
 |---|---:|
 | ✅ Uygulandı | 17 |
-| 🟡 Kısmi | 34 |
-| ⬜ Planlandı | 43 |
+| 🟡 Kısmi | 35 |
+| ⬜ Planlandı | 42 |
 | ➖ Kapsam dışı | 6 |
 | **Toplam** | **100** |
 
@@ -72,18 +72,18 @@ Bu matris, savunma anayasasındaki 100 kuralın unutulmamasını ve her iddianı
 | 31 | Price tick size | ✅ Uygulandı | OKX `tickSz` dinamik okunuyor; fiyat aşağı adım normalizasyonu ve contract/domain testleri mevcut. [Instrument catalog](../src/TradingBot.Infrastructure/Integrations/Okx/OkxSpotInstrumentCatalog.cs) |
 | 32 | Lot size | ✅ Uygulandı | OKX `lotSz` ve `minSz` dinamik okunuyor; miktar aşağı adım normalizasyonu ve testler mevcut. [Instrument testleri](../tests/TradingBot.Domain.Tests/InstrumentTests.cs) |
 | 33 | MinNotional/order decay | 🟡 Kısmi | OKX minimum quantity (`minSz`) startup'ta doğrulanıyor; backtest/benchmark açıkça verilen tick/lot/minimum quantity/notional snapshot'ını hash'leyip minimum altı girişi reddediyor ve satılamayan remainder'ı pending bırakıyor. Public metadata minimum notional sağlamadığından uydurulmuyor; gerçek account/ürün kuralı ve çok kademeli live order-decay politikası kaldı. [ADR-0019](adr/0019-backtest-instrument-quantization.md) |
-| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee, PnL/persistence ve paper fill komisyonu SQL settlement'ta; backtest alış/satış maliyetleri de net return'de testli. Exchange fee-asset çeşitleri ve live parity henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
+| 34 | Komisyon kaybı | 🟡 Kısmi | Quote-fee ve iki yönlü komisyon PnL/persistence'ta; backtest yeni sürümler için volatilite/hacim ayarlı spread/slippage ve ayrı cost attribution taşıyor. Exchange fee-asset çeşitleri, benchmark ve live parity henüz yok. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs), [ADR-0025](adr/0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) |
 | 35 | Mum gap filling | ✅ Uygulandı | Canlı `15m/1H` candle stream timeframe başına guard ile gap'i durduruyor; observed candle dahil bounded REST aralığı atomik tamamlanmadan pipeline yeniden açılmıyor. [Candle session testleri](../tests/TradingBot.Application.Tests/ClosedCandleStreamSessionTests.cs) |
 | 36 | Look-ahead bias | ✅ Uygulandı | Streaming replay yalnız bilinen trend verisini alır; execution aynı candle'da fill etmez ve next-open likiditesi için mevcut candle toplam hacmi yerine önceki kapalı candle hacmini kullanır. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs) |
 | 37 | Unix epoch overflow | ⬜ Planlandı | Exchange timestamp value object ve sınır testleri gerekli. |
 | 38 | Maksimum DCA adımı | ⬜ Planlandı | DCA ilk sürümde yok; eklenmeden önce maksimum kademe invariant'ı ve yeni kapsam kararı gerekir. |
 | 39 | Warm-up period | ✅ Uygulandı | OKX startup kapısı aynı UTC bilgi anında sıralı `15m/200` signal ve `1H/200` trend geçmişi ister; iki seri exact, kapalı ve contiguous olmadan readiness açılmaz. [Dual warm-up testleri](../tests/TradingBot.Host.Tests/OkxInstrumentStartupGateTests.cs) |
-| 40 | Sell slippage/depth | 🟡 Kısmi | Paper market buy/sell, OKX'in bounded beş seviyesini participation oranıyla tüketip her seviyeye aleyhte slippage uygulayarak VWAP üretir. Historical backtest hâlâ candle-volume proxy kullandığı için gerçek depth replay kanıtı kaldı. [Paper execution](../src/TradingBot.Domain/Execution/PaperExecution.cs), [ADR-0020](adr/0020-bounded-cumulative-order-book-depth.md) |
+| 40 | Sell slippage/depth | 🟡 Kısmi | Paper depth VWAP'a ek olarak historical execution, önceki kapalı mum range ve emir/hacim katılımının karesiyle bounded dinamik spread/slippage uygular. OHLCV proxy yerine gerçek depth replay kanıtı kaldı. [Backtest execution](../src/TradingBot.Application/Strategies/BacktestExecutionSimulator.cs), [ADR-0025](adr/0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) |
 | 41 | Spike koruması | ⬜ Planlandı | Fiyat sapma doğrulaması henüz yok; stale-data kontrolü spike kontrolü sayılmaz. |
 | 42 | Leverage sync | ➖ Kapsam dışı | Kaldıraç/Futures yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
 | 43 | Cross/isolated margin | ➖ Kapsam dışı | Margin yasak. [ADR-0007](adr/0007-kaldiracsiz-spot-only.md) |
-| 44 | Düşük likidite | ⬜ Planlandı | 24h volume, spread ve depth filtresi gerekli. |
-| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Paper execution minimum latency ve beş seviyeli cumulative market impact; backtest next-open proxy, muhafazakâr tick/lot rounding ve pending target taşır. Gerçek limit-order queue position, hidden liquidity ve cancel latency henüz yok. [Paper execution testleri](../tests/TradingBot.Domain.Tests/PaperExecutionEngineTests.cs), [ADR-0020](adr/0020-bounded-cumulative-order-book-depth.md) |
+| 44 | Düşük likidite | 🟡 Kısmi | Dinamik historical execution toplam child miktarını önceki kapalı mum hacminin en fazla `%5`iyle sınırlar ve aşırı policy'yi reddeder. 24h volume/depth instrument filtresi ve live parity kaldı. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs), [ADR-0025](adr/0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) |
+| 45 | Gerçekçi fill süresi | 🟡 Kısmi | Next-open execution, bounded child fill'leri aynı signal mumunda latency sonrası deterministik TWAP zamanlarına yayar; current-candle future range/volume fill'e sızmaz. Gerçek queue position, hidden liquidity ve cancel latency kaldı. [Backtest execution testleri](../tests/TradingBot.Application.Tests/BacktestExecutionSimulatorTests.cs), [ADR-0025](adr/0025-volatilite-ayarlı-maliyet-ve-twap-simulasyonu.md) |
 
 ## Bölüm 4 — Borsa API ve Risk Yönetimi
 

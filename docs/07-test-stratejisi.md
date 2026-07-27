@@ -120,6 +120,8 @@ Testler yalnızca kod satırlarını değil, finansal invariants, hata toparlama
 - ADX'nin yalnız entry'yi engellediği, long pozisyonda ADX düşüşünün v2 exit kararını değiştirmediği ve v1-v3 test/hash yollarının aynı kaldığı regression testleri validation ön koşuludur.
 - v4 acceptance evaluator sekiz kapıyı bağımsız değerlendirir; sıfır işlem profit-factor başarısı sayılamaz ve herhangi bir başarısız kapı tüm adayı reddeder.
 - v5 için yükselen/düşen/sabit DMI fixture'ları, strict `plusDI > minusDI` sınırı, entry-only davranış, v1-v4 hash regression ve sekiz v4-v5 acceptance kapısı uygulanmıştır.
+- Dinamik execution için volatilite/katılım karesine bağlı monoton maliyet, ayrı bps cap'leri, `%5` fail-closed sınırı, aynı mum içine deterministik TWAP zaman dağılımı ve execution mumunun gelecekteki range/volume değerlerinin fill maliyetine sızmadığı regression testleri zorunludur.
+- Dinamik execution parametreleri ayrı configuration hash üretir; legacy sabit maliyet placeholder'ları dinamik kimliği değiştirmez ve v1-v5 kilitli hash yolları korunur. Benchmark maliyet parity'si kurulmadan walk-forward acceptance fail-closed kalır.
 
 ## 5. Determinizm
 

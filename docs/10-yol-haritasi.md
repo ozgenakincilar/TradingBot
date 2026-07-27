@@ -78,6 +78,8 @@ Her aşama bir öncekinin kabul ölçütleri tamamlanmadan başlamaz.
 - [x] Canonical gerçek CSV çifti üzerinde versioned baseline walk-forward raporu çalıştıran secretsiz research CLI.
 - [x] Strategy ve benchmark için muhafazakâr tick/lot rounding, minimum quantity/notional kapısı, versioned configuration hash ve legacy kanıt uyumluluğu.
 - [x] OKX `books5`/REST için bounded beş seviyeli depth ve paper execution'da participation-sınırlı cumulative VWAP market impact.
+- [x] Son kapalı mum volatilitesi/hacmiyle doğrusal olmayan spread/slippage, `%5` toplam katılım ve bounded mum-içi TWAP child-order execution sözleşmesi; legacy v1-v5 hash yolları korundu.
+- [ ] Buy-and-hold benchmark için aynı dinamik maliyet/TWAP parity'si; tamamlanmadan yeni execution modeli acceptance çalışmasına giremez.
 - Gerçek limit-order queue replay, hidden liquidity ve cancel latency.
 - [x] Küratörlü gerçek 2025 BTC-USDT 15m/1H dataset üretimi ve beş pencereli ilk OOS değerlendirmesi; v1 baseline kabul ölçütlerini geçemedi.
 - [x] v1 hash/karar uyumluluğunu koruyan, round-trip maliyetinden türetilmiş 30 bps EMA hysteresis v2 araştırma sözleşmesi.
